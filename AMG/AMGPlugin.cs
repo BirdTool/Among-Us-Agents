@@ -45,35 +45,35 @@ public partial class AMGPlugin : BasePlugin
 
         ConfigName = Config.Bind("Fake", "Name", ":>");
 
-        var menuObject = new GameObject("ReaperMenuManager");
+        var menuObject = new GameObject("AMGManager");
         Object.DontDestroyOnLoad(menuObject);
 
-        MenuKeybind = Config.Bind("ReaperMenu.GUI",
+        MenuKeybind = Config.Bind("AMG.GUI",
                                "Keybind",
                                "Delete",
                                "The keyboard key used to toggle the GUI on and off. List of supported keycodes: https://docs.unity3d.com/Packages/com.unity.tiny@0.16/api/Unity.Tiny.Input.KeyCode.html");
 
-        MenuHtmlColor = Config.Bind("MalumMenu.GUI",
+        MenuHtmlColor = Config.Bind("AMG.GUI",
                                 "Color",
                                 "",
-                                "A custom color for your MalumMenu GUI. Supports html color codes");
+                                "A custom color for your AMG GUI. Supports html color codes");
 
-        MenuOpenOnMouse = Config.Bind("MalumMenu.GUI",
+        MenuOpenOnMouse = Config.Bind("AMG.GUI",
                                 "OpenOnMouse",
                                 false,
-                                "When enabled, the MalumMenu GUI will always be opened at the current mouse position");
+                                "When enabled, the AMG GUI will always be opened at the current mouse position");
 
-        MenuKeepSubwindowsOpen = Config.Bind("MalumMenu.GUI",
+        MenuKeepSubwindowsOpen = Config.Bind("AMG.GUI",
                                 "KeepSubwindowsOpen",
                                 false,
-                                "When enabled, closing the MalumMenu GUI will not automatically close its subwindows");
+                                "When enabled, closing the AMG GUI will not automatically close its subwindows");
 
-        AutoLoadProfile = Config.Bind("MalumMenu.Profile",
+        AutoLoadProfile = Config.Bind("AMG.Profile",
                                 "AutoLoadProfile",
                                 false,
                                 "When enabled, your saved keybind and toggle profile will be automatically loaded at game startup");
 
-        ConfigEditor = Config.Bind("MalumMenu.Config",
+        ConfigEditor = Config.Bind("AMG.Config",
                                 "ConfigEditor",
                                 "notepad.exe",
                                 "The program used to open the config file when using the Open Config toggle. Can be any executable, but using a text editor is recommended");

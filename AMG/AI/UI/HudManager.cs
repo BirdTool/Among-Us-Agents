@@ -10,6 +10,7 @@ namespace AMG.AI.UI
         public static void Postfix(HudManager __instance)
         {
             if (__instance.UseButton == null) return;
+            Navigation.WaypointManager.LoadWaypoints();
 
             GameObject buttonObj = UnityEngine.Object.Instantiate(__instance.UseButton.gameObject, __instance.UseButton.transform.parent);
             buttonObj.name = "SpawnAgentButton";

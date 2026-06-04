@@ -8,7 +8,7 @@ namespace AMG.AI.Control
 {
     public static class AgentManager
     {
-        private static readonly List<AgentListData> Agents = new List<AgentListData>();
+        public static readonly List<AgentListData> Agents = new List<AgentListData>();
 
         public static void AddAgent(PlayerControl agent, AgentData data)
         {
@@ -25,7 +25,7 @@ namespace AMG.AI.Control
             if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
 
             PlayerControl agentComponent = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
-            AgentData agentData = new AgentData() { Name = name };
+            AgentData agentData = new() { Name = name };
 
             agentComponent.PlayerId = (byte)(100 + Agents.Count);
             agentComponent.NetId = (uint)(100 + Agents.Count);
@@ -54,6 +54,7 @@ namespace AMG.AI.Control
             }
 
             AddAgent(agentComponent, agentData);
+            agentComponent.gameObject.AddComponent<AgentBrain>();
             Debug.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
         }
     }

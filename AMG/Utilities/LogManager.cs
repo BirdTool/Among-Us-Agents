@@ -8,7 +8,7 @@ namespace AMG.Utilities
     {
         private static readonly string logFilePath = "AMG/logs/log.txt";
         private static readonly string allLogFilePath = "AMG/logs/all-logs.txt";
-        private static readonly bool debugLogEnabled = false;
+        private static readonly bool debugLogEnabled = true;
 
         private static readonly List<string> LogQueue = [];
         private static Timer flushTimer;
@@ -55,7 +55,7 @@ namespace AMG.Utilities
         private static void AddToQueue(string message)
         {
             string currentHour = DateTime.Now.ToString("HH:mm:ss");
-            string formattedMessage = $"[{currentHour}] [ReaperMenu] {message}";
+            string formattedMessage = $"[{currentHour}] [AMG] {message}";
 
             System.Console.WriteLine(formattedMessage);
 
