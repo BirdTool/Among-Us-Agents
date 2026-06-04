@@ -183,5 +183,10 @@ namespace AMG.Utilities
         {
             ResolutionManager.ResolutionChanged.Invoke((float)Screen.width / Screen.height, Screen.width, Screen.height, Screen.fullScreen);
         }
+
+        public static int GetRandomInt(int min, int max)
+        {
+            return UnityEngine.Random.Range(min, max);
+        }
     }
 }

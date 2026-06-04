@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Il2CppInterop.Runtime.Injection;
 using AMG.Utilities;
 using AMG.AI.Mind;
+using AMG.AI.Control;
 
 namespace AMG.AI.Tools
 {
@@ -89,9 +90,26 @@ namespace AMG.AI.Tools
                 SaveBufferToFile();
             }
 
+            if (Input.GetKeyDown(KeyCode.G))
+            {
+                LogManager.LogDebug("[AI Command] Chamando todos os agentes!");
+
+                Vector2 myPosition = PlayerControl.LocalPlayer.transform.position;
+
+                AgentBrain[] allBrains = GameObject.FindObjectsOfType<AgentBrain>();
+                foreach (var brain in allBrains)
+                {
+                    brain.CommandGoToPosition(myPosition);
+                }
+            }
+
             if (isRecording)
             {
                 TrySaveNode(PlayerControl.LocalPlayer.transform.position);
+                foreach (var agent in AgentManager.Agents)
+                {
+                    TrySaveNode(agent.Control.transform.position);
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.T)) BufferPoint("TASK");
@@ -120,7 +138,7 @@ namespace AMG.AI.Tools
             string line = $"{type}|{pos.x:F2}|{pos.y:F2}";
             newLinesBuffer.Add(line);
 
-            LogManager.LogDebug($"[AI GPS] Em Memória: {line}");
+            // LogManager.LogDebug($"[AI GPS] Em Memória: {line}");
         }
 
         private void SaveBufferToFile()

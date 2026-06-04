@@ -12,6 +12,7 @@ namespace AMG.AI.Navigation
     {
         public WaypointType Type;
         public Vector2 Position;
+        public List<Waypoint> Neighbors = new List<Waypoint>();
     }
 
     public static class WaypointManager
@@ -21,12 +22,7 @@ namespace AMG.AI.Navigation
         public static void LoadWaypoints()
         {
             string filePath = Path.Combine(Application.dataPath, "AI_Skeld_Waypoints.txt");
-
-            if (!File.Exists(filePath))
-            {
-                LogManager.LogError("[AI Nav] Arquivo de rotas não encontrado! O Agente não saberá andar.");
-                return;
-            }
+            if (!File.Exists(filePath)) return;
 
             string[] lines = File.ReadAllLines(filePath);
             AllWaypoints.Clear();
@@ -36,7 +32,6 @@ namespace AMG.AI.Navigation
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
                 string[] parts = line.Split('|');
-
                 if (parts.Length >= 3)
                 {
                     string cleanX = parts[1].Replace(',', '.');
@@ -47,17 +42,29 @@ namespace AMG.AI.Navigation
                     {
                         if (Enum.TryParse(parts[0], out WaypointType type))
                         {
-                            AllWaypoints.Add(new Waypoint
-                            {
-                                Type = type,
-                                Position = new Vector2(x, y)
-                            });
+                            AllWaypoints.Add(new Waypoint { Type = type, Position = new Vector2(x, y) });
                         }
                     }
                 }
             }
 
-            LogManager.LogDebug($"[AI Nav] Mapa do cérebro carregado! Total de pontos gravados: {AllWaypoints.Count}");
+            float connectionRadius = 0.68f;
+            int totalConnections = 0;
+
+            for (int i = 0; i < AllWaypoints.Count; i++)
+            {
+                for (int j = i + 1; j < AllWaypoints.Count; j++)
+                {
+                    if (Vector2.Distance(AllWaypoints[i].Position, AllWaypoints[j].Position) <= connectionRadius)
+                    {
+                        AllWaypoints[i].Neighbors.Add(AllWaypoints[j]);
+                        AllWaypoints[j].Neighbors.Add(AllWaypoints[i]);
+                        totalConnections++;
+                    }
+                }
+            }
+
+            LogManager.LogDebug($"[AI Nav] Malha gerada! {AllWaypoints.Count} Pontos e {totalConnections} Conexões criadas.");
         }
     }
 }

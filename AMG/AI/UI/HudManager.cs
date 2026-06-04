@@ -31,7 +31,7 @@ namespace AMG.AI.UI
                 passiveButton.OnClick.AddListener((Action)(() =>
                 {
                     Debug.Log("[AI Agents] Botão visual clicado. Instanciando Agente...");
-                    Control.AgentManager.AddAgent("Agente AI");
+                    Control.AgentManager.AddAgent("Agent AI");
                 }));
             }
 
