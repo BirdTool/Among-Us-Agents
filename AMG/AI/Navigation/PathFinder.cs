@@ -21,8 +21,11 @@ namespace AMG.AI.Navigation
             }
             return best;
         }
-        public static List<Waypoint> FindPath(Waypoint startNode, Waypoint targetNode)
+
+        public static List<Waypoint> FindPath(Waypoint startNode, Waypoint targetNode, out float totalDistance)
         {
+            totalDistance = 0f;
+
             if (startNode == null || targetNode == null) return null;
 
             List<Waypoint> openSet = new List<Waypoint> { startNode };
@@ -55,6 +58,8 @@ namespace AMG.AI.Navigation
 
                 if (current == targetNode)
                 {
+                    totalDistance = gScore[current];
+
                     List<Waypoint> path = new List<Waypoint> { current };
                     while (cameFrom.ContainsKey(current))
                     {
@@ -87,6 +92,11 @@ namespace AMG.AI.Navigation
 
             LogManager.LogWarning("[AI GPS] Não foi possível conectar esses dois pontos no grafo.");
             return null;
+        }
+
+        public static float GetStraightDistance(Vector2 pointA, Vector2 pointB) // Calcula a distância em linha reta
+        {
+            return Vector2.Distance(pointA, pointB);
         }
     }
 }

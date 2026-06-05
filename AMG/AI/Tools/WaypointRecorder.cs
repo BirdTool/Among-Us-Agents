@@ -92,6 +92,7 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.G))
             {
+                /*
                 LogManager.LogDebug("[AI Command] Chamando todos os agentes!");
 
                 Vector2 myPosition = PlayerControl.LocalPlayer.transform.position;
@@ -101,6 +102,9 @@ namespace AMG.AI.Tools
                 {
                     brain.CommandGoToPosition(myPosition);
                 }
+                */
+
+                AgentsControl.MakeAllAgentsDoTask();
             }
 
             if (isRecording)
