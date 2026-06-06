@@ -188,5 +188,23 @@ namespace AMG.Utilities
         {
             return UnityEngine.Random.Range(min, max);
         }
+
+        public static bool ExecuteProbability(double chance)
+        {
+            chance = Math.Clamp(chance, 0, 1);
+            return RandomizerExtensions.GetSecureRandomInt(0, 100) < chance * 100;
+        }
+
+        public static bool ExecuteProbability(float chance)
+        {
+            chance = Math.Clamp(chance, 0, 1);
+            return RandomizerExtensions.GetSecureRandomInt(0, 100) < chance * 100;
+        }
+
+        public static bool ExecuteProbability(int chance)
+        {
+            chance = Math.Clamp(chance, 0, 100);
+            return RandomizerExtensions.GetSecureRandomInt(0, 100) < chance;
+        }
     }
 }

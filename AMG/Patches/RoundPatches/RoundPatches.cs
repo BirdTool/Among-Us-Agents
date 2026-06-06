@@ -1,4 +1,6 @@
-﻿using AMG.Utilities;
+﻿using AMG.AI.Control;
+using AMG.AI.Mind;
+using AMG.Utilities;
 using HarmonyLib;
 using System.Linq;
 using UnityEngine;
@@ -13,6 +15,7 @@ namespace AMG.Patches.RoundPatches
         public static void ShipStatus_Start_Postfix()
         {
             Utils.Round.ClearRounds();
+            Utils.Round.AddRound();
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]
@@ -20,6 +23,11 @@ namespace AMG.Patches.RoundPatches
         public static void MeetingHud_Start_Postfix()
         {
             Utils.Round.AddRound();
+            foreach (AgentListData agent in AgentManager.Agents)
+            {
+                var brain = agent.Control.gameObject.GetComponent<AgentBrain>();
+                brain.sawABody = false;
+            }
         }
 
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.ReportDeadBody))]

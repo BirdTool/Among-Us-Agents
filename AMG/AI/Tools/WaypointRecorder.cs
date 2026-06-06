@@ -7,6 +7,7 @@ using Il2CppInterop.Runtime.Injection;
 using AMG.Utilities;
 using AMG.AI.Mind;
 using AMG.AI.Control;
+using AMG.AI.Navigation;
 
 namespace AMG.AI.Tools
 {
@@ -92,19 +93,24 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.G))
             {
-                /*
                 LogManager.LogDebug("[AI Command] Chamando todos os agentes!");
 
                 Vector2 myPosition = PlayerControl.LocalPlayer.transform.position;
+                Waypoint target = Pathfinder.GetClosestNode(myPosition);
 
-                AgentBrain[] allBrains = GameObject.FindObjectsOfType<AgentBrain>();
-                foreach (var brain in allBrains)
+                var agents = AgentManager.Agents;
+                foreach ( var agent in agents )
                 {
-                    brain.CommandGoToPosition(myPosition);
+                    var brain = agent.Control.GetComponent<AgentBrain>();
+                    if ( brain != null )
+                    {
+                        Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
+                        List<Waypoint> path = Pathfinder.FindPath(start, target, out _);
+                        brain.CommandGoToPath(path);
+                    }
                 }
-                */
 
-                AgentsControl.MakeAllAgentsDoTask();
+                // AgentsControl.MakeAllAgentsDoTask();
             }
 
             if (isRecording)

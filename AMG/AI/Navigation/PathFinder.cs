@@ -22,6 +22,22 @@ namespace AMG.AI.Navigation
             return best;
         }
 
+        public static Waypoint GetClosestNode(Vector2 pos, float maxDistance)
+        {
+            Waypoint best = null;
+            float minDist = maxDistance;
+            foreach (var wp in WaypointManager.AllWaypoints)
+            {
+                float dist = Vector2.Distance(pos, wp.Position);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    best = wp;
+                }
+            }
+            return best;
+        }
+
         public static List<Waypoint> FindPath(Waypoint startNode, Waypoint targetNode, out float totalDistance)
         {
             totalDistance = 0f;

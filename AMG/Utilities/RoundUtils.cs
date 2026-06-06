@@ -8,10 +8,10 @@ namespace AMG.Utilities
     {
         public static class Round
         {
-            private static readonly List<GameRound> Rounds = [];
+            private static readonly List<GameRound> Rounds = new();
 
             public static GameRound CurrentRound => Rounds.Count > 0 ? Rounds.Last() : null;
-            public static List<RoundDeadBody> CurrentRoundDeadBodies => CurrentRound.Bodies;
+            public static List<RoundDeadBody> CurrentRoundDeadBodies => CurrentRound?.Bodies;
 
             public static void AddRound()
             {
@@ -21,7 +21,7 @@ namespace AMG.Utilities
 
             public static void AddDeadBody(RoundDeadBody body)
             {
-                if (Rounds.Count == 0) return;
+                if (CurrentRound == null) return;
                 CurrentRound.Bodies.Add(body);
             }
 
@@ -29,12 +29,13 @@ namespace AMG.Utilities
             {
                 Rounds.Clear();
             }
+        }
     }
 
     public class GameRound
     {
         public int Number;
-        public List<RoundDeadBody> Bodies;
+        public List<RoundDeadBody> Bodies = [];
     }
 
     public class RoundDeadBody
