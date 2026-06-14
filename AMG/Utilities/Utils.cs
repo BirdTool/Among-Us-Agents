@@ -206,5 +206,23 @@ namespace AMG.Utilities
             chance = Math.Clamp(chance, 0, 100);
             return RandomizerExtensions.GetSecureRandomInt(0, 100) < chance;
         }
+
+        public static bool CanSeeTheTarget(Vector2 origin, Vector2 destination, float distance)
+        {
+            Vector2 direction = (destination - origin).normalized;
+
+            RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, distance);
+
+            foreach (var hit in hits)
+            {
+                if (hit.collider.isTrigger) continue;
+
+                if (hit.collider.gameObject.GetComponent<PlayerControl>() != null) continue;
+
+                return false;
+            }
+
+            return true;
+        }
     }
 }

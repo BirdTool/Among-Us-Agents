@@ -6,10 +6,8 @@ using AMG.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using TMPro;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 namespace AMG.AI.Mind
 {
@@ -125,8 +123,9 @@ namespace AMG.AI.Mind
 
             if (!sawABody && Utils.Round.CurrentRoundDeadBodies != null && Utils.Round.CurrentRoundDeadBodies.Count > 0)
             {
+                /*
                 List<RoundDeadBody> bodies = Utils.Round.CurrentRoundDeadBodies;
-                List<RoundDeadBody> nearbyBodies = new List<RoundDeadBody>();
+                List<RoundDeadBody> nearbyBodies = [];
 
                 Waypoint start = Pathfinder.GetClosestNode(myAgent.transform.position);
 
@@ -142,6 +141,24 @@ namespace AMG.AI.Mind
                             nearbyBodies.Add(body);
                         }
                     }
+                }
+                */
+
+                List<RoundDeadBody> bodies = Utils.Round.CurrentRoundDeadBodies;
+                List<RoundDeadBody> nearbyBodies = [];
+
+                foreach (var body in bodies)
+                {
+                    var origin = myAgent.transform.position;
+                    var target = body.Position;
+
+                    Vector2 origin2D = new Vector2(origin.x, origin.y + 0.5f);
+
+                    float distToBody = Vector2.Distance(origin2D, target);
+                    if (distToBody > 5f) continue;
+
+                    var canSee = Utils.CanSeeTheTarget(origin2D, target, distToBody);
+                    if (canSee) nearbyBodies.Add(body);
                 }
 
                 if (nearbyBodies.Count > 0)
@@ -481,7 +498,7 @@ namespace AMG.AI.Mind
                 Waypoint target = Pathfinder.GetClosestNode(player.transform.position);
                 List<Waypoint> currentCalculatedPath = Pathfinder.FindPath(start, target, out float pathDistance);
 
-                if (pathDistance < 10f)
+                if (currentCalculatedPath != null && pathDistance < 10f)
                 {
                     isThereSomeoneNearby = true;
                     break;
@@ -490,10 +507,13 @@ namespace AMG.AI.Mind
 
             if (isThereSomeoneNearby) shouldLookAround += 0.45;
 
+            // shouldLookAround = 1; // Test mode
+
             var playerInfoToReport = GameData.Instance.GetPlayerById(mostRecentBody.PlayerId);
             if (!Utils.ExecuteProbability(shouldLookAround))
             {
                 LogManager.LogDebug("Reportará sem olhar ao redor");
+                LogManager.LogDebug($"Chance de olhar ao redor: {shouldLookAround}");
 
                 if (playerInfoToReport != null)
                 {
@@ -529,52 +549,58 @@ namespace AMG.AI.Mind
             {
                 LogManager.LogDebug($"Olhará ao redor, chance: {shouldLookAround}");
                 Vector2 bodyPos = mostRecentBody.Position;
-                float patrolRadius = 7f;
-
-                Vector2[] directions =
-                [
-                    Vector2.up,                     // Cima
-                    Vector2.down,                   // Baixo
-                    Vector2.left,                   // Esquerda
-                    Vector2.right,                  // Direita
-                    new Vector2( 1,  1).normalized, // Nordeste (Diagonal)
-                    new Vector2(-1,  1).normalized, // Noroeste (Diagonal)
-                    new Vector2( 1, -1).normalized, // Sudeste (Diagonal)
-                    new Vector2(-1, -1).normalized  // Sudoeste (Diagonal)
-                ];
 
                 List<Waypoint> patrolPoints = [];
                 Waypoint agentNodeStart = Pathfinder.GetClosestNode(myAgent.transform.position);
 
-                foreach (Vector2 dir in directions)
+                Vector2 agentPos2D = myAgent.transform.position;
+                Vector2 agentToBodyDir = (bodyPos - agentPos2D).normalized;
+
+                List<Waypoint> candidateNodes = [];
+                foreach (var wp in WaypointManager.AllWaypoints)
                 {
-                    Vector2 targetPosition = bodyPos + (dir * patrolRadius);
-                    Waypoint node = Pathfinder.GetClosestNode(targetPosition, 1.5f);
+                    float distToBody = Vector2.Distance(bodyPos, wp.Position);
 
-                    if (node != null)
+                    if (distToBody >= 2.5f && distToBody <= 12f)
                     {
-                        if (Vector2.Distance(myAgent.transform.position, node.Position) < 2f)
-                            continue;
+                        if (distToBody < 0.1f) continue;
 
-                        Pathfinder.FindPath(agentNodeStart, node, out float walkingDistToNode);
-                        if (walkingDistToNode > 12f)
-                            continue;
+                        Vector2 bodyToNodeDir = (wp.Position - bodyPos).normalized;
 
-                        bool isRedundant = false;
-                        foreach (Waypoint existingPoint in patrolPoints)
+                        if (Vector2.Dot(agentToBodyDir, bodyToNodeDir) >= -0.4f)
                         {
-                            if (Vector2.Distance(node.Position, existingPoint.Position) < 2.5f)
-                            {
-                                isRedundant = true;
-                                break;
-                            }
-                        }
-
-                        if (!isRedundant)
-                        {
-                            patrolPoints.Add(node);
+                            candidateNodes.Add(wp);
                         }
                     }
+                }
+
+                candidateNodes.Sort((a, b) =>
+                    Vector2.Distance(bodyPos, a.Position).CompareTo(Vector2.Distance(bodyPos, b.Position))
+                );
+
+                foreach (Waypoint node in candidateNodes)
+                {
+                    bool isRedundant = false;
+                    foreach (Waypoint existingPoint in patrolPoints)
+                    {
+                        if (Vector2.Distance(node.Position, existingPoint.Position) < 2.5f)
+                        {
+                            isRedundant = true;
+                            break;
+                        }
+                    }
+
+                    if (isRedundant) continue;
+
+                    var testPath = Pathfinder.FindPath(agentNodeStart, node, out float walkingDistToNode);
+
+                    if (testPath == null || walkingDistToNode > 18f)
+                        continue;
+
+                    patrolPoints.Add(node);
+
+                    if (patrolPoints.Count >= 2)
+                        break;
                 }
 
                 LogManager.LogDebug($"[Agente {myAgent.PlayerId}] Encontrou {patrolPoints.Count} pontos válidos na mesma área para patrulhar.");
@@ -589,22 +615,28 @@ namespace AMG.AI.Mind
                             bool canReport = CanReportBody(bodyPos);
                             if (!canReport)
                             {
-                                var start = Pathfinder.GetClosestNode(myAgent.transform.position);
-                                var end = Pathfinder.GetClosestNode(bodyPos);
-
-                                var path = Pathfinder.FindPath(start, end, out float dist);
-                                CommandGoToPath(path);
+                                if (currentPath == null)
+                                {
+                                    var startNode = Pathfinder.GetClosestNode(myAgent.transform.position);
+                                    var endNode = Pathfinder.GetClosestNode(bodyPos);
+                                    var path = Pathfinder.FindPath(startNode, endNode, out float dist);
+                                    CommandGoToPath(path);
+                                }
+                                return false;
                             }
                             else
                             {
                                 myAgent.CmdReportDeadBody(playerInfoToReport);
                                 currentPath = null;
                                 currentPathIndex = 0;
+                                return true;
                             }
                         }
                         else
-                            LogManager.LogError($"[Agente {myAgent.PlayerId}] Tentou reportar corpo do ID {mostRecentBody.PlayerId}, mas o registro não existe mais!");
-                        return true;
+                        {
+                            LogManager.LogError($"[Agente {myAgent.PlayerId}] Registro do corpo sumiu!");
+                            return true;
+                        }
                     }
 
                     if (currentPath == null)
@@ -632,10 +664,8 @@ namespace AMG.AI.Mind
                         }
                         else
                         {
-                            var backupTarget = patrolPoints[0];
-                            List<Waypoint> backupPath = Pathfinder.FindPath(currentAgentNode, backupTarget, out _);
-                            CommandGoToPath(backupPath);
-                            patrolPoints.RemoveAt(0);
+                            LogManager.LogWarning("[AI] Nenhum ponto de patrulha acessível, abortando patrulha.");
+                            patrolPoints.Clear();
                         }
                     }
                     return false;
@@ -645,13 +675,8 @@ namespace AMG.AI.Mind
 
         public bool CanReportBody(Vector2 bodyPosition)
         {
-            var start = Pathfinder.GetClosestNode(myAgent.transform.position);
-            var end = Pathfinder.GetClosestNode(bodyPosition);
-
-            var path = Pathfinder.FindPath(start, end, out float dist);
-            var minimumDist = 5.4f;
-            
-            return minimumDist > dist;
+            float dist = Vector2.Distance(myAgent.transform.position, bodyPosition);
+            return dist < 3.4f;
         }
     }
 }
