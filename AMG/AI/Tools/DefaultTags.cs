@@ -30,6 +30,14 @@ namespace AMG.AI.Tools
                 Size = "80%",
                 Identifier = IdentifierEnum.State
             };
+
+            public static AgentTag SmartWandering => new()
+            {
+                Tag = "Wandering",
+                ColourHex = "#ff57df",
+                Size = "80%",
+                Identifier = IdentifierEnum.State
+            };
         }
 
         public static class Emotions

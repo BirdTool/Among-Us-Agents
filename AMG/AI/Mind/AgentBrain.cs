@@ -185,7 +185,71 @@ namespace AMG.AI.Mind
                 case AgentState.OnMeeting:
                     UpdateMeetingState();
                     break;
+                case AgentState.SmartWandering:
+                    UpdateSmartWandering();
+                    break;
             }
+        }
+
+        private void UpdateNavigating()
+        {
+            ReplaceNameTag(DefaultTags.States.Navigating);
+
+            bool hasReachedDestination = ProcessPathMovement();
+
+            if (hasReachedDestination)
+            {
+                myAgent.MyPhysics.body.velocity = Vector2.zero;
+                currentPath = null;
+                currentPathIndex = 0;
+
+                if (currentLocalTask != null)
+                {
+                    StartSimulatedTask(currentLocalTask, 5f);
+                }
+                else
+                {
+                    SetState(AgentState.Wandering);
+                }
+            }
+        }
+
+        private void UpdateSmartWandering()
+        {
+            ReplaceNameTag(DefaultTags.States.SmartWandering);
+
+            if (currentPath == null || currentPathIndex >= currentPath.Count)
+            {
+                CalculateSmartPath();
+                return;
+            }
+
+            bool hasReachedDestination = ProcessPathMovement();
+
+            if (hasReachedDestination)
+            {
+                currentPath = null;
+                currentPathIndex = 0;
+                myAgent.MyPhysics.body.velocity = Vector2.zero;
+            }
+        }
+
+        private void CalculateSmartPath()
+        {
+            var agentPosition = Pathfinder.GetClosestNode(myAgent.transform.position);
+            var randomWaypoint = WaypointManager.AllWaypoints.GetRandomItemSecureOrDefault();
+            var path = Pathfinder.FindPath(agentPosition, randomWaypoint, out float dist);
+            var emergencyBreak = 0;
+
+            while (dist < 10f && emergencyBreak < 500)
+            {
+                randomWaypoint = WaypointManager.AllWaypoints.GetRandomItemSecureOrDefault();
+                path = Pathfinder.FindPath(agentPosition, randomWaypoint, out dist);
+                emergencyBreak++;
+            }
+
+            currentPath = path;
+            currentPathIndex = 0;
         }
 
         private void UpdateMeetingState()
@@ -214,7 +278,7 @@ namespace AMG.AI.Mind
             }
         }
 
-        private void SetState(AgentState newState)
+        public void SetState(AgentState newState)
         {
             if (currentState != newState)
             {
@@ -230,6 +294,9 @@ namespace AMG.AI.Mind
                         break;
                     case AgentState.Navigating:
                         ReplaceNameTag(DefaultTags.States.Navigating);
+                        break;
+                    case AgentState.SmartWandering:
+                        ReplaceNameTag(DefaultTags.States.SmartWandering);
                         break;
                 }
             }
@@ -286,24 +353,9 @@ namespace AMG.AI.Mind
             }
         }
 
-        private void UpdateNavigating()
+        private bool ProcessPathMovement()
         {
-            if (currentPath == null || currentPathIndex >= currentPath.Count)
-            {
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
-                currentPath = null;
-                currentPathIndex = 0;
-                if (currentLocalTask != null)
-                {
-                    StartSimulatedTask(currentLocalTask, 5f);
-                }
-                else
-                {
-                    SetState(AgentState.Wandering);
-                }
-                return;
-            }
-            ReplaceNameTag(DefaultTags.States.Navigating);
+            if (currentPath == null || currentPathIndex >= currentPath.Count) return true;
 
             Waypoint currentStep = currentPath[currentPathIndex];
             Vector2 currentPos = transform.position;
@@ -320,7 +372,7 @@ namespace AMG.AI.Mind
                     isEvading = false;
                     stuckTimer = 0f;
                 }
-                return;
+                return false;
             }
 
             float dist = Vector2.Distance(currentPos, currentStep.Position);
@@ -357,6 +409,8 @@ namespace AMG.AI.Mind
                 currentPathIndex++;
                 stuckTimer = 0f;
             }
+
+            return currentPathIndex >= currentPath.Count;
         }
 
         private void ChangeRandomDirection()

@@ -61,6 +61,26 @@ namespace AMG.Utilities
             return HudManager.Instance.roomTracker.LastRoom.RoomId;
         }
 
+        public static SystemTypes GetPlayerRoom(PlayerControl targetPlayer)
+        {
+            if (targetPlayer == null || ShipStatus.Instance == null)
+            {
+                return SystemTypes.Hallway;
+            }
+
+            Vector2 playerPos = targetPlayer.GetTruePosition();
+
+            foreach (var room in ShipStatus.Instance.AllRooms)
+            {
+                if (room.roomArea != null && room.roomArea.OverlapPoint(playerPos))
+                {
+                    return room.RoomId;
+                }
+            }
+
+            return SystemTypes.Hallway;
+        }
+
         public static KeyCode StringToKeycode(string keyCodeStr)
         {
 
@@ -224,5 +244,6 @@ namespace AMG.Utilities
 
             return true;
         }
+
     }
 }

@@ -131,5 +131,34 @@ namespace AMG.Utilities
             float normalized = randomValue / (float)uint.MaxValue;
             return min + (normalized * (max - min));
         }
+
+        public static T GetRandomItemSecure<T>(this IList<T> list)
+        {
+            if (list == null)
+                throw new ArgumentNullException(nameof(list));
+
+            if (list.Count == 0)
+                throw new InvalidOperationException("Não é possível obter um item aleatório de uma lista vazia.");
+
+            byte[] box = new byte[4];
+            _rng.GetBytes(box);
+            int randomInt = Math.Abs(BitConverter.ToInt32(box, 0));
+            int index = randomInt % list.Count;
+
+            return list[index];
+        }
+
+        public static T GetRandomItemSecureOrDefault<T>(this IList<T> list, T defaultValue = default(T))
+        {
+            if (list == null || list.Count == 0)
+                return defaultValue;
+
+            byte[] box = new byte[4];
+            _rng.GetBytes(box);
+            int randomInt = Math.Abs(BitConverter.ToInt32(box, 0));
+            int index = randomInt % list.Count;
+
+            return list[index];
+        }
     }
 }

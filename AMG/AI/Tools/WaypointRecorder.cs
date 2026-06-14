@@ -1,13 +1,14 @@
-﻿using HarmonyLib;
-using UnityEngine;
-using System.IO;
+﻿using AMG.AI.Control;
+using AMG.AI.Mind;
+using AMG.AI.Navigation;
+using AMG.Utilities;
+using HarmonyLib;
+using Il2CppInterop.Runtime.Injection;
 using System;
 using System.Collections.Generic;
-using Il2CppInterop.Runtime.Injection;
-using AMG.Utilities;
-using AMG.AI.Mind;
-using AMG.AI.Control;
-using AMG.AI.Navigation;
+using System.IO;
+using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 namespace AMG.AI.Tools
 {
@@ -122,9 +123,25 @@ namespace AMG.AI.Tools
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.T)) BufferPoint("TASK");
-            if (Input.GetKeyDown(KeyCode.V)) BufferPoint("VENT");
-            if (Input.GetKeyDown(KeyCode.M)) BufferPoint("SABOTAGE");
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                var agents = AgentManager.Agents;
+                var agentReference = agents[0];
+                if (agentReference == null) return;
+                var state = Enums.AgentEnums.AgentState.SmartWandering;
+
+                var referenceBrain = agentReference.Control.GetComponent<AgentBrain>();
+                if (referenceBrain.currentState == state) state = Enums.AgentEnums.AgentState.Wandering;
+
+                foreach (var agent in agents)
+                {
+                    var brain = agent.Control.GetComponent<AgentBrain>();
+                    if (brain != null)
+                    {
+                        brain.SetState(state);
+                    }
+                }
+            }
         }
 
         private void TrySaveNode(Vector2 pos)
