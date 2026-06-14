@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace AMG.Enums.AgentEnums
 {
-    public enum AgentState { Wandering, Stopped, Navigating }
+    public enum AgentState { Wandering, Stopped, Navigating, OnMeeting }
 }

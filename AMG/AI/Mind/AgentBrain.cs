@@ -5,6 +5,7 @@ using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -168,6 +169,8 @@ namespace AMG.AI.Mind
                 }
             }
 
+            if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { currentState = AgentState.OnMeeting; }
+
             switch (currentState)
             {
                 case AgentState.Wandering:
@@ -179,6 +182,35 @@ namespace AMG.AI.Mind
                 case AgentState.Navigating:
                     UpdateNavigating();
                     break;
+                case AgentState.OnMeeting:
+                    UpdateMeetingState();
+                    break;
+            }
+        }
+
+        private void UpdateMeetingState()
+        {
+            if (myAgent.Data.IsDead) return;
+            if (Utils.IsMeeting)
+            {
+                SetState(AgentState.OnMeeting);
+                // Test only
+                if (Utils.IsMeetingVoting && !MeetingHud.Instance.DidVote(myAgent.PlayerId))
+                {
+                    var candidates = Utils.Players.AllAlivePlayerNotMe;
+                    int cnt = candidates.Count();
+                    if (cnt > 0)
+                    {
+                        var randomPlayerToVote = candidates.ElementAt(RandomizerExtensions.GetSecureRandomInt(0, cnt));
+
+                        MeetingHud.Instance.CmdCastVote(myAgent.PlayerId, randomPlayerToVote.PlayerId);
+                    }
+                }
+                return;
+            }
+            else
+            {
+                SetState(AgentState.Wandering);
             }
         }
 
@@ -192,6 +224,7 @@ namespace AMG.AI.Mind
                     case AgentState.Wandering:
                         ReplaceNameTag(DefaultTags.States.Wandering);
                         break;
+                    case AgentState.OnMeeting:
                     case AgentState.Stopped:
                         ReplaceNameTag(DefaultTags.States.Stopped);
                         break;
