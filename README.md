@@ -95,6 +95,9 @@ To find those locations, I generate a circle around the body with a radius of 7 
 
 ---
 
-## Current Goal
+## Current Step: Planning the Agent Autonomous Part
 
-Make the agents play normally.
+The game just got an update, and the agent's movement got BROKEN, so I had to remap The Skeld again.
+
+I'm preparing the code to make the agent autonomous, and my goal is to make the agent do its tasks and walk around the map (watch cams maybe?).
+After that, I have to make them take notes about what they did and saw, and move according to their personality (e.g. cautious agents will prefer to walk in groups while doing their tasks).
