@@ -1,6 +1,6 @@
 ﻿using AMG.Enums;
 
-namespace AMG.AI.Mind
+namespace AMG.Models
 {
     public class AgentTag
     {

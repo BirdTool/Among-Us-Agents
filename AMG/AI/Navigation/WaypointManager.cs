@@ -1,8 +1,10 @@
-﻿using System;
+﻿using AMG.AI.Tools;
+using AMG.Utilities;
+using Il2CppInterop.Runtime.Injection;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using AMG.Utilities;
 
 namespace AMG.AI.Navigation
 {
@@ -13,11 +15,32 @@ namespace AMG.AI.Navigation
         public WaypointType Type;
         public Vector2 Position;
         public List<Waypoint> Neighbors = new List<Waypoint>();
+        private int stuckHot = 0;
+
+        public void IncreaseStuckHot()
+        {
+            if (stuckHot < 0) return;
+
+            stuckHot++;
+
+            if (stuckHot >= 30)
+            {
+                stuckHot = -9999;
+
+                if (HudManager.Instance == null || HudManager.Instance.gameObject == null) return;
+
+                var waypointRecorder = HudManager.Instance.gameObject.GetComponent<WaypointRecorder>();
+                if (waypointRecorder != null)
+                {
+                    waypointRecorder.RemoveNode(this);
+                }
+            }
+        }
     }
 
     public static class WaypointManager
     {
-        public static List<Waypoint> AllWaypoints = new List<Waypoint>();
+        public static List<Waypoint> AllWaypoints = [];
 
         public static void LoadWaypoints()
         {

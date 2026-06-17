@@ -46,6 +46,26 @@ namespace AMG.AI.Tools
         private List<Vector2> existingNodes = new List<Vector2>();
         private List<string> newLinesBuffer = new List<string>();
 
+        public void RemoveNode(Waypoint node)
+        {
+            if (node == null) return;
+
+            foreach (var neighbor in node.Neighbors)
+            {
+                if (neighbor != null && neighbor.Neighbors.Contains(node))
+                {
+                    neighbor.Neighbors.Remove(node);
+                }
+            }
+
+            WaypointManager.AllWaypoints.Remove(node);
+
+            existingNodes.RemoveAll(pos => Vector2.Distance(pos, node.Position) < 0.05f);
+
+            ResetAndSaveNodes();
+
+            LogManager.LogWarning($"[AI GPS] AUTO-LIMPEZA: Nó ruim em {node.Position} foi erradicado pela IA!");
+        }
         void Awake()
         {
             filePath = Path.Combine(Application.dataPath, "AI_Skeld_Waypoints.txt");
@@ -142,6 +162,41 @@ namespace AMG.AI.Tools
                     }
                 }
             }
+
+            if (Input.GetKeyDown(KeyCode.K))
+            {
+                AgentsControl.MakeAllAgentsDoTask();
+            }
+
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                var node = Pathfinder.GetClosestNode(PlayerControl.LocalPlayer.transform.position, 1f);
+
+                if (node != null)
+                {
+                    RemoveNode(node);
+
+                    LogManager.LogDebug($"[AI GPS] Nó defeituoso em {node.Position} foi APAGADO com sucesso!");
+                }
+                else
+                {
+                    LogManager.LogWarning("[AI GPS] Nenhum nó próximo o suficiente para deletar.");
+                }
+            }
+        }
+
+        public void ResetAndSaveNodes()
+        {
+            newLinesBuffer.Clear();
+
+            foreach (var node in existingNodes)
+            {
+                BufferPoint("NODE", node);
+            }
+
+            File.WriteAllLines(filePath, newLinesBuffer);
+
+            newLinesBuffer.Clear();
         }
 
         private void TrySaveNode(Vector2 pos)

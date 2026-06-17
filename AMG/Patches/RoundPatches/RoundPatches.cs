@@ -1,5 +1,6 @@
 ﻿using AMG.AI.Control;
 using AMG.AI.Mind;
+using AMG.AI.Tools;
 using AMG.Utilities;
 using HarmonyLib;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace AMG.Patches.RoundPatches
         {
             Utils.Round.ClearRounds();
             Utils.Round.AddRound();
+            TaskAssignment.SetCommonTask();
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]
@@ -27,6 +29,8 @@ namespace AMG.Patches.RoundPatches
             {
                 var brain = agent.Control.gameObject.GetComponent<AgentBrain>();
                 brain.sawABody = false;
+                brain.ResetPath();
+                brain.SetState(Enums.AgentEnums.AgentState.OnMeeting);
             }
         }
 

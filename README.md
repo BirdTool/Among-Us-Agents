@@ -95,6 +95,41 @@ To find those locations, I generate a circle around the body with a radius of 7 
 
 ---
 
+### Smart Wandering Images
+
+<table>
+<tr>
+<td align="center">
+<img src="assets/WanderingOnCafe.png" width="80%">
+<br>
+Cafe Wandering
+</td>
+
+<td align="center">
+<img src="assets/WanderingCamSeen.png" width="80%">
+<br>
+Vision On Cams
+</td>
+</tr>
+
+<td align="center">
+<img src="assets/MeetingUI.png" width="80%">
+<br>
+Meeting UI Bug
+</td>
+</tr>
+
+<td align="center">
+<img src="assets/PlayersTracking.png" width="80%">
+<br>
+I don't know the name of this
+</td>
+</tr>
+</table>
+
+
+---
+
 ## Current Step: Planning the Agent Autonomous Part
 
 The game just got an update, and the agent's movement got BROKEN, so I had to remap The Skeld again.

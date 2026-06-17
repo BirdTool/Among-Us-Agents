@@ -9,7 +9,7 @@ namespace AMG.AI.Mind
         private void UpdateMeetingState()
         {
             if (myAgent.Data.IsDead) return;
-            if (Utils.IsMeeting)
+            if (Utils.IsMeeting || Utils.IsExiling)
             {
                 SetState(AgentState.OnMeeting);
                 // Test only

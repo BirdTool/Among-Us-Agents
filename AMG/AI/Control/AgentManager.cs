@@ -1,4 +1,5 @@
 using AMG.AI.Mind;
+using AMG.AI.Tools;
 using AMG.Utilities;
 using InnerNet;
 using System.Collections.Generic;
@@ -9,19 +10,21 @@ namespace AMG.AI.Control
 {
     public static class AgentManager
     {
-        public static readonly List<AgentListData> Agents = new();
+        public static readonly List<AgentListData> Agents = [];
 
         private static readonly List<string> FirstNames = new()
         {
             "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph",
             "Charles", "Thomas", "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth",
-            "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Crewmate", "Impostor"
+            "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Crewmate", "Impostor",
+            "Cristiano", "Luna", "Luar", "Lua", "Léo", "Leonardo", "Cassilhas"
         };
 
         private static readonly List<string> Surnames = new()
         {
             "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-            "Rodriguez", "Martinez", "Carsion", "Doe", "Silva", "Santos", "Oliveira", "Toretto"
+            "Rodriguez", "Martinez", "Carsion", "Doe", "Silva", "Santos", "Oliveira", "Toretto",
+            "Santos", "Máfia", "Giuseppe", "Morteiro", "Besta", "Gigante", "Giant", "Sol"
         };
 
         public static void AddAgent(PlayerControl agent, AgentData data)
@@ -56,7 +59,7 @@ namespace AMG.AI.Control
                 agentComponent.myTasks = new Il2CppSystem.Collections.Generic.List<PlayerTask>();
             }
 
-            AssignTasksToAgent(agentComponent);
+            TaskAssignment.AssignTasks(agentComponent);
 
             AgentData agentData = new() { Name = name };
 
@@ -109,7 +112,21 @@ namespace AMG.AI.Control
 
             AddAgent(agentComponent, agentData);
             agentComponent.gameObject.AddComponent<AgentBrain>();
-            Debug.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
+            LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
+        }
+
+        public static void ClearAllAgents()
+        {
+            foreach (var agent in Agents)
+            {
+                if (agent.Control != null && agent.Control.gameObject != null)
+                {
+                    Object.Destroy(agent.Control.gameObject);
+                }
+            }
+
+            Agents.Clear();
+            LogManager.Log("[AI Agents] Partida encerrada/abandonada. Todos os agentes foram deletados.");
         }
 
         public static string GenerateUniqueRandomName()
@@ -128,42 +145,6 @@ namespace AMG.AI.Control
             }
 
             return finalName;
-        }
-
-        private static void AssignTasksToAgent(PlayerControl agent)
-        {
-            if (ShipStatus.Instance == null) return;
-
-            var rawTasks = new List<NormalPlayerTask>();
-
-            if (ShipStatus.Instance.CommonTasks != null)
-            {
-                rawTasks.AddRange(ShipStatus.Instance.CommonTasks);
-            }
-
-            if (ShipStatus.Instance.ShortTasks != null)
-            {
-                rawTasks.AddRange(ShipStatus.Instance.ShortTasks);
-            }
-
-            if (rawTasks == null || rawTasks.Count == 0) return;
-
-            agent.myTasks.Clear();
-
-            int tasksToGive = Mathf.Min(3, rawTasks.Count);
-
-            for (int i = 0; i < tasksToGive; i++)
-            {
-                var taskPrefab = rawTasks[Utils.GetRandomInt(0, rawTasks.Count - 1)];
-
-                var spawnedTask = UnityEngine.Object.Instantiate(taskPrefab, agent.transform);
-
-                spawnedTask.Id = (uint)i;
-
-                spawnedTask.Owner = agent;
-
-                agent.myTasks.Add(spawnedTask);
-            }
         }
 
         public static AgentData GetAgentData(PlayerControl agent)

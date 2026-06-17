@@ -1,5 +1,6 @@
 ﻿using AMG.AI.Navigation;
 using AMG.AI.Tools;
+using AMG.Models;
 using AMG.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,7 @@ namespace AMG.AI.Mind
 {
     public partial class AgentBrain
     {
-        private void SawABody(List<RoundDeadBody> bodies)
+        private void SawABodyAction(List<RoundDeadBody> bodies)
         {
             if (myAgent.Data.IsDead) return;
             LogManager.LogDebug("Agente viu um corpo!");
@@ -69,8 +70,7 @@ namespace AMG.AI.Mind
                         var path = Pathfinder.FindPath(start, end, out float dist);
                         CommandGoToPath(path);
 
-                        isOnlyPredefinedAction = false;
-                        updateAction = () =>
+                        updateAction = new AgentUpdateAction(() =>
                         {
                             bool canReport = CanReportBody(mostRecentBody.Position);
                             if (canReport)
@@ -79,6 +79,11 @@ namespace AMG.AI.Mind
                                 return true;
                             }
                             return false;
+                        })
+                        {
+                            ExecuteOnMeeting = false,
+                            DeleteOnMeeting = false,
+                            IsOnlyPredefinedAction = false,
                         };
                     }
                     else
@@ -149,8 +154,7 @@ namespace AMG.AI.Mind
 
                 LogManager.LogDebug($"[Agente {myAgent.PlayerId}] Encontrou {patrolPoints.Count} pontos válidos na mesma área para patrulhar.");
 
-                isOnlyPredefinedAction = false;
-                updateAction = () =>
+                updateAction = new AgentUpdateAction(() =>
                 {
                     if (patrolPoints.Count == 0)
                     {
@@ -213,8 +217,51 @@ namespace AMG.AI.Mind
                         }
                     }
                     return false;
+                })
+                {
+                    ExecuteOnMeeting = false,
+                    DeleteOnMeeting = false,
+                    IsOnlyPredefinedAction = false,
                 };
             }
+        }
+
+        private List<RoundDeadBody> GetNearbyBodies()
+        {
+            List<RoundDeadBody> nearbyBodies = [];
+
+            if (!sawABody && Utils.Round.CurrentRoundDeadBodies != null && Utils.Round.CurrentRoundDeadBodies.Count > 0)
+            {
+                List<RoundDeadBody> bodies = Utils.Round.CurrentRoundDeadBodies;
+
+                foreach (var body in bodies)
+                {
+                    var origin = myAgent.transform.position;
+                    var target = body.Position;
+
+                    Vector2 origin2D = new Vector2(origin.x, origin.y + 0.5f);
+
+                    float distToBody = Vector2.Distance(origin2D, target);
+                    if (distToBody > 5f) continue;
+
+                    var canSee = Utils.CanSeeTheTarget(origin2D, target, distToBody);
+                    if (canSee) nearbyBodies.Add(body);
+                }
+            }
+
+            return nearbyBodies;
+        }
+
+        private bool ExecuteHaveSeenNearbyBodiesAction()
+        {
+            var nearbyBodies = GetNearbyBodies();
+            if (nearbyBodies.Count > 0)
+            {
+                SawABodyAction(nearbyBodies);
+                sawABody = true;
+                return true;
+            }
+            return false;
         }
     }
 }

@@ -2,6 +2,7 @@ using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums;
 using AMG.Enums.AgentEnums;
+using AMG.Models;
 using AMG.Utilities;
 using System;
 using System.Collections.Generic;
@@ -26,17 +27,11 @@ namespace AMG.AI.Mind
         // private Waypoint targetNode = null;
         private float waitTimer = 0f;
 
-        // Anti Travamento
-        private Vector2 lastPosition = Vector2.zero;
-        private float stuckTimer = 0f;
-        private bool isEvading = false;
-        private float evadeTimer = 0f;
-        private Vector2 evadeDirection = Vector2.zero;
-
-        public Func<bool> updateAction = null;
-        public bool isOnlyPredefinedAction = false;
+        public AgentUpdateAction updateAction = null;
 
         public bool sawABody = false; // Defined as false every meeting
+
+        private Dictionary<AgentState, Action> _updateActions;
 
         void Awake()
         {
@@ -56,6 +51,15 @@ namespace AMG.AI.Mind
             var playerInfo = GameData.Instance?.GetPlayerById(myAgent.PlayerId);
             baseName = playerInfo?.PlayerName ?? "AI";
 
+            _updateActions = new()
+            {
+                [AgentState.Wandering] = UpdateWandering,
+                [AgentState.Stopped] = UpdateStopped,
+                [AgentState.Navigating] = UpdateNavigating,
+                [AgentState.OnMeeting] = UpdateMeetingState,
+                [AgentState.SmartWandering] = UpdateSmartWandering
+            };
+
             ChangeRandomDirection();
         }
 
@@ -65,14 +69,14 @@ namespace AMG.AI.Mind
 
             if (updateAction != null)
             {
-                bool isActionFinished = updateAction.Invoke();
+                bool isActionFinished = updateAction.Execute();
 
                 if (isActionFinished)
                 {
                     updateAction = null;
-                    isOnlyPredefinedAction = false;
+                    updateAction.IsOnlyPredefinedAction = false;
                 }
-                else if (isOnlyPredefinedAction)
+                else if (updateAction.IsOnlyPredefinedAction)
                 {
                     return;
                 }
@@ -86,52 +90,11 @@ namespace AMG.AI.Mind
                 }
             }
 
-            if (!sawABody && Utils.Round.CurrentRoundDeadBodies != null && Utils.Round.CurrentRoundDeadBodies.Count > 0)
-            {
-                List<RoundDeadBody> bodies = Utils.Round.CurrentRoundDeadBodies;
-                List<RoundDeadBody> nearbyBodies = [];
-
-                foreach (var body in bodies)
-                {
-                    var origin = myAgent.transform.position;
-                    var target = body.Position;
-
-                    Vector2 origin2D = new Vector2(origin.x, origin.y + 0.5f);
-
-                    float distToBody = Vector2.Distance(origin2D, target);
-                    if (distToBody > 5f) continue;
-
-                    var canSee = Utils.CanSeeTheTarget(origin2D, target, distToBody);
-                    if (canSee) nearbyBodies.Add(body);
-                }
-
-                if (nearbyBodies.Count > 0)
-                {
-                    SawABody(nearbyBodies);
-                    sawABody = true;
-                }
-            }
+            ExecuteHaveSeenNearbyBodiesAction(); // Execute always when there are bodies nearby
 
             if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { currentState = AgentState.OnMeeting; }
 
-            switch (currentState)
-            {
-                case AgentState.Wandering:
-                    UpdateWandering();
-                    break;
-                case AgentState.Stopped:
-                    UpdateStopped();
-                    break;
-                case AgentState.Navigating:
-                    UpdateNavigating();
-                    break;
-                case AgentState.OnMeeting:
-                    UpdateMeetingState();
-                    break;
-                case AgentState.SmartWandering:
-                    UpdateSmartWandering();
-                    break;
-            }
+            _updateActions[currentState]?.Invoke();
         }
 
         public void SetState(AgentState newState)

@@ -12,6 +12,14 @@ namespace AMG.AI.Mind
         private int currentPathIndex = 0;
         private float speed = 3.2f;
 
+        private Vector2 lastPosition = Vector2.zero;
+        private float stuckTimer = 0f;
+        private bool isEvading = false;
+        private float evadeTimer = 0f;
+        private Vector2 evadeDirection = Vector2.zero;
+
+        private float lastEvasionSign = 1f;
+
         private bool ProcessPathMovement()
         {
             if (currentPath == null || currentPathIndex >= currentPath.Count) return true;
@@ -48,13 +56,15 @@ namespace AMG.AI.Mind
 
                     if (stuckTimer > 0.4f)
                     {
+                        if (currentStep != null) currentStep.IncreaseStuckHot();
+
                         isEvading = true;
                         evadeTimer = 0.3f;
 
-                        float sign = UnityEngine.Random.value > 0.5f ? 1f : -1f;
-                        evadeDirection = new Vector2(-direction.y * sign, direction.x * sign).normalized;
+                        lastEvasionSign = -lastEvasionSign;
+                        evadeDirection = new Vector2(-direction.y * lastEvasionSign, direction.x * lastEvasionSign).normalized;
 
-                        LogManager.LogWarning($"[AI Brain] {baseName} travou na quina! Executando Manobra Evasiva.");
+                        LogManager.LogWarning($"[AI Brain] {baseName} travou na quina! Executando Manobra Evasiva alternada.");
                     }
                 }
                 else
@@ -91,6 +101,16 @@ namespace AMG.AI.Mind
             {
                 spriteRenderer.flipX = direction.x < 0;
             }
+        }
+
+        public void ResetPath()
+        {
+            currentPath = null;
+            currentPathIndex = 0;
+            isEvading = false;
+
+            if (myAgent.MyPhysics?.body != null)
+                myAgent.MyPhysics.body.velocity = Vector2.zero;
         }
     }
 }

@@ -1,5 +1,5 @@
-﻿using AMG.AI.Mind;
-using AMG.Enums;
+﻿using AMG.Enums;
+using AMG.Models;
 
 namespace AMG.AI.Tools
 {
