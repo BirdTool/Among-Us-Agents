@@ -112,6 +112,8 @@ namespace AMG.AI.Control
 
             AddAgent(agentComponent, agentData);
             agentComponent.gameObject.AddComponent<AgentBrain>();
+            var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
+            brain.MapGameTasksToAILogic();
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
         }
 

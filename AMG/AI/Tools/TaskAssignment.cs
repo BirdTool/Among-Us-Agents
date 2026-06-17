@@ -1,6 +1,6 @@
 ﻿using AMG.Utilities;
 using AmongUs.GameOptions;
-using System; // Necessário para o Math.Min
+using System;
 using System.Collections.Generic;
 
 namespace AMG.AI.Tools
@@ -71,6 +71,7 @@ namespace AMG.AI.Tools
             foreach (var task in rawTasks)
             {
                 var spawnedTask = UnityEngine.Object.Instantiate(task, player.transform);
+
                 spawnedTask.Id = (uint)currentId;
                 spawnedTask.Owner = player;
                 player.myTasks.Add(spawnedTask);
