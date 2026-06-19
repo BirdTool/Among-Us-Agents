@@ -19,18 +19,20 @@ namespace AMG.AI.Mind
         private TextMeshPro nameTextComp;
         private SpriteRenderer spriteRenderer;
         public PlayerTask currentLocalTask = null;
+        public float delayTime = 0.3f;
 
         public AgentState currentState = AgentState.Stopped;
 
         // Chamado
         // private Waypoint targetNode = null;
-        private float waitTimer = 0f;
+        // private float waitTimer = 0f;
 
         public AgentUpdateAction updateAction = null;
 
         public bool sawABody = false; // Defined as false every meeting
 
         private Dictionary<AgentState, Action> _updateActions;
+        private Dictionary<AgentState, AgentTag> _updateTags;
 
         void Awake()
         {
@@ -56,7 +58,18 @@ namespace AMG.AI.Mind
                 [AgentState.Stopped] = UpdateStopped,
                 [AgentState.Navigating] = UpdateNavigating,
                 [AgentState.OnMeeting] = UpdateMeetingState,
-                [AgentState.SmartWandering] = UpdateSmartWandering
+                [AgentState.SmartWandering] = UpdateSmartWandering,
+                [AgentState.DoingTask] = UpdateDoingTask
+            };
+
+            _updateTags = new()
+            {
+                [AgentState.Wandering] = DefaultTags.States.Wandering,
+                [AgentState.Stopped] = DefaultTags.States.Stopped,
+                [AgentState.Navigating] = DefaultTags.States.Navigating,
+                [AgentState.OnMeeting] = DefaultTags.States.Stopped,
+                [AgentState.SmartWandering] = DefaultTags.States.SmartWandering,
+                [AgentState.DoingTask] = DefaultTags.States.DoingTask
             };
 
             ChangeRandomDirection();
@@ -101,21 +114,10 @@ namespace AMG.AI.Mind
             if (currentState != newState)
             {
                 currentState = newState;
-                switch (newState)
+                _updateTags.TryGetValue(newState, out var tag);
+                if (tag != null)
                 {
-                    case AgentState.Wandering:
-                        ReplaceNameTag(DefaultTags.States.Wandering);
-                        break;
-                    case AgentState.OnMeeting:
-                    case AgentState.Stopped:
-                        ReplaceNameTag(DefaultTags.States.Stopped);
-                        break;
-                    case AgentState.Navigating:
-                        ReplaceNameTag(DefaultTags.States.Navigating);
-                        break;
-                    case AgentState.SmartWandering:
-                        ReplaceNameTag(DefaultTags.States.SmartWandering);
-                        break;
+                    ReplaceNameTag(tag);
                 }
             }
         }
@@ -123,20 +125,6 @@ namespace AMG.AI.Mind
         private void UpdateStopped()
         {
             ReplaceNameTag(DefaultTags.States.Stopped);
-        }
-
-        public void StartSimulatedTask(PlayerTask task, float duration)
-        {
-            if (task == null) return;
-
-            currentLocalTask = task;
-            waitTimer = duration;
-            currentState = AgentState.Stopped;
-
-            if (myAgent.MyPhysics?.body != null)
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
-
-            ReplaceNameTag(IdentifierEnum.Emotion, "Focused", "#FFFF00");
         }
 
         public bool CanReportBody(Vector2 bodyPosition)

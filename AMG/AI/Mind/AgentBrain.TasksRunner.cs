@@ -1,5 +1,6 @@
 ﻿using AMG.AI.Navigation;
-using AMG.AI.TasksWork.CommonTasks;
+using AMG.AI.TasksWork;
+using AMG.AI.Tools;
 using AMG.Interfaces;
 using AMG.Utilities;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace AMG.AI.Mind
     public partial class AgentBrain
     {
         public Dictionary<uint, ITaskWork> AITasks = [];
+        private CooldownTimer taskTimer = new CooldownTimer();
 
         public void MapGameTasksToAILogic()
         {
@@ -18,38 +20,38 @@ namespace AMG.AI.Mind
 
             foreach (var gameTask in myAgent.myTasks)
             {
-                switch (gameTask.TaskType)
-                {
-                    case TaskTypes.SwipeCard:
-                        AITasks.Add(gameTask.Id, new CardTask());
-                        break;
-                    default:
-                        break;
-                }
+                AITasks.Add(gameTask.Id, TasksGroup.GetTaskOrGeneric(gameTask.TaskType));
             }
         }
 
-        public void TryExecuteTask(uint taskId)
+        public bool TryExecuteTask(uint taskId)
         {
+            if (!taskTimer.IsOver()) return false;
+
+            bool finished = false;
+
             if (AITasks.TryGetValue(taskId, out ITaskWork aiTask))
             {
-                bool finished = aiTask.Execute();
+                finished = aiTask.Execute();
 
                 if (finished)
                 {
-                    LogManager.LogDebug($"[AI] O Agente completou a task!");
                     myAgent.RpcCompleteTask(taskId);
-
                     AITasks.Remove(taskId);
                 }
-                else if (CanExecuteTask(taskId)) { TryExecuteTask(taskId); }
+                else if (CanExecuteTask(taskId))
+                {
+                    taskTimer.StartDelay(RandomizerExtensions.GetSecureRandomFloat(0.02f, 0.10f));
+                }
             }
+
+            return finished;
         }
 
         private bool CanExecuteTask(uint taskId)
         {
             if (Utils.IsMeeting || Utils.IsExiling) return false;
-            PlayerTask task = myAgent.myTasks.ToArray().ToList().Find(p => p.Id == taskId);
+            PlayerTask task = myAgent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
             if (task.Locations.Count > 0)
             {
                 var start = Pathfinder.GetClosestNode(myAgent.transform.position);
@@ -73,6 +75,21 @@ namespace AMG.AI.Mind
             }
 
             return true;
+        }
+
+        private void UpdateDoingTask()
+        {
+            if (currentLocalTask == null)
+            {
+                RemoveNameTag(Enums.IdentifierEnum.Think);
+                DecisionTest();
+            }
+            bool success = TryExecuteTask(currentLocalTask.Id);
+            if (success)
+            {
+                RemoveNameTag(Enums.IdentifierEnum.Think);
+                DecisionTest();
+            }
         }
     }
 }

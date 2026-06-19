@@ -206,7 +206,7 @@ namespace AMG.Utilities
 
         public static int GetRandomInt(int min, int max)
         {
-            return UnityEngine.Random.Range(min, max);
+            return RandomizerExtensions.GetSecureRandomInt(min, max);
         }
 
         public static bool ExecuteProbability(double chance)

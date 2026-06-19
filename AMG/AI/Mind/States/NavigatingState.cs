@@ -16,18 +16,8 @@ namespace AMG.AI.Mind
 
             if (hasReachedDestination)
             {
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
-                currentPath = null;
-                currentPathIndex = 0;
-
-                if (currentLocalTask != null)
-                {
-                    StartSimulatedTask(currentLocalTask, 5f);
-                }
-                else
-                {
-                    SetState(AgentState.Wandering);
-                }
+                ResetPath();
+                SetState(AgentState.Wandering);
             }
         }
     }

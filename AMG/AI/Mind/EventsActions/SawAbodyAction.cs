@@ -9,6 +9,9 @@ namespace AMG.AI.Mind
 {
     public partial class AgentBrain
     {
+        private CooldownTimer _cognitiveTimer = new();
+        private List<RoundDeadBody> _pendingBodiesToReact = null;
+
         private void SawABodyAction(List<RoundDeadBody> bodies)
         {
             if (myAgent.Data.IsDead) return;
@@ -239,7 +242,7 @@ namespace AMG.AI.Mind
                     var origin = myAgent.transform.position;
                     var target = body.Position;
 
-                    Vector2 origin2D = new Vector2(origin.x, origin.y + 0.5f);
+                    Vector2 origin2D = new(origin.x, origin.y + 0.5f);
 
                     float distToBody = Vector2.Distance(origin2D, target);
                     if (distToBody > 5f) continue;
@@ -254,13 +257,37 @@ namespace AMG.AI.Mind
 
         private bool ExecuteHaveSeenNearbyBodiesAction()
         {
+            if (sawABody) return false;
+
             var nearbyBodies = GetNearbyBodies();
+
             if (nearbyBodies.Count > 0)
             {
-                SawABodyAction(nearbyBodies);
-                sawABody = true;
-                return true;
+                if (!_cognitiveTimer.IsRunning && _pendingBodiesToReact == null)
+                {
+                    _cognitiveTimer.StartDelay(delayTime);
+                    _pendingBodiesToReact = nearbyBodies;
+
+                    LogManager.LogDebug($"[AI] Viu um vulto! A ficha vai cair em {delayTime:F2} segundos...");
+
+                    return false;
+                }
             }
+
+            if (_pendingBodiesToReact != null)
+            {
+                if (_cognitiveTimer.Consume())
+                {
+                    LogManager.LogDebug("[AI] A ficha caiu! Reagindo ao corpo!");
+                    sawABody = true;
+
+                    SawABodyAction(_pendingBodiesToReact);
+
+                    _pendingBodiesToReact = null;
+                    return true;
+                }
+            }
+
             return false;
         }
     }
