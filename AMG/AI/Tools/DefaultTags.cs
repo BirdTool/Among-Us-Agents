@@ -52,7 +52,7 @@ namespace AMG.AI.Tools
                 Tag = "Calculating",
                 ColourHex = "#ff3636",
                 Size = "80%",
-                Identifier = IdentifierEnum.Think
+                Identifier = IdentifierEnum.State
             };
 
         }

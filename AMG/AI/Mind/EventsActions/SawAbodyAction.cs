@@ -22,7 +22,7 @@ namespace AMG.AI.Mind
                 return;
             }
 
-            ReplaceNameTag(DefaultTags.Emotions.Scared);
+            ReplaceNameTag(DefaultTags.Emotions.Scared, 20f);
             LogManager.LogDebug("Tag de emoção definida como assutado");
 
             double shouldLookAround = 0;
@@ -265,10 +265,9 @@ namespace AMG.AI.Mind
             {
                 if (!_cognitiveTimer.IsRunning && _pendingBodiesToReact == null)
                 {
-                    _cognitiveTimer.StartDelay(delayTime);
+                    var reactionTime = GetReactionTime();
+                    _cognitiveTimer.StartDelay(reactionTime);
                     _pendingBodiesToReact = nearbyBodies;
-
-                    LogManager.LogDebug($"[AI] Viu um vulto! A ficha vai cair em {delayTime:F2} segundos...");
 
                     return false;
                 }
@@ -278,7 +277,6 @@ namespace AMG.AI.Mind
             {
                 if (_cognitiveTimer.Consume())
                 {
-                    LogManager.LogDebug("[AI] A ficha caiu! Reagindo ao corpo!");
                     sawABody = true;
 
                     SawABodyAction(_pendingBodiesToReact);

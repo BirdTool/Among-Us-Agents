@@ -19,7 +19,9 @@ namespace AMG.AI.Mind
         private TextMeshPro nameTextComp;
         private SpriteRenderer spriteRenderer;
         public PlayerTask currentLocalTask = null;
+
         public float delayTime = 0.3f;
+        public float delayDisturb = 0f; // Range of delayTime's disturb
 
         public AgentState currentState = AgentState.Stopped;
 
@@ -111,6 +113,18 @@ namespace AMG.AI.Mind
             if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { currentState = AgentState.OnMeeting; }
 
             _updateActions[currentState]?.Invoke();
+        }
+
+        public float GetReactionTime()
+        {
+            if (delayDisturb <= 0f)
+                return delayTime;
+
+            float minDelay = Mathf.Max(0.05f, delayTime - (delayDisturb * 0.5f));
+
+            float maxDelay = delayTime + delayDisturb;
+
+            return RandomizerExtensions.GetSecureRandomFloat(minDelay, maxDelay);
         }
 
         public void SetState(AgentState newState)

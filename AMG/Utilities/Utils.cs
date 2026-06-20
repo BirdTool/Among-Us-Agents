@@ -1,3 +1,4 @@
+using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
 using InnerNet;
 using Sentry.Internal.Extensions;
@@ -38,7 +39,48 @@ namespace AMG.Utilities
         internal static bool IsCrewmateRole(RoleTypes role) => !IsImpostorRole(role);
 
         internal static int RemainingKills => Players.AllAliveCrewmates.Count() - Players.AllAliveImpostors.Count();
-        internal static int RemainingTasks => GetRemaingTasks();
+        public static int TotalTasks
+        {
+            get
+            {
+                int total = 0;
+                foreach (var player in Players.AllCrewmates)
+                    foreach (var task in player.myTasks)
+                        total++;
+
+                return total;
+            }
+        }
+
+        public static int RemainingTasks
+        {
+            get
+            {
+                int remaining = 0;
+                foreach (var player in Players.AllCrewmates)
+                    foreach (var task in player.myTasks)
+                        if (!task.IsComplete)
+                            remaining++;
+
+                return remaining;
+            }
+        }
+
+        public static int CompletedTasks
+        {
+            get
+            {
+                int completed = 0;
+                foreach (var player in Players.AllCrewmates)
+                    foreach (var task in player.myTasks)
+                        if (task.IsComplete)
+                            completed++;
+
+                return completed;
+            }
+        }
+
+        public static float? SecondsSinceShipStart => IsShip ? Time.time - RoundPatches.ShipStartedAt : null;
 
         public static byte GetCurrentMapID()
         {
@@ -246,22 +288,6 @@ namespace AMG.Utilities
             }
 
             return true;
-        }
-
-        public static int GetRemaingTasks()
-        {
-            var totalTasks = 0;
-            var completedTasks = 0;
-            foreach ( var player in Players.AllCrewmates )
-            {
-                foreach ( var task in player.myTasks )
-                {
-                    totalTasks++;
-                    if (task.IsComplete) completedTasks++;
-                }
-            }
-
-            return totalTasks - completedTasks;
         }
     }
 }

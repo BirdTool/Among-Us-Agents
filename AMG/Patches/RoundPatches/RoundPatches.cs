@@ -11,6 +11,8 @@ namespace AMG.Patches.RoundPatches
     [HarmonyPatch]
     public static class RoundPatches
     {
+        public static float ShipStartedAt { get; private set; }
+
         [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.Start))]
         [HarmonyPostfix]
         public static void ShipStatus_Start_Postfix()
@@ -18,6 +20,7 @@ namespace AMG.Patches.RoundPatches
             Utils.Round.ClearRounds();
             Utils.Round.AddRound();
             TaskAssignment.SetCommonTask();
+            ShipStartedAt = Time.time;
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]

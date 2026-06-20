@@ -92,6 +92,24 @@ namespace AMG.AI.Mind
             }
         }
 
+        public void ReplaceNameTag(AgentTag tag, float expiresAt)
+        {
+            var existing = tags.Find(t => t.Identifier == tag.Identifier);
+            if (existing != null)
+            {
+                existing.Tag = tag.Tag;
+                existing.ColourHex = tag.ColourHex;
+                existing.Size = tag.Size;
+                existing.ExpiresAt = expiresAt;
+                RefreshNameTag();
+            }
+            else
+            {
+                tag.ExpiresAt = expiresAt;
+                AddNameTag(tag);
+            }
+        }
+
         public void SetTags(List<AgentTag> newTags)
         {
             tags = newTags;

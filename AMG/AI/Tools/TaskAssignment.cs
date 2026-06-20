@@ -3,11 +3,17 @@ using AmongUs.GameOptions;
 using System;
 using System.Collections.Generic;
 
+// Issues:
+// The task bar doesn't increase when the agent does its task
+// When the agent "does" its task, appears to the user "Task Completed" even if the user doens't have that task
+
 namespace AMG.AI.Tools
 {
     public static class TaskAssignment
     {
-        private static List<NormalPlayerTask> CommonTasks = new List<NormalPlayerTask>();
+        private static readonly List<NormalPlayerTask> CommonTasks = [];
+
+        private static uint CurrentId = 100;
 
         public static void SetCommonTask()
         {
@@ -66,17 +72,21 @@ namespace AMG.AI.Tools
                 rawTasks.Add(longTasksCopy[i]);
             }
 
-            int currentId = 0;
-
             foreach (var task in rawTasks)
             {
                 var spawnedTask = UnityEngine.Object.Instantiate(task, player.transform);
 
-                spawnedTask.Id = (uint)currentId;
+                spawnedTask.Id = CurrentId;
                 spawnedTask.Owner = player;
+
                 player.myTasks.Add(spawnedTask);
-                currentId++;
+
+                spawnedTask.Initialize();
+
+                CurrentId++;
             }
+
+            GameData.Instance?.RecomputeTaskCounts();
         }
 
         public static void AssignTasks(List<PlayerControl> playerList)

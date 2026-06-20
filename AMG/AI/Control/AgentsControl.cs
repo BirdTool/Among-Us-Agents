@@ -92,6 +92,16 @@ namespace AMG.AI.Control
             }
         }
 
+        public static void SetAllAgentAsCalculating()
+        {
+            foreach (var agent in AgentManager.Agents)
+            {
+                var brain = agent.Control.GetComponent<AgentBrain>();
+
+                brain.SetState(AgentState.Calculating);
+            }
+        }
+
         private static AgentControlData GetAgentControlData(byte agentId)
         {
             if (AgentsActions.TryGetValue(agentId, out var controlData))

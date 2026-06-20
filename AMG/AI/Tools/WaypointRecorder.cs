@@ -165,7 +165,7 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.K))
             {
-                AgentsControl.MakeAllAgentsDoTask();
+                AgentsControl.SetAllAgentAsCalculating();
             }
 
             if (Input.GetKeyDown(KeyCode.N))

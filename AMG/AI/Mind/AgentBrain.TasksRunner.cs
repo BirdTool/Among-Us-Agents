@@ -28,16 +28,32 @@ namespace AMG.AI.Mind
         {
             if (!taskTimer.IsOver()) return false;
 
-            bool finished = false;
+            bool stepFinished = false;
 
             if (AITasks.TryGetValue(taskId, out ITaskWork aiTask))
             {
-                finished = aiTask.Execute();
+                stepFinished = aiTask.Execute();
 
-                if (finished)
+                if (stepFinished)
                 {
-                    myAgent.RpcCompleteTask(taskId);
-                    AITasks.Remove(taskId);
+                    PlayerTask gameTask = myAgent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
+                    var normalTask = gameTask?.TryCast<NormalPlayerTask>();
+
+                    normalTask?.NextStep();
+
+                    if (gameTask == null || gameTask.IsComplete)
+                    {
+                        myAgent.myTasks.Remove(gameTask);
+                        AITasks.Remove(taskId);
+
+                        GameData.Instance?.RecomputeTaskCounts();
+
+                        LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) finalizada manualmente pro bot {myAgent.PlayerId}");
+                    }
+                    else
+                    {
+                        AITasks[taskId] = TasksGroup.GetTaskOrGeneric(gameTask.TaskType);
+                    }
                 }
                 else if (CanExecuteTask(taskId))
                 {
@@ -45,7 +61,7 @@ namespace AMG.AI.Mind
                 }
             }
 
-            return finished;
+            return stepFinished;
         }
 
         private bool CanExecuteTask(uint taskId)

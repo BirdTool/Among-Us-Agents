@@ -1,17 +1,8 @@
 ﻿using AMG.AI.Navigation;
 using AMG.Interfaces;
 using AMG.Utilities;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-
-// THIS CODE HAS NOT BEEN TESTED
-// THIS CODE HAS NOT BEEN TESTED
-// THIS CODE HAS NOT BEEN TESTED
-// THIS CODE HAS NOT BEEN TESTED
-// THIS CODE HAS NOT BEEN TESTED
-// THIS CODE HAS NOT BEEN TESTED
 
 namespace AMG.AI.Mind.Decisions.MainDecisions
 {
@@ -19,84 +10,230 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
     {
         private readonly Dictionary<int, float> _utilityCache = [];
         private readonly Dictionary<int, float> _nextUpdateTime = [];
+        public readonly Dictionary<int, float> _timeWithoutDoingTasks = [];
+
+        private List<Vector2> GetSafeTaskLocations(PlayerTask task)
+        {
+            var locs = new List<Vector2>();
+
+            var normalTask = task.TryCast<NormalPlayerTask>();
+            if (normalTask != null)
+            {
+                try
+                {
+                    var validPositions = normalTask.FindValidConsolesPositions();
+                    if (validPositions != null)
+                    {
+                        foreach (var pos in validPositions) locs.Add(pos);
+                        if (locs.Count > 0)
+                        {
+                            LogManager.LogDebug($"[TaskDecision] FindValidConsolesPositions: {locs.Count} posicao(oes) para {task.TaskType}");
+                            return locs;
+                        }
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    LogManager.LogDebug($"[TaskDecision] FindValidConsolesPositions falhou: {ex.Message}");
+                }
+
+                /*
+                try
+                {
+                    var specialConsole = normalTask.FindSpecialConsole();
+                    if (specialConsole != null)
+                    {
+                        locs.Add(specialConsole.transform.position);
+                        LogManager.LogDebug($"[TaskDecision] FindSpecialConsole encontrado para {task.TaskType}");
+                        return locs;
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    LogManager.LogDebug($"[TaskDecision] FindSpecialConsole falhou: {ex.Message}");
+                }
+                */
+            }
+
+            try
+            {
+                foreach (var loc in task.Locations) locs.Add(loc);
+                if (locs.Count > 0) return locs;
+            }
+            catch (System.Exception) { }
+
+            try
+            {
+                if (ShipStatus.Instance != null && ShipStatus.Instance.AllConsoles != null)
+                {
+                    foreach (var console in ShipStatus.Instance.AllConsoles)
+                    {
+                        bool hasTaskType = false;
+                        foreach (var t in console.TaskTypes)
+                        {
+                            if (t == task.TaskType) { hasTaskType = true; break; }
+                        }
+                        if (hasTaskType) locs.Add(console.transform.position);
+                    }
+                }
+            }
+            catch (System.Exception) { }
+
+            return locs;
+        }
 
         public float CalculateUtility(AgentBrain brain)
         {
             int agentId = brain.GetInstanceID();
 
-            if (_nextUpdateTime.TryGetValue(agentId, out float nextUpdate))
+            if (_nextUpdateTime.TryGetValue(agentId, out float nextUpdate) && Time.time < nextUpdate)
             {
-                if (Time.time < nextUpdate)
-                {
-                    return _utilityCache.TryGetValue(agentId, out float cached) ? cached : 0f;
-                }
+                return _utilityCache.TryGetValue(agentId, out float cached) ? cached : 0f;
             }
 
+            LogManager.LogDebug($"[TaskDecision] Iniciando calculo de utilidade para Agente {agentId}");
+
+            float utility = brain.AgentControl.Data.Role.IsImpostor ? ImpostorUtility(brain) : CrewmateUtility(brain);
+
+            LogManager.LogDebug($"[TaskDecision] Pontuacao final calculada: {utility}");
+
+            _utilityCache[agentId] = utility;
+            _nextUpdateTime[agentId] = Time.time + 1f;
+
+            return utility;
+        }
+
+        private float CrewmateUtility(AgentBrain brain)
+        {
             var tasks = brain.AgentControl.myTasks;
             if (tasks == null || tasks.Count == 0) return 0f;
 
+            bool isDead = brain.AgentControl.Data.IsDead;
+            Vector2 agentPos = brain.AgentControl.transform.position;
+            var startNode = Pathfinder.GetClosestNode(agentPos);
+
+            if (!isDead && startNode == null) return 0f;
+
+            int validTasksCount = 0;
             float finalPercentage = 0f;
             int tasksNearby = 0;
 
-            var startNode = Pathfinder.GetClosestNode(brain.AgentControl.transform.position);
-
-            if (startNode != null)
+            foreach (var task in tasks)
             {
-                foreach (var task in tasks)
-                {
-                    if (!task.HasLocation) continue;
+                if (task.IsComplete) continue;
 
-                    foreach (var location in task.Locations)
+                var safeLocations = GetSafeTaskLocations(task);
+                if (safeLocations.Count == 0) continue;
+
+                bool hasAtLeastOneValidLocation = false;
+
+                foreach (var location in safeLocations)
+                {
+                    hasAtLeastOneValidLocation = true;
+
+                    float straightDist = Vector2.Distance(agentPos, location);
+                    if (straightDist > 8f) continue;
+
+                    if (isDead)
+                    {
+                        if (straightDist <= 5f) tasksNearby++;
+                    }
+                    else
                     {
                         var endNode = Pathfinder.GetClosestNode(location);
                         if (endNode == null) continue;
 
                         Pathfinder.FindPath(startNode, endNode, out float realWalkDistance);
-
                         if (realWalkDistance <= 5f)
                         {
+                            LogManager.LogDebug($"[TaskDecision-Crewmate] OPA! Painel de {task.TaskType} esta PERTO!");
                             tasksNearby++;
                             break;
                         }
                     }
                 }
+
+                if (hasAtLeastOneValidLocation) validTasksCount++;
             }
 
+            if (validTasksCount == 0)
+            {
+                LogManager.LogDebug("[TaskDecision-Crewmate] Falha: Nenhuma task pendente com localizacao valida encontada.");
+                return 0f;
+            }
+
+            if (Utils.SecondsSinceShipStart.HasValue && Utils.SecondsSinceShipStart < 40f) finalPercentage += 100f;
             if (tasksNearby > 0) finalPercentage += 40f;
             if (Utils.RemainingTasks < 4) finalPercentage += 40f;
-
-            _utilityCache[agentId] = finalPercentage;
-            _nextUpdateTime[agentId] = Time.time + 1f;
+            if (isDead) finalPercentage += 60f;
+            if (validTasksCount > 3) finalPercentage += 20f;
+            finalPercentage += 40f; // Debug only
 
             return finalPercentage;
         }
 
-        public void Execute(AgentBrain brain)
+        private float ImpostorUtility(AgentBrain brain)
         {
             var tasks = brain.AgentControl.myTasks;
-            if (tasks == null || tasks.Count == 0)
+            if (tasks == null || tasks.Count == 0) return 0f;
+
+            bool isDead = brain.AgentControl.Data.IsDead;
+            var startNode = Pathfinder.GetClosestNode(brain.AgentControl.transform.position);
+
+            if (!isDead && startNode == null) return 0f;
+
+            int validTasksCount = 0;
+            foreach (var task in tasks)
             {
-                brain.SetState(Enums.AgentEnums.AgentState.Calculating);
-                return;
+                if (task.IsComplete) continue;
+
+                var safeLocations = GetSafeTaskLocations(task);
+                if (safeLocations.Count > 0) validTasksCount++;
             }
+
+            if (validTasksCount == 0) return 0f;
+
+            int agentId = brain.GetInstanceID();
+            if (!_timeWithoutDoingTasks.ContainsKey(agentId))
+                _timeWithoutDoingTasks.Add(agentId, Time.time);
+
+            float finalPercentage = 0f;
+
+            if (Utils.CompletedTasks < 4) finalPercentage += 40f;
+            if (Utils.SecondsSinceShipStart.HasValue && Utils.SecondsSinceShipStart < 40f) finalPercentage += 80f;
+
+            var timeSinceLastTask = Time.time - _timeWithoutDoingTasks[agentId];
+            finalPercentage += Mathf.Min(timeSinceLastTask * 1.2f, 60f);
+
+            if (brain.ImpostorMemory.FakedTasks >= tasks.Count)
+                finalPercentage -= 40f;
+
+            return finalPercentage;
+        }
+
+        public bool Execute(AgentBrain brain)
+        {
+            var tasks = brain.AgentControl.myTasks;
+            if (tasks == null || tasks.Count == 0) return false;
 
             var startNode = Pathfinder.GetClosestNode(brain.AgentControl.transform.position);
-            if (startNode == null)
-            {
-                brain.SetState(Enums.AgentEnums.AgentState.Calculating);
-                return;
-            }
+            bool isDead = brain.AgentControl.Data.IsDead;
 
-            var validTasks = new List<Tuple<PlayerTask, float, List<Waypoint>>>();
+            if (!isDead && startNode == null) return false;
+
+            var validTasks = new List<(PlayerTask Task, float Dist, List<Waypoint> Path)>();
 
             foreach (var task in tasks)
             {
-                if (!task.HasLocation) continue;
+                if (task.IsComplete) continue;
+
+                var safeLocations = GetSafeTaskLocations(task);
+                if (safeLocations.Count == 0) continue;
 
                 float minWalkDist = float.MaxValue;
                 List<Waypoint> bestPath = null;
 
-                foreach (var location in task.Locations)
+                foreach (var location in safeLocations)
                 {
                     var endNode = Pathfinder.GetClosestNode(location);
                     if (endNode == null) continue;
@@ -112,23 +249,25 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
 
                 if (bestPath != null)
                 {
-                    validTasks.Add(Tuple.Create(task, minWalkDist, bestPath));
+                    validTasks.Add((task, minWalkDist, bestPath));
                 }
             }
 
-            var shortsTaskNearby = new List<Tuple<PlayerTask, float, List<Waypoint>>>();
+            if (validTasks.Count == 0) return false;
+
+            var shortsTaskNearby = new List<(PlayerTask Task, float Dist, List<Waypoint> Path)>();
             var longTasks = ShipStatus.Instance?.LongTasks;
 
             foreach (var taskData in validTasks)
             {
-                if (taskData.Item2 > 5f) continue;
+                if (taskData.Dist > 5f) continue;
 
                 bool isShort = true;
                 if (longTasks != null)
                 {
                     for (int i = 0; i < longTasks.Count; i++)
                     {
-                        if (longTasks[i]?.TaskType == taskData.Item1.TaskType)
+                        if (longTasks[i]?.TaskType == taskData.Task.TaskType)
                         {
                             isShort = false;
                             break;
@@ -141,17 +280,20 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
 
             var targetList = shortsTaskNearby.Count > 0 ? shortsTaskNearby : validTasks;
 
-            if (targetList.Count > 0)
+            var bestTaskData = targetList[0];
+            for (int i = 1; i < targetList.Count; i++)
             {
-                var bestTaskData = targetList.OrderBy(t => t.Item2).First();
+                if (targetList[i].Dist < bestTaskData.Dist)
+                {
+                    bestTaskData = targetList[i];
+                }
+            }
 
-                brain.currentLocalTask = bestTaskData.Item1;
-                brain.CommandGoToPath(bestTaskData.Item3);
-            }
-            else
-            {
-                brain.SetState(Enums.AgentEnums.AgentState.Calculating);
-            }
+            LogManager.LogDebug($"[TaskDecision-Execute] SUCESSO! Agente comandado para task: {bestTaskData.Task.TaskType}");
+            brain.currentLocalTask = bestTaskData.Task;
+            brain.CommandGoToPath(bestTaskData.Path);
+
+            return true;
         }
     }
 }
