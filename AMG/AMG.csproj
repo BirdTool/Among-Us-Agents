@@ -20,6 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="AI\Mind\Decisions\ParallelDecisions\" />
       <Folder Include="AI\TasksWork\Skeld\" />
     </ItemGroup>
 

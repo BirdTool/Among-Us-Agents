@@ -1,8 +1,5 @@
-﻿using AMG.AI.Navigation;
-using AMG.AI.Tools;
+﻿using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace AMG.AI.Mind
 {
@@ -17,7 +14,15 @@ namespace AMG.AI.Mind
             if (hasReachedDestination)
             {
                 ResetPath();
-                SetState(AgentState.Wandering);
+
+                if (currentLocalTask != null)
+                {
+                    SetState(AgentState.DoingTask);
+                }
+                else
+                {
+                    SetState(AgentState.Calculating);
+                }
             }
         }
     }

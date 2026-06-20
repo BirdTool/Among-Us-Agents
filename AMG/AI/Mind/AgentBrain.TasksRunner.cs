@@ -1,11 +1,11 @@
 ﻿using AMG.AI.Navigation;
 using AMG.AI.TasksWork;
 using AMG.AI.Tools;
+using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
 using AMG.Utilities;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace AMG.AI.Mind
 {
@@ -81,14 +81,12 @@ namespace AMG.AI.Mind
         {
             if (currentLocalTask == null)
             {
-                RemoveNameTag(Enums.IdentifierEnum.Think);
-                DecisionTest();
+                SetState(AgentState.Calculating);
             }
             bool success = TryExecuteTask(currentLocalTask.Id);
             if (success)
             {
-                RemoveNameTag(Enums.IdentifierEnum.Think);
-                DecisionTest();
+                SetState(AgentState.Calculating);
             }
         }
     }

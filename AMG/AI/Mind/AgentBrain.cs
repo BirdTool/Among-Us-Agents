@@ -24,7 +24,7 @@ namespace AMG.AI.Mind
         public AgentState currentState = AgentState.Stopped;
 
         // Chamado
-        // private Waypoint targetNode = null;
+        // private Waypoifnt targetNode = null;
         // private float waitTimer = 0f;
 
         public AgentUpdateAction updateAction = null;
@@ -33,6 +33,8 @@ namespace AMG.AI.Mind
 
         private Dictionary<AgentState, Action> _updateActions;
         private Dictionary<AgentState, AgentTag> _updateTags;
+
+        public PlayerControl AgentControl => myAgent;
 
         void Awake()
         {
@@ -59,7 +61,8 @@ namespace AMG.AI.Mind
                 [AgentState.Navigating] = UpdateNavigating,
                 [AgentState.OnMeeting] = UpdateMeetingState,
                 [AgentState.SmartWandering] = UpdateSmartWandering,
-                [AgentState.DoingTask] = UpdateDoingTask
+                [AgentState.DoingTask] = UpdateDoingTask,
+                [AgentState.Calculating] = UpdateCalculating
             };
 
             _updateTags = new()
@@ -69,7 +72,8 @@ namespace AMG.AI.Mind
                 [AgentState.Navigating] = DefaultTags.States.Navigating,
                 [AgentState.OnMeeting] = DefaultTags.States.Stopped,
                 [AgentState.SmartWandering] = DefaultTags.States.SmartWandering,
-                [AgentState.DoingTask] = DefaultTags.States.DoingTask
+                [AgentState.DoingTask] = DefaultTags.States.DoingTask,
+                [AgentState.Calculating] = DefaultTags.States.Calculating
             };
 
             ChangeRandomDirection();

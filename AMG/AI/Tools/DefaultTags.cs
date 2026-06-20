@@ -46,6 +46,15 @@ namespace AMG.AI.Tools
                 Size = "80%",
                 Identifier = IdentifierEnum.State
             };
+
+            public static AgentTag Calculating => new()
+            {
+                Tag = "Calculating",
+                ColourHex = "#ff3636",
+                Size = "80%",
+                Identifier = IdentifierEnum.Think
+            };
+
         }
 
         public static class Emotions

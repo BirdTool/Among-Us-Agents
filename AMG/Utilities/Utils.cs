@@ -37,6 +37,9 @@ namespace AMG.Utilities
         internal static bool IsImpostorRole(RoleTypes role) => role == RoleTypes.Impostor || role == RoleTypes.Shapeshifter || role == RoleTypes.Viper || role == RoleTypes.Phantom;
         internal static bool IsCrewmateRole(RoleTypes role) => !IsImpostorRole(role);
 
+        internal static int RemainingKills => Players.AllAliveCrewmates.Count() - Players.AllAliveImpostors.Count();
+        internal static int RemainingTasks => GetRemaingTasks();
+
         public static byte GetCurrentMapID()
         {
             // Works for the tutorial
@@ -245,5 +248,20 @@ namespace AMG.Utilities
             return true;
         }
 
+        public static int GetRemaingTasks()
+        {
+            var totalTasks = 0;
+            var completedTasks = 0;
+            foreach ( var player in Players.AllCrewmates )
+            {
+                foreach ( var task in player.myTasks )
+                {
+                    totalTasks++;
+                    if (task.IsComplete) completedTasks++;
+                }
+            }
+
+            return totalTasks - completedTasks;
+        }
     }
 }
