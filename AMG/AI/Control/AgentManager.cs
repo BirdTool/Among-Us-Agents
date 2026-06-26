@@ -1,6 +1,7 @@
 using AMG.AI.Mind;
 using AMG.AI.Tools;
 using AMG.Utilities;
+using AmongUs.GameOptions;
 using InnerNet;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,22 +56,16 @@ namespace AMG.AI.Control
             PlayerControl agentComponent = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
 
             if (agentComponent.myTasks == null)
-            {
                 agentComponent.myTasks = new Il2CppSystem.Collections.Generic.List<PlayerTask>();
-            }
-
-            TaskAssignment.AssignTasks(agentComponent);
-
-            AgentData agentData = new() { Name = name };
 
             agentComponent.PlayerId = (byte)(100 + Agents.Count);
             agentComponent.NetId = (uint)(100 + Agents.Count);
 
             ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
             if (localClient != null)
-            {
                 GameData.Instance.AddPlayer(agentComponent, localClient);
-            }
+
+            TaskAssignment.AssignTasks(agentComponent);
 
             var playerInfo = GameData.Instance.GetPlayerById(agentComponent.PlayerId);
             if (playerInfo != null)
@@ -99,17 +94,19 @@ namespace AMG.AI.Control
                 }
             }
 
+            agentComponent.RpcSetRole(RoleTypes.Crewmate);
+
+            var pInfo = GameData.Instance?.GetPlayerById(agentComponent.PlayerId);
+            LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsImpostor={pInfo?.Role?.IsImpostor}, Tasks count={pInfo?.Tasks?.Count}");
+
             if (PlayerControl.LocalPlayer != null)
             {
                 Vector3 currentPos = PlayerControl.LocalPlayer.transform.position;
                 agentComponent.transform.position = currentPos;
-
-                if (agentComponent.NetTransform != null)
-                {
-                    agentComponent.NetTransform.SnapTo(currentPos);
-                }
+                agentComponent.NetTransform?.SnapTo(currentPos);
             }
 
+            AgentData agentData = new() { Name = name };
             AddAgent(agentComponent, agentData);
             agentComponent.gameObject.AddComponent<AgentBrain>();
             var brain = agentComponent.gameObject.GetComponent<AgentBrain>();

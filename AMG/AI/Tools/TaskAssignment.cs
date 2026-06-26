@@ -2,10 +2,10 @@
 using AmongUs.GameOptions;
 using System;
 using System.Collections.Generic;
+using static NetworkedPlayerInfo;
 
-// Issues:
-// The task bar doesn't increase when the agent does its task
-// When the agent "does" its task, appears to the user "Task Completed" even if the user doens't have that task
+// Issues to fix:
+// The task bar doesn't increase when the agent does its task [IMPORTANT, I'M TRYING TO FIX IT]
 
 namespace AMG.AI.Tools
 {
@@ -13,7 +13,7 @@ namespace AMG.AI.Tools
     {
         private static readonly List<NormalPlayerTask> CommonTasks = [];
 
-        private static uint CurrentId = 100;
+        private static uint CurrentId = 30;
 
         public static void SetCommonTask()
         {
@@ -41,6 +41,12 @@ namespace AMG.AI.Tools
             if (ShipStatus.Instance == null) return;
 
             player.myTasks.Clear();
+
+            var pInfo = GameData.Instance?.GetPlayerById(player.PlayerId);
+            if (pInfo != null && pInfo.Tasks != null)
+            {
+                pInfo.Tasks.Clear();
+            }
 
             var rawTasks = new List<NormalPlayerTask>();
 
@@ -81,12 +87,26 @@ namespace AMG.AI.Tools
 
                 player.myTasks.Add(spawnedTask);
 
+                if (pInfo != null)
+                {
+                    if (pInfo.Tasks == null)
+                        pInfo.Tasks = new Il2CppSystem.Collections.Generic.List<TaskInfo>();
+
+                    var taskInfo = new TaskInfo((byte)spawnedTask.Id, (uint)spawnedTask.TaskType);
+                    pInfo.Tasks.Add(taskInfo);
+
+                    LogManager.LogDebug($"[TaskAssignment] Registrado no GameData: Id={spawnedTask.Id}, Type={spawnedTask.TaskType}");
+                }
+
                 spawnedTask.Initialize();
 
                 CurrentId++;
             }
 
             GameData.Instance?.RecomputeTaskCounts();
+
+            if (GameData.Instance != null)
+                LogManager.LogDebug($"[TaskAssignment] Após recálculo: TotalTasks={GameData.Instance.TotalTasks}, CompletedTasks={GameData.Instance.CompletedTasks}");
         }
 
         public static void AssignTasks(List<PlayerControl> playerList)

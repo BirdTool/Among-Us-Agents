@@ -39,20 +39,31 @@ namespace AMG.AI.Mind
                     PlayerTask gameTask = myAgent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
                     var normalTask = gameTask?.TryCast<NormalPlayerTask>();
 
-                    normalTask?.NextStep();
-
-                    if (gameTask == null || gameTask.IsComplete)
+                    if (normalTask != null)
                     {
-                        myAgent.myTasks.Remove(gameTask);
-                        AITasks.Remove(taskId);
+                        normalTask.taskStep++;
 
-                        GameData.Instance?.RecomputeTaskCounts();
+                        if (normalTask.taskStep >= normalTask.MaxStep)
+                        {
+                            normalTask.taskStep = normalTask.MaxStep;
 
-                        LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) finalizada manualmente pro bot {myAgent.PlayerId}");
-                    }
-                    else
-                    {
-                        AITasks[taskId] = TasksGroup.GetTaskOrGeneric(gameTask.TaskType);
+                            myAgent.myTasks.Remove(gameTask);
+                            AITasks.Remove(taskId);
+
+                            if (GameData.Instance != null)
+                            {
+                                GameData.Instance.CompletedTasks++;
+
+                                if (HudManager.Instance != null)
+                                    HudManager.Instance.taskDirtyTimer = 0f;
+
+                                LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída. {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}");
+                            }
+                        }
+                        else
+                        {
+                            AITasks[taskId] = TasksGroup.GetTaskOrGeneric(gameTask.TaskType);
+                        }
                     }
                 }
                 else if (CanExecuteTask(taskId))
