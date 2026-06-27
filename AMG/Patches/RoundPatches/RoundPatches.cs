@@ -17,9 +17,9 @@ namespace AMG.Patches.RoundPatches
         [HarmonyPostfix]
         public static void ShipStatus_Start_Postfix()
         {
+            TaskAssignment.SetCommonTask();
             Utils.Round.ClearRounds();
             Utils.Round.AddRound();
-            TaskAssignment.SetCommonTask();
             ShipStartedAt = Time.time;
             TaskAssignment.RegisterPlayerTasks();
         }

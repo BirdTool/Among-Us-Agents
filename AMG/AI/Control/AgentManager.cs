@@ -2,6 +2,7 @@ using AMG.AI.Mind;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using AmongUs.GameOptions;
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 using InnerNet;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,16 @@ namespace AMG.AI.Control
 {
     public static class AgentManager
     {
+        private static PlayerControl _realLocalPlayer;
+
+        public static void CaptureRealLocalPlayer()
+        {
+            if (_realLocalPlayer == null && PlayerControl.LocalPlayer != null)
+                _realLocalPlayer = PlayerControl.LocalPlayer;
+        }
+
+        public static PlayerControl RealLocalPlayer => _realLocalPlayer;
+
         public static readonly List<AgentListData> Agents = [];
 
         private static readonly List<string> FirstNames = new()
@@ -53,17 +64,66 @@ namespace AMG.AI.Control
         {
             if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
 
-            PlayerControl agentComponent = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
+            if (!AmongUsClient.Instance.AmHost)
+            {
+                Debug.Log("[AI Agents] Apenas o Host do lobby pode spawnar agentes!");
+                return;
+            }
+
+            CaptureRealLocalPlayer();
+
+            PlayerControl humanPlayer = PlayerControl.LocalPlayer;
+
+            PlayerControl agentComponent = UnityEngine.Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
 
             if (agentComponent.myTasks == null)
                 agentComponent.myTasks = new Il2CppSystem.Collections.Generic.List<PlayerTask>();
 
-            agentComponent.PlayerId = (byte)(100 + Agents.Count);
-            agentComponent.NetId = (uint)(100 + Agents.Count);
+            byte newPlayerId = GetAvailablePlayerId();
+            agentComponent.PlayerId = newPlayerId;
+
+            agentComponent.isDummy = true;
+
+            uint safeNetId = (uint)(100 + (Agents.Count * 10));
+
+            agentComponent.NetId = safeNetId;
+
+            var physics = agentComponent.GetComponent<PlayerPhysics>();
+            if (physics != null) physics.NetId = safeNetId + 1;
+
+            var transform = agentComponent.GetComponent<CustomNetworkTransform>();
+            if (transform != null) transform.NetId = safeNetId + 2;
+
+            AmongUsClient.Instance.Spawn(agentComponent, AmongUsClient.Instance.ClientId, SpawnFlags.None);
 
             ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
             if (localClient != null)
                 GameData.Instance.AddPlayer(agentComponent, localClient);
+
+            var pInfo = GameData.Instance.GetPlayerById(agentComponent.PlayerId);
+            if (pInfo != null)
+            {
+                pInfo.PlayerName = name;
+
+                pInfo.DefaultOutfit.HatId = "";
+                pInfo.DefaultOutfit.SkinId = "";
+                pInfo.DefaultOutfit.VisorId = "";
+                pInfo.DefaultOutfit.PetId = "";
+                pInfo.DefaultOutfit.ColorId = randomizeCosmetics
+                    ? Utils.GetRandomInt(0, 17)
+                    : 1;
+
+                agentComponent.RawSetColor(pInfo.DefaultOutfit.ColorId);
+            }
+
+            agentComponent.StartCoroutine(ApplyCosmeticsNextFrame(agentComponent, randomizeCosmetics).WrapToIl2Cpp());
+
+            PlayerControl.LocalPlayer = humanPlayer;
+            if (Camera.main != null)
+            {
+                var follower = Camera.main.GetComponent<FollowerCamera>();
+                if (follower != null) follower.SetTarget(humanPlayer);
+            }
 
             TaskAssignment.AssignTasks(agentComponent, agentComponent.PlayerId);
 
@@ -91,12 +151,22 @@ namespace AMG.AI.Control
                 else
                 {
                     playerInfo.DefaultOutfit.ColorId = 1;
+                    
+                    playerInfo.DefaultOutfit.HatId = "";
+                    playerInfo.DefaultOutfit.SkinId = "";
+                    playerInfo.DefaultOutfit.VisorId = "";
+                    playerInfo.DefaultOutfit.PetId = "";
+                    agentComponent.RpcSetHat("");
+                    agentComponent.RpcSetSkin("");
+                    agentComponent.RpcSetVisor("");
+                    agentComponent.RpcSetPet("");
+
+                    agentComponent.RawSetColor(pInfo.DefaultOutfit.ColorId);
                 }
             }
 
             agentComponent.RpcSetRole(RoleTypes.Crewmate);
 
-            var pInfo = GameData.Instance?.GetPlayerById(agentComponent.PlayerId);
             LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsImpostor={pInfo?.Role?.IsImpostor}, Tasks count={pInfo?.Tasks?.Count}");
 
             if (PlayerControl.LocalPlayer != null)
@@ -112,6 +182,48 @@ namespace AMG.AI.Control
             var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
             brain.MapGameTasksToAILogic();
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
+        }
+
+        private static System.Collections.IEnumerator ApplyCosmeticsNextFrame(
+    PlayerControl agent, bool randomize)
+        {
+            yield return null;
+
+            agent.RpcSetHat("");
+            agent.RpcSetSkin("");
+            agent.RpcSetVisor("");
+            agent.RpcSetPet("");
+
+            if (randomize)
+            {
+                string hat = GetRandomHat();
+                string skin = GetRandomSkin();
+                string visor = GetRandomVisor();
+
+                var info = GameData.Instance.GetPlayerById(agent.PlayerId);
+                if (info != null)
+                {
+                    info.DefaultOutfit.HatId = hat;
+                    info.DefaultOutfit.SkinId = skin;
+                    info.DefaultOutfit.VisorId = visor;
+                }
+
+                agent.RpcSetHat(hat);
+                agent.RpcSetSkin(skin);
+                agent.RpcSetVisor(visor);
+            }
+        }
+
+        private static byte GetAvailablePlayerId()
+        {
+            for (byte i = 0; i < 15; i++)
+            {
+                if (GameData.Instance.GetPlayerById(i) == null)
+                {
+                    return i;
+                }
+            }
+            return 15;
         }
 
         public static void ClearAllAgents()

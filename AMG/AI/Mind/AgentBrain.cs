@@ -150,5 +150,21 @@ namespace AMG.AI.Mind
             float dist = Vector2.Distance(myAgent.transform.position, bodyPosition);
             return dist < 3.4f;
         }
+
+        private void StartMoving(Vector2 direction)
+        {
+            myAgent.Collider.enabled = true;
+
+            var anim = myAgent.MyPhysics?.Animations;
+            if (anim != null)
+                anim.PlayRunAnimation();
+        }
+
+        private void StopMoving()
+        {
+            var anim = myAgent.MyPhysics?.Animations;
+            if (anim != null)
+                anim.PlayIdleAnimation();
+        }
     }
 }
