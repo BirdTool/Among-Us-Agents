@@ -58,8 +58,8 @@ namespace AMG.AI.Control
             if (agentComponent.myTasks == null)
                 agentComponent.myTasks = new Il2CppSystem.Collections.Generic.List<PlayerTask>();
 
-            agentComponent.PlayerId = (byte)(100 + Agents.Count);
-            agentComponent.NetId = (uint)(100 + Agents.Count);
+            agentComponent.PlayerId = (byte)(15 + Agents.Count);
+            agentComponent.NetId = (uint)(15 + Agents.Count);
 
             ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
             if (localClient != null)
