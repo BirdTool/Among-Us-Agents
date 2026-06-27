@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using static NetworkedPlayerInfo;
 
-// Issues to fix:
-// The task bar doesn't increase when the agent does its task [IMPORTANT, I'M TRYING TO FIX IT]
+// Issues
+// The task bar doesn't increase, it's probally a Freeplay's issue
 
 namespace AMG.AI.Tools
 {
@@ -36,17 +36,14 @@ namespace AMG.AI.Tools
             }
         }
 
-        public static void AssignTasks(PlayerControl player)
+        public static void AssignTasks(PlayerControl agent, byte agentPlayerId)
         {
             if (ShipStatus.Instance == null) return;
 
-            player.myTasks.Clear();
+            var localPlayer = PlayerControl.LocalPlayer;
+            var localPInfo = GameData.Instance?.GetPlayerById(localPlayer.PlayerId);
 
-            var pInfo = GameData.Instance?.GetPlayerById(player.PlayerId);
-            if (pInfo != null && pInfo.Tasks != null)
-            {
-                pInfo.Tasks.Clear();
-            }
+            agent.myTasks.Clear();
 
             var rawTasks = new List<NormalPlayerTask>();
 
@@ -80,23 +77,22 @@ namespace AMG.AI.Tools
 
             foreach (var task in rawTasks)
             {
-                var spawnedTask = UnityEngine.Object.Instantiate(task, player.transform);
-
+                var spawnedTask = UnityEngine.Object.Instantiate(task, localPlayer.transform);
                 spawnedTask.Id = CurrentId;
-                spawnedTask.Owner = player;
+                spawnedTask.Owner = localPlayer; 
 
-                player.myTasks.Add(spawnedTask);
+                localPlayer.myTasks.Add(spawnedTask);
 
-                if (pInfo != null)
+                if (localPInfo != null)
                 {
-                    if (pInfo.Tasks == null)
-                        pInfo.Tasks = new Il2CppSystem.Collections.Generic.List<TaskInfo>();
-
-                    var taskInfo = new TaskInfo((byte)spawnedTask.Id, (uint)spawnedTask.TaskType);
-                    pInfo.Tasks.Add(taskInfo);
-
-                    LogManager.LogDebug($"[TaskAssignment] Registrado no GameData: Id={spawnedTask.Id}, Type={spawnedTask.TaskType}");
+                    if (localPInfo.Tasks == null)
+                        localPInfo.Tasks = new Il2CppSystem.Collections.Generic.List<TaskInfo>();
+                    localPInfo.Tasks.Add(new TaskInfo((byte)CurrentId, (uint)task.TaskType));
                 }
+
+                TaskTracker.AgentTaskIds[CurrentId] = agentPlayerId;
+
+                agent.myTasks.Add(spawnedTask);
 
                 spawnedTask.Initialize();
 
@@ -104,17 +100,13 @@ namespace AMG.AI.Tools
             }
 
             GameData.Instance?.RecomputeTaskCounts();
-
-            if (GameData.Instance != null)
-                LogManager.LogDebug($"[TaskAssignment] Após recálculo: TotalTasks={GameData.Instance.TotalTasks}, CompletedTasks={GameData.Instance.CompletedTasks}");
         }
 
-        public static void AssignTasks(List<PlayerControl> playerList)
+        public static void RegisterPlayerTasks()
         {
-            foreach (PlayerControl player in playerList)
-            {
-                AssignTasks(player);
-            }
+            TaskTracker.PlayerOwnTaskIds.Clear();
+            foreach (var task in PlayerControl.LocalPlayer.myTasks)
+                TaskTracker.PlayerOwnTaskIds.Add(task.Id);
         }
     }
 }

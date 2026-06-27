@@ -65,7 +65,7 @@ namespace AMG.AI.Control
             if (localClient != null)
                 GameData.Instance.AddPlayer(agentComponent, localClient);
 
-            TaskAssignment.AssignTasks(agentComponent);
+            TaskAssignment.AssignTasks(agentComponent, agentComponent.PlayerId);
 
             var playerInfo = GameData.Instance.GetPlayerById(agentComponent.PlayerId);
             if (playerInfo != null)

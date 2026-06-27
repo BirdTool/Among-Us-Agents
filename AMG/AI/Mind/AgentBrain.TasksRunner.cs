@@ -12,7 +12,7 @@ namespace AMG.AI.Mind
     public partial class AgentBrain
     {
         public Dictionary<uint, ITaskWork> AITasks = [];
-        private CooldownTimer taskTimer = new CooldownTimer();
+        private CooldownTimer taskTimer = new();
 
         public void MapGameTasksToAILogic()
         {
@@ -50,15 +50,10 @@ namespace AMG.AI.Mind
                             myAgent.myTasks.Remove(gameTask);
                             AITasks.Remove(taskId);
 
-                            if (GameData.Instance != null)
-                            {
-                                GameData.Instance.CompletedTasks++;
+                            TaskTracker.SuppressNextBanner = true;
+                            PlayerControl.LocalPlayer.RpcCompleteTask(taskId);
 
-                                if (HudManager.Instance != null)
-                                    HudManager.Instance.taskDirtyTimer = 0f;
-
-                                LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída. {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}");
-                            }
+                            LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída pelo agente {myAgent.PlayerId}");
                         }
                         else
                         {

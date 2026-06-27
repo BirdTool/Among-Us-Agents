@@ -21,6 +21,7 @@ namespace AMG.Patches.RoundPatches
             Utils.Round.AddRound();
             TaskAssignment.SetCommonTask();
             ShipStartedAt = Time.time;
+            TaskAssignment.RegisterPlayerTasks();
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]
