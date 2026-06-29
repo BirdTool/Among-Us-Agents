@@ -12,6 +12,7 @@ namespace AMG.AI.Control
     public static class AgentManager
     {
         public static readonly List<AgentListData> Agents = [];
+        public static bool RecycleDummies = true;
 
         private static readonly List<string> FirstNames = new()
         {
@@ -53,7 +54,18 @@ namespace AMG.AI.Control
         {
             if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
 
-            PlayerControl agentComponent = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
+            PlayerControl dummie = null;
+            if (RecycleDummies)
+            {
+                foreach ( PlayerControl player in PlayerControl.AllPlayerControls )
+                {
+                    if (!player.isDummy) continue;
+                    dummie = player;
+                }
+            }
+
+            PlayerControl agentComponent = dummie ?? Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
+            agentComponent.isDummy = false;
 
             if (agentComponent.myTasks == null)
                 agentComponent.myTasks = new Il2CppSystem.Collections.Generic.List<PlayerTask>();
