@@ -1,6 +1,7 @@
 ﻿using AMG.AI.Control;
 using AMG.AI.Mind;
 using AMG.AI.Tools;
+using AMG.Helpers;
 using AMG.Utilities;
 using HarmonyLib;
 using System.Linq;
@@ -21,12 +22,16 @@ namespace AMG.Patches.RoundPatches
             Utils.Round.AddRound();
             TaskAssignment.SetCommonTask();
             ShipStartedAt = Time.time;
+
+            LogManager.LogDebug("Partida iniciada");
+            ScreenLogging.Log("<color=Fuchsia><size=3>Match started</size></color>");
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]
         [HarmonyPostfix]
         public static void MeetingHud_Start_Postfix()
         {
+            ScreenLogging.Log("<color=Fuchsia><size=3>Meeting called</size></color>");
             Utils.Round.AddRound();
             foreach (AgentListData agent in AgentManager.Agents)
             {

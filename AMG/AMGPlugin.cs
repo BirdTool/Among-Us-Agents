@@ -1,9 +1,11 @@
-﻿using AMG.Utilities;
+﻿using AMG.Helpers;
+using AMG.Utilities;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
+using Il2CppInterop.Runtime.Injection;
 using Reactor;
 using UnityEngine;
 
@@ -17,7 +19,6 @@ public partial class AMGPlugin : BasePlugin
     public Harmony Harmony { get; } = new(Id);
     public static AMGPlugin Plugin;
     public new static ManualLogSource Log;
-
 
     public ConfigEntry<string> ConfigName { get; private set; }
     public static bool IsPanicked = false;
@@ -79,6 +80,8 @@ public partial class AMGPlugin : BasePlugin
                                 "The program used to open the config file when using the Open Config toggle. Can be any executable, but using a text editor is recommended");
 
         Harmony.PatchAll();
+
+        ClassInjector.RegisterTypeInIl2Cpp<ScreenLoggerBehavior>();
 
         LogManager.TransferLogsToAllLogs();
     }
