@@ -71,7 +71,6 @@ namespace AMG.AI.Control
             }
 
             CaptureRealLocalPlayer();
-
             PlayerControl humanPlayer = PlayerControl.LocalPlayer;
 
             PlayerControl agentComponent = UnityEngine.Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
@@ -81,11 +80,9 @@ namespace AMG.AI.Control
 
             byte newPlayerId = GetAvailablePlayerId();
             agentComponent.PlayerId = newPlayerId;
-
             agentComponent.isDummy = true;
 
             uint safeNetId = (uint)(100 + (Agents.Count * 10));
-
             agentComponent.NetId = safeNetId;
 
             var physics = agentComponent.GetComponent<PlayerPhysics>();
@@ -104,15 +101,7 @@ namespace AMG.AI.Control
             if (pInfo != null)
             {
                 pInfo.PlayerName = name;
-
-                pInfo.DefaultOutfit.HatId = "";
-                pInfo.DefaultOutfit.SkinId = "";
-                pInfo.DefaultOutfit.VisorId = "";
-                pInfo.DefaultOutfit.PetId = "";
-                pInfo.DefaultOutfit.ColorId = randomizeCosmetics
-                    ? Utils.GetRandomInt(0, 17)
-                    : 1;
-
+                pInfo.DefaultOutfit.ColorId = randomizeCosmetics ? Utils.GetRandomInt(0, 17) : 1;
                 agentComponent.RawSetColor(pInfo.DefaultOutfit.ColorId);
             }
 
@@ -126,48 +115,7 @@ namespace AMG.AI.Control
             }
 
             TaskAssignment.AssignTasks(agentComponent, agentComponent.PlayerId);
-
-            var playerInfo = GameData.Instance.GetPlayerById(agentComponent.PlayerId);
-            if (playerInfo != null)
-            {
-                playerInfo.PlayerName = name;
-
-                if (randomizeCosmetics)
-                {
-                    playerInfo.DefaultOutfit.ColorId = Utils.GetRandomInt(0, 17);
-
-                    string randomHat = GetRandomHat();
-                    playerInfo.DefaultOutfit.HatId = randomHat;
-                    playerInfo.Object.RpcSetHat(randomHat);
-
-                    string randomSkin = GetRandomSkin();
-                    playerInfo.DefaultOutfit.SkinId = randomSkin;
-                    playerInfo.Object.RpcSetSkin(randomSkin);
-
-                    string randomVisor = GetRandomVisor();
-                    playerInfo.DefaultOutfit.VisorId = randomVisor;
-                    playerInfo.Object.RpcSetVisor(randomVisor);
-                }
-                else
-                {
-                    playerInfo.DefaultOutfit.ColorId = 1;
-                    
-                    playerInfo.DefaultOutfit.HatId = "";
-                    playerInfo.DefaultOutfit.SkinId = "";
-                    playerInfo.DefaultOutfit.VisorId = "";
-                    playerInfo.DefaultOutfit.PetId = "";
-                    agentComponent.RpcSetHat("");
-                    agentComponent.RpcSetSkin("");
-                    agentComponent.RpcSetVisor("");
-                    agentComponent.RpcSetPet("");
-
-                    agentComponent.RawSetColor(pInfo.DefaultOutfit.ColorId);
-                }
-            }
-
             agentComponent.RpcSetRole(RoleTypes.Crewmate);
-
-            LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsImpostor={pInfo?.Role?.IsImpostor}, Tasks count={pInfo?.Tasks?.Count}");
 
             if (PlayerControl.LocalPlayer != null)
             {
@@ -181,6 +129,7 @@ namespace AMG.AI.Control
             agentComponent.gameObject.AddComponent<AgentBrain>();
             var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
             brain.MapGameTasksToAILogic();
+
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
         }
 

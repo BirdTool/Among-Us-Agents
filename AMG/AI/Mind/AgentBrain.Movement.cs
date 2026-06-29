@@ -22,10 +22,16 @@ namespace AMG.AI.Mind
 
         private bool ProcessPathMovement()
         {
-            if (currentPath == null || currentPathIndex >= currentPath.Count) return true;
+            if (currentPath == null || currentPathIndex >= currentPath.Count)
+            {
+                StopMoving();
+                return true;
+            }
 
             Waypoint currentStep = currentPath[currentPathIndex];
             Vector2 currentPos = transform.position;
+
+            StartMoving();
 
             if (isEvading)
             {

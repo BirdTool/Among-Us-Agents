@@ -151,7 +151,7 @@ namespace AMG.AI.Mind
             return dist < 3.4f;
         }
 
-        private void StartMoving(Vector2 direction)
+        private void StartMoving(/* Vector2 direction */)
         {
             myAgent.Collider.enabled = true;
 
