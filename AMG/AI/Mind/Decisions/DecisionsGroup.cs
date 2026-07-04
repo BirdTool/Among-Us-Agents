@@ -10,7 +10,7 @@ namespace AMG.AI.Mind.Decisions
         public static List<IMainDecision> AllMainDecisions { get; } = [
                 new TaskDecision()
             ];
-        public static List<IParallelDecision> AllParallelMainDecisions { get; } = [
+        public static List<IParallelDecision> AllParallelDecisions { get; } = [
                 new SawABodyPLDecision()
             ];
     }

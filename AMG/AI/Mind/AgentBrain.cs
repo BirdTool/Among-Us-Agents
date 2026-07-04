@@ -109,7 +109,7 @@ namespace AMG.AI.Mind
                 }
             }
 
-            var parallelActions = DecisionsGroup.AllParallelMainDecisions;
+            var parallelActions = DecisionsGroup.AllParallelDecisions;
             foreach (var parallelAction in parallelActions)
             {
                 parallelAction.Evaluate(this);
