@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace AMG.AI.Mind.Decisions.ParallelDecisions
 {
-    public class SawABodyPLDecision : IParallelDecision
+    internal class SawABodyPLDecision : IParallelDecision
     {
         private Dictionary<byte, CooldownTimer> _agentCognitiveTimes = [];
         private Dictionary<byte, List<RoundDeadBody>> _agentsPendingBodiesToReact = [];

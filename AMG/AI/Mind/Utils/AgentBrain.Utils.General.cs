@@ -11,6 +11,9 @@ namespace AMG.AI.Mind
         public bool IsDead => myAgent.Data.IsDead;
         public Vector2 Vector2Position => myAgent.transform.position;
         public Waypoint WaypointPosition => Pathfinder.GetClosestNode(Vector2Position);
+        public bool IsCrewmate => !myAgent.Data.Role.IsImpostor;
+        public bool IsImpostor => myAgent.Data.Role.IsImpostor;
+        
 
         public bool CanReportBody(Vector2 bodyPosition)
         {
@@ -67,6 +70,27 @@ namespace AMG.AI.Mind
                     ReplaceNameTag(tag);
                 }
             }
+        }
+
+        public List<PlayerControl> GetNearbyPlayers()
+        {
+            List<PlayerControl> nearbyPlayers = [];
+
+            foreach (var player in Utils.Players.AllAlivePlayerNotMe)
+            {
+                var origin = myAgent.transform.position;
+                var target = player.transform.position;
+
+                Vector2 origin2D = new(origin.x, origin.y + 0.5f);
+
+                float distToBody = Vector2.Distance(origin2D, target);
+                if (distToBody > 6.5f) continue;
+
+                var canSee = Utils.CanSeeTheTarget(origin2D, target, distToBody);
+                if (canSee) nearbyPlayers.Add(player);
+            }
+
+            return nearbyPlayers;
         }
     }
 }
