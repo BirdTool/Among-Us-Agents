@@ -8,7 +8,7 @@ namespace AMG.AI.Mind
 {
     public partial class AgentBrain
     {
-        private List<Waypoint> currentPath = null;
+        public List<Waypoint> currentPath { get; private set; } = null;
         private int currentPathIndex = 0;
         private float speed = 3.2f;
 

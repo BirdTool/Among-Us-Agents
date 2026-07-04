@@ -1,3 +1,4 @@
+using AMG.AI.Mind.Decisions;
 using AMG.AI.Tools;
 using AMG.Enums;
 using AMG.Enums.AgentEnums;
@@ -108,47 +109,20 @@ namespace AMG.AI.Mind
                 }
             }
 
-            ExecuteHaveSeenNearbyBodiesAction(); // Execute always when there are bodies nearby
+            var parallelActions = DecisionsGroup.AllParallelMainDecisions;
+            foreach (var parallelAction in parallelActions)
+            {
+                parallelAction.Evaluate(this);
+            }
 
             if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { currentState = AgentState.OnMeeting; }
 
             _updateActions[currentState]?.Invoke();
         }
 
-        public float GetReactionTime()
-        {
-            if (delayDisturb <= 0f)
-                return delayTime;
-
-            float minDelay = Mathf.Max(0.05f, delayTime - (delayDisturb * 0.5f));
-
-            float maxDelay = delayTime + delayDisturb;
-
-            return RandomizerExtensions.GetSecureRandomFloat(minDelay, maxDelay);
-        }
-
-        public void SetState(AgentState newState)
-        {
-            if (currentState != newState)
-            {
-                currentState = newState;
-                _updateTags.TryGetValue(newState, out var tag);
-                if (tag != null)
-                {
-                    ReplaceNameTag(tag);
-                }
-            }
-        }
-
         private void UpdateStopped()
         {
             ReplaceNameTag(DefaultTags.States.Stopped);
-        }
-
-        public bool CanReportBody(Vector2 bodyPosition)
-        {
-            float dist = Vector2.Distance(myAgent.transform.position, bodyPosition);
-            return dist < 3.4f;
         }
     }
 }

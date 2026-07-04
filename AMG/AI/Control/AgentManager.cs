@@ -54,39 +54,50 @@ namespace AMG.AI.Control
         {
             if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
 
-            PlayerControl dummie = null;
+            PlayerControl agentComponent = null;
+
             if (RecycleDummies)
             {
-                foreach ( PlayerControl player in PlayerControl.AllPlayerControls )
+                foreach (PlayerControl player in PlayerControl.AllPlayerControls)
                 {
                     if (!player.isDummy) continue;
-                    dummie = player;
+
+                    if (Agents.Any(a => a.Control == player)) continue;
+
+                    agentComponent = player;
+                    break;
                 }
             }
 
-            PlayerControl agentComponent = dummie ?? Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
+            bool isRecycled = agentComponent != null;
+            if (!isRecycled)
+            {
+                agentComponent = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
+                agentComponent.PlayerId = (byte)(100 + Agents.Count);
+                agentComponent.NetId = (uint)(100 + Agents.Count);
+
+                ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
+                if (localClient != null)
+                    GameData.Instance.AddPlayer(agentComponent, localClient);
+            }
+
             agentComponent.isDummy = false;
 
             if (agentComponent.myTasks == null)
                 agentComponent.myTasks = new Il2CppSystem.Collections.Generic.List<PlayerTask>();
 
-            agentComponent.PlayerId = (byte)(100 + Agents.Count);
-            agentComponent.NetId = (uint)(100 + Agents.Count);
-
-            ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
-            if (localClient != null)
-                GameData.Instance.AddPlayer(agentComponent, localClient);
-
-            TaskAssignment.AssignTasks(agentComponent);
-
             var playerInfo = GameData.Instance.GetPlayerById(agentComponent.PlayerId);
+
             if (playerInfo != null)
             {
                 playerInfo.PlayerName = name;
 
                 if (randomizeCosmetics)
                 {
-                    playerInfo.DefaultOutfit.ColorId = Utils.GetRandomInt(0, 17);
+                    byte randomColor = (byte)Utils.GetRandomInt(0, 17);
+                    playerInfo.DefaultOutfit.ColorId = randomColor;
+
+                    playerInfo.Object.RpcSetColor(randomColor);
 
                     string randomHat = GetRandomHat();
                     playerInfo.DefaultOutfit.HatId = randomHat;
@@ -103,13 +114,14 @@ namespace AMG.AI.Control
                 else
                 {
                     playerInfo.DefaultOutfit.ColorId = 1;
+                    playerInfo.Object.RpcSetColor(1);
                 }
             }
 
             agentComponent.RpcSetRole(RoleTypes.Crewmate);
 
             var pInfo = GameData.Instance?.GetPlayerById(agentComponent.PlayerId);
-            LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsImpostor={pInfo?.Role?.IsImpostor}, Tasks count={pInfo?.Tasks?.Count}");
+            LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsRecycled={isRecycled}, IsImpostor={pInfo?.Role?.IsImpostor}");
 
             if (PlayerControl.LocalPlayer != null)
             {
@@ -118,11 +130,16 @@ namespace AMG.AI.Control
                 agentComponent.NetTransform?.SnapTo(currentPos);
             }
 
+            agentComponent.SetColor(playerInfo.DefaultOutfit.ColorId);
+
             AgentData agentData = new() { Name = name };
             AddAgent(agentComponent, agentData);
             agentComponent.gameObject.AddComponent<AgentBrain>();
             var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
+
+            TaskAssignment.AssignTasks(agentComponent);
             brain.MapGameTasksToAILogic();
+
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
         }
 
