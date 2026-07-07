@@ -1,6 +1,5 @@
 using AMG.AI.Mind.Decisions;
 using AMG.AI.Tools;
-using AMG.Enums;
 using AMG.Enums.AgentEnums;
 using AMG.Models;
 using AMG.Utilities;
@@ -20,6 +19,8 @@ namespace AMG.AI.Mind
         private TextMeshPro nameTextComp;
         private SpriteRenderer spriteRenderer;
         public PlayerTask currentLocalTask = null;
+        public bool isGoingToFixASabotage = false;
+        public bool _noticedASabotage = false;
 
         public float delayTime = 0.3f;
         public float delayDisturb = 0f; // Range of delayTime's disturb
@@ -115,7 +116,19 @@ namespace AMG.AI.Mind
                 parallelAction.Evaluate(this);
             }
 
-            if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { currentState = AgentState.OnMeeting; }
+            if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { SetState(AgentState.OnMeeting); }
+
+            if (!_noticedASabotage && Utils.IsAnySabotageActive)
+            {
+                _noticedASabotage = true;
+                SetState(AgentState.Calculating);
+            }
+            else if (_noticedASabotage && !Utils.IsAnySabotageActive)
+            {
+                _noticedASabotage = false;
+                isGoingToFixASabotage = false;
+                SetState(AgentState.Calculating);
+            }
 
             _updateActions[currentState]?.Invoke();
         }

@@ -8,7 +8,8 @@ namespace AMG.AI.Mind.Decisions
     internal static class DecisionsGroup
     {
         public static List<IMainDecision> AllMainDecisions { get; } = [
-                new TaskDecision()
+                new TaskDecision(),
+                new FixSabotageDecision()
             ];
         public static List<IParallelDecision> AllParallelDecisions { get; } = [
                 new SawABodyPLDecision()

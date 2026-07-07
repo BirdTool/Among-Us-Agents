@@ -27,7 +27,6 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
                         foreach (var pos in validPositions) locs.Add(pos);
                         if (locs.Count > 0)
                         {
-                            LogManager.LogDebug($"[TaskDecision] FindValidConsolesPositions: {locs.Count} posicao(oes) para {task.TaskType}");
                             return locs;
                         }
                     }
@@ -91,15 +90,13 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
                 return _utilityCache.TryGetValue(agentId, out float cached) ? cached : 0f;
             }
 
-            LogManager.LogDebug($"[TaskDecision] Iniciando calculo de utilidade para Agente {agentId}");
-
             float utility = brain.AgentControl.Data.Role.IsImpostor ? ImpostorUtility(brain) : CrewmateUtility(brain);
 
-            LogManager.LogDebug($"[TaskDecision] Pontuacao final calculada: {utility}");
 
             _utilityCache[agentId] = utility;
             _nextUpdateTime[agentId] = Time.time + 1f;
 
+            LogManager.LogDebug($"[TaskDecision-CalculateUtility] AgentId: {agentId}, Utility: {utility}");
             return utility;
         }
 
@@ -146,7 +143,7 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
                         Pathfinder.FindPath(startNode, endNode, out float realWalkDistance);
                         if (realWalkDistance <= 5f)
                         {
-                            LogManager.LogDebug($"[TaskDecision-Crewmate] OPA! Painel de {task.TaskType} esta PERTO!");
+                            LogManager.LogDebug($"[TaskDecision-Crewmate] Painel de {task.TaskType} esta perto!");
                             tasksNearby++;
                             break;
                         }
@@ -167,7 +164,6 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
             if (Utils.RemainingTasks < 4) finalPercentage += 40f;
             if (isDead) finalPercentage += 60f;
             if (validTasksCount > 3) finalPercentage += 20f;
-            finalPercentage += 40f; // Debug only
 
             return finalPercentage;
         }

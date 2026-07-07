@@ -2,6 +2,7 @@
 using AMG.AI.Tools;
 using AMG.Interfaces;
 using AMG.Utilities;
+using System.Collections.Generic;
 
 namespace AMG.AI.Mind
 {
@@ -13,9 +14,10 @@ namespace AMG.AI.Mind
         private void UpdateCalculating()
         {
             ResetPath();
-            if (_calculatingTries > 3)
+
+            if (_calculatingTries >= 3)
             {
-                LogManager.LogDebug("Calculating Tries is bigger than 3");
+                LogManager.LogDebug("[AI Brain] Limite de falhas alcançado! Mudando para SmartWandering.");
                 SetState(Enums.AgentEnums.AgentState.SmartWandering);
                 _calculatingTries = 0;
                 return;
@@ -24,39 +26,48 @@ namespace AMG.AI.Mind
             if (_calculatingTimer.Consume())
             {
                 var decisions = DecisionsGroup.AllMainDecisions;
-                float bestDecisionPoints = 0;
-                IMainDecision bestDecision = null;
+
+                List<(IMainDecision decision, float points)> validDecisions = new();
 
                 foreach (var decision in decisions)
                 {
                     float points = decision.CalculateUtility(this);
-                    if (points > bestDecisionPoints)
+                    if (points > 0)
                     {
-                        bestDecisionPoints = points;
-                        bestDecision = decision;
+                        validDecisions.Add((decision, points));
                     }
                 }
 
-                if (bestDecisionPoints > 0 && bestDecision != null)
+                validDecisions.Sort((a, b) => b.points.CompareTo(a.points));
+
+                bool decisionExecuted = false;
+
+                foreach (var item in validDecisions)
                 {
-                    LogManager.LogDebug("Decision match");
+                    LogManager.LogDebug($"[AI Brain] Tentando decisão: {item.decision.GetType().Name} ({item.points} pts)");
                     SetState(Enums.AgentEnums.AgentState.Stopped);
 
-                    bool success = bestDecision.Execute(this);
+                    bool success = item.decision.Execute(this);
 
-                    if (!success)
+                    if (success)
                     {
-                        LogManager.LogDebug("Execution failed! Fallback to Calculating.");
-                        SetState(Enums.AgentEnums.AgentState.Calculating);
-                        _calculatingTries++;
-                        _calculatingTimer.StartDelay(GetReactionTime());
+                        LogManager.LogDebug($"[AI Brain] Sucesso na decisão: {item.decision.GetType().Name}");
+                        decisionExecuted = true;
+                        _calculatingTries = 0;
+                        break;
+                    }
+                    else
+                    {
+                        LogManager.LogDebug($"[AI Brain] Falhou ao executar {item.decision.GetType().Name}. Passando para a próxima opção");
                     }
                 }
-                else
+
+                if (!decisionExecuted)
                 {
-                    LogManager.LogDebug("Decision doesn't match");
+                    LogManager.LogDebug("[AI Brain] Nenhuma decisão pôde ser executada! Incrementando falha e aguardando...");
+                    SetState(Enums.AgentEnums.AgentState.Calculating);
                     _calculatingTries++;
-                    _calculatingTimer.StartDelay(GetReactionTime());
+                    _calculatingTimer.StartDelay(0.4f);
                 }
             }
         }
