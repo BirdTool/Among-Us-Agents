@@ -1,7 +1,6 @@
 using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
 using InnerNet;
-using Sentry.Internal.Extensions;
 using System;
 using System.IO;
 using System.Linq;

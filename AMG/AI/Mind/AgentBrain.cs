@@ -1,6 +1,7 @@
 using AMG.AI.Mind.Decisions;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
+using AMG.Interfaces;
 using AMG.Models;
 using AMG.Utilities;
 using System;
@@ -38,6 +39,9 @@ namespace AMG.AI.Mind
         private Dictionary<AgentState, Action> _updateActions;
         private Dictionary<AgentState, AgentTag> _updateTags;
 
+        public SabotageSteps currentSabotageStep = null;
+        private CooldownTimer sabotageTimer = new();
+
         public PlayerControl AgentControl => myAgent;
 
         void Awake()
@@ -66,7 +70,8 @@ namespace AMG.AI.Mind
                 [AgentState.OnMeeting] = UpdateMeetingState,
                 [AgentState.SmartWandering] = UpdateSmartWandering,
                 [AgentState.DoingTask] = UpdateDoingTask,
-                [AgentState.Calculating] = UpdateCalculating
+                [AgentState.Calculating] = UpdateCalculating,
+                [AgentState.FixingSabotage] = UpdateFixingSabotage
             };
 
             _updateTags = new()
@@ -77,7 +82,8 @@ namespace AMG.AI.Mind
                 [AgentState.OnMeeting] = DefaultTags.States.Stopped,
                 [AgentState.SmartWandering] = DefaultTags.States.SmartWandering,
                 [AgentState.DoingTask] = DefaultTags.States.DoingTask,
-                [AgentState.Calculating] = DefaultTags.States.Calculating
+                [AgentState.Calculating] = DefaultTags.States.Calculating,
+                [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage
             };
 
             ChangeRandomDirection();
@@ -93,8 +99,8 @@ namespace AMG.AI.Mind
 
                 if (isActionFinished)
                 {
-                    updateAction = null;
                     updateAction.IsOnlyPredefinedAction = false;
+                    updateAction = null;
                 }
                 else if (updateAction.IsOnlyPredefinedAction)
                 {
@@ -127,6 +133,7 @@ namespace AMG.AI.Mind
             {
                 _noticedASabotage = false;
                 isGoingToFixASabotage = false;
+                currentSabotageStep = null;
                 SetState(AgentState.Calculating);
             }
 
@@ -136,6 +143,12 @@ namespace AMG.AI.Mind
         private void UpdateStopped()
         {
             ReplaceNameTag(DefaultTags.States.Stopped);
+        }
+
+        public void TriggerCalculatingDelay(float delay)
+        {
+            SetState(AgentState.Calculating);
+            _calculatingTimer.StartDelay(delay);
         }
     }
 }

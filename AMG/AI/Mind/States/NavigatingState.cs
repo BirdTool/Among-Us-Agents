@@ -15,7 +15,11 @@ namespace AMG.AI.Mind
             {
                 ResetPath();
 
-                if (currentLocalTask != null)
+                if (currentSabotageStep != null)
+                {
+                    SetState(AgentState.FixingSabotage);
+                }
+                else if (currentLocalTask != null)
                 {
                     SetState(AgentState.DoingTask);
                 }

@@ -55,6 +55,13 @@ namespace AMG.AI.Tools
                 Identifier = IdentifierEnum.State
             };
 
+            public static AgentTag FixingSabotage => new()
+            {
+                Tag = "Fixing Sabotage",
+                ColourHex = "#ff0000",
+                Size = "80%",
+                Identifier = IdentifierEnum.State
+            };
         }
 
         public static class Emotions
