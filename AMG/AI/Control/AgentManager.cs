@@ -14,20 +14,20 @@ namespace AMG.AI.Control
         public static readonly List<AgentListData> Agents = [];
         public static bool RecycleDummies = true;
 
-        private static readonly List<string> FirstNames = new()
-        {
+        private static readonly List<string> FirstNames =
+        [
             "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph",
             "Charles", "Thomas", "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth",
             "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Crewmate", "Impostor",
             "Cristiano", "Luna", "Luar", "Lua", "Léo", "Leonardo", "Cassilhas"
-        };
+        ];
 
-        private static readonly List<string> Surnames = new()
-        {
+        private static readonly List<string> Surnames =
+        [
             "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
             "Rodriguez", "Martinez", "Carsion", "Doe", "Silva", "Santos", "Oliveira", "Toretto",
             "Santos", "Máfia", "Giuseppe", "Morteiro", "Besta", "Gigante", "Giant", "Sol"
-        };
+        ];
 
         public static void AddAgent(PlayerControl agent, AgentData data)
         {
@@ -76,7 +76,7 @@ namespace AMG.AI.Control
                 agentComponent.PlayerId = (byte)(100 + Agents.Count);
                 agentComponent.NetId = (uint)(100 + Agents.Count);
 
-                ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
+                ClientData localClient = AgentNetworkClient.CreateNewAgentNetworkClient(name);
                 if (localClient != null)
                     GameData.Instance.AddPlayer(agentComponent, localClient);
             }
