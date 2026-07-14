@@ -5,6 +5,22 @@ namespace AMG.AI.Mind.Decisions.Sabotages
 {
     public static class SabotageManager
     {
+        public static void CheckSabotageStateChange()
+        {
+            var active = GetActiveManualSabotage();
+
+            if (active != null && Utils.CurrentSabotage == null)
+            {
+                Utils.CurrentSabotage = active;
+                Utils.OnSabotageStarted?.Invoke(active);
+            }
+            else if (active == null && Utils.CurrentSabotage != null)
+            {
+                Utils.CurrentSabotage = null;
+                Utils.OnSabotageEnded?.Invoke();
+            }
+        }
+
         public static ISabotage GetActiveManualSabotage()
         {
             var ship = ShipStatus.Instance;

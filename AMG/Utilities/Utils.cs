@@ -1,3 +1,4 @@
+using AMG.Interfaces;
 using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
 using InnerNet;
@@ -33,11 +34,16 @@ namespace AMG.Utilities
         internal static bool IsDleksMap => (MapNames)GetCurrentMapID() == MapNames.Dleks; // Skeld but inverted
         internal static bool IsAirshipMap => (MapNames)GetCurrentMapID() == MapNames.Airship;
         internal static bool IsFungleMap => (MapNames)GetCurrentMapID() == MapNames.Fungle;
+        internal static ISabotage CurrentSabotage { get; set; } = null;
+
+        public static Action<ISabotage> OnSabotageStarted;
+        public static Action OnSabotageEnded;
 
         internal static bool IsImpostorRole(RoleTypes role) => role == RoleTypes.Impostor || role == RoleTypes.Shapeshifter || role == RoleTypes.Viper || role == RoleTypes.Phantom;
         internal static bool IsCrewmateRole(RoleTypes role) => !IsImpostorRole(role);
 
         internal static int RemainingKills => Players.AllAliveCrewmates.Count() - Players.AllAliveImpostors.Count();
+        
         public static int TotalTasks
         {
             get

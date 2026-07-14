@@ -39,7 +39,7 @@ namespace AMG.AI.Mind
         private Dictionary<AgentState, Action> _updateActions;
         private Dictionary<AgentState, AgentTag> _updateTags;
 
-        public SabotageSteps currentSabotageStep = null;
+        public SabotageStep currentSabotageStep = null;
         private CooldownTimer sabotageTimer = new();
 
         public PlayerControl AgentControl => myAgent;
@@ -86,6 +86,9 @@ namespace AMG.AI.Mind
                 [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage
             };
 
+            Utils.OnSabotageStarted += HandleSabotageStarted;
+            Utils.OnSabotageEnded += HandleSabotageEnded;
+
             ChangeRandomDirection();
         }
 
@@ -124,6 +127,7 @@ namespace AMG.AI.Mind
 
             if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { SetState(AgentState.OnMeeting); }
 
+            /*
             if (!_noticedASabotage && Utils.IsAnySabotageActive)
             {
                 _noticedASabotage = true;
@@ -136,8 +140,31 @@ namespace AMG.AI.Mind
                 currentSabotageStep = null;
                 SetState(AgentState.Calculating);
             }
+            */
 
             _updateActions[currentState]?.Invoke();
+        }
+
+        private void OnDestroy()
+        {
+            Utils.OnSabotageStarted -= HandleSabotageStarted;
+            Utils.OnSabotageEnded -= HandleSabotageEnded;
+        }
+
+        private void HandleSabotageStarted(ISabotage newSabotage)
+        {
+            if (myAgent.Data.IsDead) return;
+            
+            _noticedASabotage = true;
+            SetState(AgentState.Calculating);
+        }
+
+        private void HandleSabotageEnded()
+        {
+            _noticedASabotage = false;
+            isGoingToFixASabotage = false;
+            currentSabotageStep = null;
+            SetState(AgentState.Calculating);
         }
 
         private void UpdateStopped()

@@ -22,13 +22,18 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
 
         public bool Execute(AgentBrain brain)
         {
+            if (Utils.CurrentSabotage == null) return false;
+
+            ISabotage activeSabotage = Utils.CurrentSabotage;
+            /*
             if (!Utils.IsAnySabotageActive) return false;
 
             ISabotage activeSabotage = SabotageManager.GetActiveManualSabotage();
             if (activeSabotage == null) return false;
+            */
 
             Vector2 myPos = brain.transform.position;
-            SabotageSteps bestStep = null;
+            SabotageStep bestStep = null;
             Waypoint bestWaypoint = null;
             float bestScore = float.MaxValue;
 

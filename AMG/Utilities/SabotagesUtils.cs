@@ -7,10 +7,7 @@ namespace AMG.Utilities
     {
         public static class Sabotages
         {
-            // This method has not been tested yet! It should work, I hope
-            // This method has not been tested yet! It should work, I hope
-            // This method has not been tested yet! It should work, I hope
-            // This method has not been tested yet! It should work, I hope
+            /* About to be deleted
             public static List<Vector3> GetActiveSabotageLocations(ShipStatus shipStatus)
             {
                 List<Vector3> locations = [];
@@ -46,6 +43,7 @@ namespace AMG.Utilities
 
                 return locations;
             }
+            */
 
             public static bool IsReactorSabotaged(ShipStatus shipStatus)
             {

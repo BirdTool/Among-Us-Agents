@@ -116,21 +116,5 @@ namespace AMG.AI.Mind
                 SetState(AgentState.Calculating);
             }
         }
-
-        private void UpdateFixingSabotage()
-        {
-            if (!Utils.IsAnySabotageActive || currentSabotageStep == null)
-            {
-                currentSabotageStep = null;
-                SetState(AgentState.Calculating);
-                return;
-            }
-
-            if (sabotageTimer.IsOver())
-            {
-                currentSabotageStep.CompleteStep(this);
-                sabotageTimer.StartDelay(0.5f);
-            }
-        }
     }
 }
