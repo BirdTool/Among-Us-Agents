@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace AMG.AI.Tools
 {
@@ -33,5 +33,6 @@ namespace AMG.AI.Tools
         }
 
         public bool IsRunning => endDelayTime.HasValue && Time.time < endDelayTime.Value;
+        public bool IsStarted => endDelayTime.HasValue;
     }
 }

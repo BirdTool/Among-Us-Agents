@@ -27,7 +27,7 @@ namespace AMG.AI.Mind
             {
                 var decisions = DecisionsGroup.AllMainDecisions;
 
-                List<(IMainDecision decision, float points)> validDecisions = new();
+                List<(IMainDecision decision, float points)> validDecisions = [];
 
                 foreach (var decision in decisions)
                 {

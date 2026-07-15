@@ -40,7 +40,6 @@ namespace AMG.AI.Mind
         private Dictionary<AgentState, AgentTag> _updateTags;
 
         public SabotageStep currentSabotageStep = null;
-        private CooldownTimer sabotageTimer = new();
 
         public PlayerControl AgentControl => myAgent;
 
@@ -50,7 +49,7 @@ namespace AMG.AI.Mind
             nameTextComp = this.GetComponentInChildren<TextMeshPro>();
             spriteRenderer = this.GetComponent<SpriteRenderer>();
 
-            tags = new List<AgentTag>();
+            tags = [];
             speed = 3.2f;
 
             if (nameTextComp != null)

@@ -1,4 +1,6 @@
-﻿using AMG.Interfaces;
+using AMG.AI.Control;
+using AMG.Enums.AgentEnums;
+using AMG.Interfaces;
 using AMG.Utilities;
 
 namespace AMG.AI.Mind.Decisions.Sabotages
@@ -9,6 +11,22 @@ namespace AMG.AI.Mind.Decisions.Sabotages
         {
             var active = GetActiveManualSabotage();
 
+            if (active != null && Utils.CurrentSabotage != null && active.GetType() != Utils.CurrentSabotage.GetType())
+            {
+                Utils.CurrentSabotage = null;
+                Utils.OnSabotageEnded?.Invoke();
+                foreach (var agent in AgentManager.Agents)
+                {
+                    var brain = agent.Control.GetComponent<AgentBrain>();
+                    if (brain != null)
+                    {
+                        brain.currentSabotageStep = null;
+                        brain.isGoingToFixASabotage = false;
+                        brain.SetState(AgentState.Calculating);
+                    }
+                }
+            }
+
             if (active != null && Utils.CurrentSabotage == null)
             {
                 Utils.CurrentSabotage = active;
@@ -18,6 +36,16 @@ namespace AMG.AI.Mind.Decisions.Sabotages
             {
                 Utils.CurrentSabotage = null;
                 Utils.OnSabotageEnded?.Invoke();
+                foreach (var agent in AgentManager.Agents)
+                {
+                    var brain = agent.Control.GetComponent<AgentBrain>();
+                    if (brain != null)
+                    {
+                        brain.currentSabotageStep = null;
+                        brain.isGoingToFixASabotage = false;
+                        brain.SetState(AgentState.Calculating);
+                    }
+                }
             }
         }
 
@@ -44,10 +72,10 @@ namespace AMG.AI.Mind.Decisions.Sabotages
 
         private static ISabotage SkeldSabotageHandler(ShipStatus ship)
         {
-            if (Utils.Sabotages.IsReactorSabotaged(ship)) return new SkeldReactorSabotage();
-            if (Utils.Sabotages.IsOxygenSabotaged(ship)) return new SkeldO2Sabotage();
-            if (Utils.Sabotages.IsElectricalSabotaged(ship)) return new SkeldLightsSabotage();
-            if (Utils.Sabotages.IsCommsSabotaged(ship)) return new SkeldCommsSabotage();
+            if (Utils.Sabotages.IsReactorSabotaged(ship)) { LogManager.LogDebug("O Reator foi sabotado!"); return new SkeldReactorSabotage(); }
+            if (Utils.Sabotages.IsOxygenSabotaged(ship)) { LogManager.LogDebug("O Oxigênio foi sabotado!"); return new SkeldO2Sabotage(); }
+            if (Utils.Sabotages.IsElectricalSabotaged(ship)) { LogManager.LogDebug("As luzes foram sabotadas!"); return new SkeldLightsSabotage(); }
+            if (Utils.Sabotages.IsCommsSabotaged(ship)) { LogManager.LogDebug("Os Comms foram sabotados!"); return new SkeldCommsSabotage(); }
             return null;
         }
     }

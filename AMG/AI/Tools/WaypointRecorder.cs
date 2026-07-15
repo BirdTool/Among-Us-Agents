@@ -170,6 +170,7 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.N))
             {
+                /*
                 var node = Pathfinder.GetClosestNode(PlayerControl.LocalPlayer.transform.position, 1f);
 
                 if (node != null)
@@ -182,6 +183,10 @@ namespace AMG.AI.Tools
                 {
                     LogManager.LogWarning("[AI GPS] Nenhum nó próximo o suficiente para deletar.");
                 }
+                */
+
+                var location = Utils.Players.LocalPlayer.transform.position;
+                Utils.ShowPopup($"Current Location: X: {location.x}, Y: {location.y}");
             }
         }
 

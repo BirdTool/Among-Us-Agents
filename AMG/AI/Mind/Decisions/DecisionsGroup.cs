@@ -12,7 +12,8 @@ namespace AMG.AI.Mind.Decisions
                 new FixSabotageDecision()
             ];
         public static List<IParallelDecision> AllParallelDecisions { get; } = [
-                new SawABodyPLDecision()
+                new SawABodyPLDecision(),
+                new SabotageStepPLDecision()
             ];
     }
 }

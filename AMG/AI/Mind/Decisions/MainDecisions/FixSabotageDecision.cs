@@ -1,4 +1,4 @@
-﻿using AMG.AI.Navigation;
+using AMG.AI.Navigation;
 using AMG.Interfaces;
 using AMG.Utilities;
 using AMG.AI.Mind.Decisions.Sabotages;
@@ -39,6 +39,7 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
 
             foreach (var step in activeSabotage.GetSteps())
             {
+                if (step.IsCompleted) continue;
                 if (step.Locations == null || step.Locations.Count == 0) continue;
 
                 foreach (var target in step.Locations)

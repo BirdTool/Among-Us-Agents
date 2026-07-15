@@ -12,7 +12,7 @@ namespace AMG.AI.Mind
     public partial class AgentBrain
     {
         public Dictionary<uint, ITaskWork> AITasks = [];
-        private CooldownTimer taskTimer = new CooldownTimer();
+        private CooldownTimer taskTimer = new();
 
         public void MapGameTasksToAILogic()
         {
