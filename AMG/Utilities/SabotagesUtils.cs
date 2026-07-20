@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AMG.Utilities
@@ -121,6 +121,57 @@ namespace AMG.Utilities
                         shipStatus.RpcUpdateSystem(SystemTypes.Electrical, (byte)i);
                     }
                 }
+            }
+
+            public static bool IsPlayerOccupyingLocation(Vector2 location, float threshold = 0.6f)
+            {
+                foreach (var player in PlayerControl.AllPlayerControls)
+                {
+                    if (player == null || player.Data == null || player.Data.IsDead) continue;
+
+                    // Skip our agents, since their state is already managed by the AI logic
+                    if (player.GetComponent<AMG.AI.Mind.AgentBrain>() != null) continue;
+
+                    if (Vector2.Distance(player.transform.position, location) <= threshold)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            public static bool IsO2ConsoleCompleted(ShipStatus shipStatus, int consoleId)
+            {
+                if (shipStatus == null || !IsOxygenSabotaged(shipStatus)) return false;
+
+                try
+                {
+                    var lifeSupp = shipStatus.Systems[SystemTypes.LifeSupp].Cast<LifeSuppSystemType>();
+                    
+                    var prop = typeof(LifeSuppSystemType).GetProperty("CompletedConsoles", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                    var field = typeof(LifeSuppSystemType).GetField("CompletedConsoles", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                    
+                    object completedConsoles = null;
+                    if (prop != null) completedConsoles = prop.GetValue(lifeSupp);
+                    else if (field != null) completedConsoles = field.GetValue(lifeSupp);
+
+                    if (completedConsoles != null)
+                    {
+                        var containsMethod = completedConsoles.GetType().GetMethod("Contains", new[] { typeof(int) }) ?? 
+                                             completedConsoles.GetType().GetMethod("Contains");
+
+                        if (containsMethod != null)
+                        {
+                            return (bool)containsMethod.Invoke(completedConsoles, new object[] { consoleId });
+                        }
+                    }
+                }
+                catch 
+                {
+                    // Ignore reflection errors and fallback to false
+                }
+
+                return false;
             }
         }
     }
