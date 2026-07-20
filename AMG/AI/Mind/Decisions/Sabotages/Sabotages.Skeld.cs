@@ -7,7 +7,28 @@ using UnityEngine;
 namespace AMG.AI.Mind.Decisions.Sabotages
 {
     public class SkeldReactorSabotagedStep(List<Waypoint> locations) : GenericSabotageStepBothSides(locations) { }
-    public class SkeldO2SabotagedStep(List<Waypoint> locations) : GenericSabotageStep(locations) { }
+    public class SkeldO2SabotagedStep(List<Waypoint> locations, int consoleId) : GenericSabotageStep(locations) 
+    { 
+        public int ConsoleId { get; } = consoleId;
+        
+        public override bool IsCompleted
+        {
+            get
+            {
+                if (base.IsCompleted) return true;
+                
+                // For O2, checking distance isn't enough because players walk away after fixing
+                // So we check the actual system state if it has been fixed
+                if (Utils.Sabotages.IsO2ConsoleCompleted(ShipStatus.Instance, ConsoleId))
+                {
+                    return true;
+                }
+                
+                return false;
+            }
+            set => base.IsCompleted = value;
+        }
+    }
     public class SkeldLightsSabotagedStep(List<Waypoint> locations) : GenericSabotageStep(locations) { }
     public class SkeldCommsSabotagedStep(List<Waypoint> locations) : GenericSabotageStep(locations) { }
 
@@ -30,8 +51,8 @@ namespace AMG.AI.Mind.Decisions.Sabotages
         public bool StepComplete { get; } = false;
 
         private readonly List<SabotageStep> _steps = [
-            new SkeldO2SabotagedStep([new Vector2(6.804f, -3.03f).GetClosestNode()]) { TimeToFix = 3.68f }, // O2
-            new SkeldO2SabotagedStep([new Vector2(6.565f, -6.754f).GetClosestNode()]) { TimeToFix = 3.68f } // Admin
+            new SkeldO2SabotagedStep([new Vector2(6.804f, -3.03f).GetClosestNode()], 0) { TimeToFix = 3.68f }, // O2
+            new SkeldO2SabotagedStep([new Vector2(6.565f, -6.754f).GetClosestNode()], 1) { TimeToFix = 3.68f } // Admin
         ];
 
         public List<SabotageStep> GetSteps() => _steps;
