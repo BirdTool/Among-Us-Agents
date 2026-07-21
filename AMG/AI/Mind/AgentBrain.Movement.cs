@@ -2,6 +2,7 @@
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace AMG.AI.Mind
@@ -20,6 +21,7 @@ namespace AMG.AI.Mind
 
         private float lastEvasionSign = 1f;
 
+        // True if the path is completed
         private bool ProcessPathMovement()
         {
             if (currentPath == null || currentPathIndex >= currentPath.Count) return true;
@@ -77,6 +79,17 @@ namespace AMG.AI.Mind
             {
                 currentPathIndex++;
                 stuckTimer = 0f;
+            }
+
+            var nextStep = currentPath.ElementAtOrDefault(currentPathIndex + 1);
+            if (nextStep != null && currentStep.Room != nextStep.Room)
+            {
+                if (Utils.IsRoomClosed(currentStep.Room) || Utils.IsRoomClosed(nextStep.Room))
+                {
+                    currentPath = null; 
+                    
+                    return true; // It's not completed, but there's no path to follow anyway
+                }
             }
 
             return currentPathIndex >= currentPath.Count;

@@ -44,12 +44,12 @@ namespace AMG.AI.Navigation
 
             if (startNode == null || targetNode == null) return null;
 
-            List<Waypoint> openSet = new List<Waypoint> { startNode };
-            HashSet<Waypoint> closedSet = new HashSet<Waypoint>();
-            Dictionary<Waypoint, Waypoint> cameFrom = new Dictionary<Waypoint, Waypoint>();
+            List<Waypoint> openSet = [startNode];
+            HashSet<Waypoint> closedSet = [];
+            Dictionary<Waypoint, Waypoint> cameFrom = [];
 
-            Dictionary<Waypoint, float> gScore = new Dictionary<Waypoint, float>();
-            Dictionary<Waypoint, float> fScore = new Dictionary<Waypoint, float>();
+            Dictionary<Waypoint, float> gScore = [];
+            Dictionary<Waypoint, float> fScore = [];
 
             foreach (var wp in WaypointManager.AllWaypoints)
             {
@@ -76,7 +76,7 @@ namespace AMG.AI.Navigation
                 {
                     totalDistance = gScore[current];
 
-                    List<Waypoint> path = new List<Waypoint> { current };
+                    List<Waypoint> path = [current];
                     while (cameFrom.ContainsKey(current))
                     {
                         current = cameFrom[current];
@@ -92,6 +92,12 @@ namespace AMG.AI.Navigation
                 foreach (var neighbor in current.Neighbors)
                 {
                     if (closedSet.Contains(neighbor)) continue;
+
+                    if (current.Room != neighbor.Room)
+                    {
+                        if (Utils.IsRoomClosed(current.Room)) continue;
+                        if (Utils.IsRoomClosed(neighbor.Room)) continue;
+                    }
 
                     float tentativeGScore = gScore[current] + Vector2.Distance(current.Position, neighbor.Position);
 

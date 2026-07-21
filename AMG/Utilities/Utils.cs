@@ -294,5 +294,7 @@ namespace AMG.Utilities
 
             return true;
         }
+
+        public static bool IsRoomClosed(SystemTypes room) => ShipStatus.Instance.AllDoors.FirstOrDefault(d => d.Room == room).IsOpen;
     }
 }
