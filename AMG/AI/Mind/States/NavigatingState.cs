@@ -9,9 +9,9 @@ namespace AMG.AI.Mind
         {
             ReplaceNameTag(DefaultTags.States.Navigating);
 
-            bool hasReachedDestination = ProcessPathMovement();
+            bool? hasReachedDestination = ProcessPathMovement();
 
-            if (hasReachedDestination)
+            if (hasReachedDestination == true)
             {
                 ResetPath();
 
@@ -27,6 +27,11 @@ namespace AMG.AI.Mind
                 {
                     SetState(AgentState.Calculating);
                 }
+            }
+            else if (hasReachedDestination == null)
+            {
+                ResetPath();
+                SetState(AgentState.Calculating);
             }
         }
     }

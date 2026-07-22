@@ -10,7 +10,7 @@ namespace AMG.AI.Mind
     public partial class AgentBrain
     {
         public List<Waypoint> currentPath { get; private set; } = null;
-        private int currentPathIndex = 0;
+        public int currentPathIndex { get; private set; } = 0;
         private float speed = 3.2f;
 
         private Vector2 lastPosition = Vector2.zero;
@@ -20,10 +20,17 @@ namespace AMG.AI.Mind
         private Vector2 evadeDirection = Vector2.zero;
 
         private float lastEvasionSign = 1f;
+        private bool _stopForced = false;
 
         // True if the path is completed
-        private bool ProcessPathMovement()
+        private bool? ProcessPathMovement()
         {
+            if (_stopForced) 
+            { 
+                _stopForced = false; 
+                return null; 
+            }
+            
             if (currentPath == null || currentPathIndex >= currentPath.Count) return true;
 
             Waypoint currentStep = currentPath[currentPathIndex];
@@ -88,7 +95,7 @@ namespace AMG.AI.Mind
                 {
                     currentPath = null; 
                     
-                    return true; // It's not completed, but there's no path to follow anyway
+                    return null; // It's not completed, but there's no path to follow anyway
                 }
             }
 
@@ -116,7 +123,7 @@ namespace AMG.AI.Mind
             }
         }
 
-        public void ResetPath()
+        public void ResetPath(bool isForced = false)
         {
             currentPath = null;
             currentPathIndex = 0;
@@ -124,6 +131,8 @@ namespace AMG.AI.Mind
 
             if (myAgent.MyPhysics?.body != null)
                 myAgent.MyPhysics.body.velocity = Vector2.zero;
+
+            if (isForced) _stopForced = true;
         }
     }
 }

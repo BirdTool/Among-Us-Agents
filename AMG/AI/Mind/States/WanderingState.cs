@@ -1,5 +1,6 @@
 ﻿using AMG.AI.Navigation;
 using AMG.AI.Tools;
+using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 using UnityEngine;
 
@@ -32,13 +33,14 @@ namespace AMG.AI.Mind
                 return;
             }
 
-            bool hasReachedDestination = ProcessPathMovement();
+            bool? hasReachedDestination = ProcessPathMovement();
 
-            if (hasReachedDestination)
+            if (hasReachedDestination == true || hasReachedDestination == null)
             {
                 currentPath = null;
                 currentPathIndex = 0;
                 myAgent.MyPhysics.body.velocity = Vector2.zero;
+                SetState(AgentState.Calculating);
             }
         }
 

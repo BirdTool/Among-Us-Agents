@@ -295,6 +295,11 @@ namespace AMG.Utilities
             return true;
         }
 
-        public static bool IsRoomClosed(SystemTypes room) => ShipStatus.Instance.AllDoors.FirstOrDefault(d => d.Room == room).IsOpen;
+        public static bool IsRoomClosed(SystemTypes room)
+        {
+            var doors = ShipStatus.Instance.AllDoors.Where(d => d.Room == room).ToList();
+            if (doors.Count == 0) return false;
+            return doors.All(d => !d.IsOpen);
+        }
     }
 }
