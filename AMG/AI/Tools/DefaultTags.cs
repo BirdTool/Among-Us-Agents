@@ -18,7 +18,7 @@ namespace AMG.AI.Tools
             public static AgentTag Stopped => new()
             {
                 Tag = "Stopped",
-                ColourHex = "#FFA500",
+                ColourHex = "#be0000",
                 Size = "80%",
                 Identifier = IdentifierEnum.State
             };
@@ -35,6 +35,30 @@ namespace AMG.AI.Tools
             {
                 Tag = "Wandering",
                 ColourHex = "#ff57df",
+                Size = "80%",
+                Identifier = IdentifierEnum.State
+            };
+
+            public static AgentTag DoingTask => new()
+            {
+                Tag = "Doing Task",
+                ColourHex = "#fd7200",
+                Size = "80%",
+                Identifier = IdentifierEnum.State
+            };
+
+            public static AgentTag Calculating => new()
+            {
+                Tag = "Calculating",
+                ColourHex = "#ff3636",
+                Size = "80%",
+                Identifier = IdentifierEnum.State
+            };
+
+            public static AgentTag FixingSabotage => new()
+            {
+                Tag = "Fixing Sabotage",
+                ColourHex = "#ff0000",
                 Size = "80%",
                 Identifier = IdentifierEnum.State
             };
@@ -103,23 +127,15 @@ namespace AMG.AI.Tools
         {
             public static AgentTag Calculating => new()
             {
-                Tag = "Calculando Rota...",
+                Tag = "Calculating route...",
                 ColourHex = "#00BFFF",
-                Size = "65%",
-                Identifier = IdentifierEnum.Think
-            };
-
-            public static AgentTag DoingTask => new()
-            {
-                Tag = "Focado na Task",
-                ColourHex = "#66FF66",
                 Size = "65%",
                 Identifier = IdentifierEnum.Think
             };
 
             public static AgentTag Stuck => new()
             {
-                Tag = "Preso na Quina!",
+                Tag = "Stuck!",
                 ColourHex = "#DC143C",
                 Size = "65%",
                 Identifier = IdentifierEnum.Think

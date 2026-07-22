@@ -1,7 +1,10 @@
+using AMG.AI.Mind;
+using AMG.Interfaces;
+using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
 using InnerNet;
-using Sentry.Internal.Extensions;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -33,9 +36,61 @@ namespace AMG.Utilities
         internal static bool IsDleksMap => (MapNames)GetCurrentMapID() == MapNames.Dleks; // Skeld but inverted
         internal static bool IsAirshipMap => (MapNames)GetCurrentMapID() == MapNames.Airship;
         internal static bool IsFungleMap => (MapNames)GetCurrentMapID() == MapNames.Fungle;
+        internal static ISabotage CurrentSabotage { get; set; } = null;
+
+        public static Action<ISabotage> OnSabotageStarted;
+        public static Action OnSabotageEnded;
+
+        /// <summary>Fired whenever any door opens or closes. Consumers (e.g. path cache) subscribe to invalidate stale state.</summary>
+        public static Action OnDoorStateChanged;
 
         internal static bool IsImpostorRole(RoleTypes role) => role == RoleTypes.Impostor || role == RoleTypes.Shapeshifter || role == RoleTypes.Viper || role == RoleTypes.Phantom;
         internal static bool IsCrewmateRole(RoleTypes role) => !IsImpostorRole(role);
+
+        internal static int RemainingKills => Players.AllAliveCrewmates.Count() - Players.AllAliveImpostors.Count();
+        
+        public static int TotalTasks
+        {
+            get
+            {
+                int total = 0;
+                foreach (var player in Players.AllCrewmates)
+                    foreach (var task in player.myTasks)
+                        total++;
+
+                return total;
+            }
+        }
+
+        public static int RemainingTasks
+        {
+            get
+            {
+                int remaining = 0;
+                foreach (var player in Players.AllCrewmates)
+                    foreach (var task in player.myTasks)
+                        if (!task.IsComplete)
+                            remaining++;
+
+                return remaining;
+            }
+        }
+
+        public static int CompletedTasks
+        {
+            get
+            {
+                int completed = 0;
+                foreach (var player in Players.AllCrewmates)
+                    foreach (var task in player.myTasks)
+                        if (task.IsComplete)
+                            completed++;
+
+                return completed;
+            }
+        }
+
+        public static float? SecondsSinceShipStart => IsShip ? Time.time - RoundPatches.ShipStartedAt : null;
 
         public static byte GetCurrentMapID()
         {
@@ -206,7 +261,7 @@ namespace AMG.Utilities
 
         public static int GetRandomInt(int min, int max)
         {
-            return UnityEngine.Random.Range(min, max);
+            return RandomizerExtensions.GetSecureRandomInt(min, max);
         }
 
         public static bool ExecuteProbability(double chance)
@@ -245,5 +300,39 @@ namespace AMG.Utilities
             return true;
         }
 
+        /// <summary>
+        /// Call this whenever a door opens or closes so that path-cache consumers
+        /// (e.g. Pathfinder) know to invalidate their cached routes.
+        /// </summary>
+        public static void NotifyDoorStateChanged()
+        {
+            OnDoorStateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Returns true when every door in <paramref name="room"/> is closed.
+        /// Always reads live door state — no caching — so it is safe to call
+        /// every frame from movement and parallel-decision checks.
+        /// </summary>
+        public static bool IsRoomClosed(SystemTypes room)
+        {
+            if (ShipStatus.Instance == null) return false;
+
+            bool hasDoor = false;
+            foreach (var door in ShipStatus.Instance.AllDoors)
+            {
+                if (door.Room != room) continue;
+                hasDoor = true;
+                if (door.IsOpen) return false; // Any open door → room accessible
+            }
+
+            // True only if at least one door exists AND none were open
+            return hasDoor;
+        }
+
+        public static List<AgentBrain> GetAllBrains()
+        {
+            return [.. UnityEngine.Object.FindObjectsOfType<AgentBrain>()];
+        }
     }
 }

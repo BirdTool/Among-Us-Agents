@@ -1,17 +1,78 @@
 ﻿using AMG.AI.Navigation;
 using AMG.AI.Tools;
+using AMG.Interfaces;
 using AMG.Models;
 using AMG.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AMG.AI.Mind
+namespace AMG.AI.Mind.Decisions.ParallelDecisions
 {
-    public partial class AgentBrain
+    internal class SawABodyPLDecision : IParallelDecision
     {
-        private void SawABodyAction(List<RoundDeadBody> bodies)
+        private Dictionary<byte, CooldownTimer> _agentCognitiveTimes = [];
+        private Dictionary<byte, List<RoundDeadBody>> _agentsPendingBodiesToReact = [];
+
+        private CooldownTimer GetAgentCognitiveTimer(byte agentId)
         {
-            if (myAgent.Data.IsDead) return;
+            if (!_agentCognitiveTimes.ContainsKey(agentId))
+            {
+                _agentCognitiveTimes[agentId] = new CooldownTimer();
+            }
+            return _agentCognitiveTimes[agentId];
+        }
+
+        private List<RoundDeadBody> GetAgentPendingBodies(byte agentId)
+        {
+            if (!_agentsPendingBodiesToReact.ContainsKey(agentId))
+            {
+                _agentsPendingBodiesToReact[agentId] = null;
+            }
+            return _agentsPendingBodiesToReact[agentId];
+        }
+
+        public void Evaluate(AgentBrain brain)
+        {
+            if (brain.sawABody) return;
+
+            byte id = brain.AgentControl.PlayerId;
+
+            var cognitiveTimer = GetAgentCognitiveTimer(id);
+            var pendingBodiesToReact = GetAgentPendingBodies(id);
+
+            var nearbyBodies = brain.GetNearbyBodies();
+
+            if (nearbyBodies.Count > 0)
+            {
+                if (!cognitiveTimer.IsRunning && pendingBodiesToReact == null)
+                {
+                    var reactionTime = brain.GetReactionTime();
+                    cognitiveTimer.StartDelay(reactionTime);
+                    _agentsPendingBodiesToReact[id] = nearbyBodies;
+
+                    return;
+                }
+            }
+
+            if (pendingBodiesToReact != null)
+            {
+                if (cognitiveTimer.Consume())
+                {
+                    brain.sawABody = true;
+
+                    SawABodyAction(pendingBodiesToReact, brain);
+
+                    _agentsPendingBodiesToReact.Remove(id);
+                    return;
+                }
+            }
+
+            return;
+        }
+
+        private void SawABodyAction(List<RoundDeadBody> bodies, AgentBrain brain)
+        {
+            if (brain.IsDead) return;
             LogManager.LogDebug("Agente viu um corpo!");
             if (bodies.Count < 1)
             {
@@ -19,7 +80,7 @@ namespace AMG.AI.Mind
                 return;
             }
 
-            ReplaceNameTag(DefaultTags.Emotions.Scared);
+            brain.ReplaceNameTag(DefaultTags.Emotions.Scared, 20f);
             LogManager.LogDebug("Tag de emoção definida como assutado");
 
             double shouldLookAround = 0;
@@ -62,20 +123,20 @@ namespace AMG.AI.Mind
 
                 if (playerInfoToReport != null)
                 {
-                    bool canReport = CanReportBody(mostRecentBody.Position);
+                    bool canReport = brain.CanReportBody(mostRecentBody.Position);
                     if (!canReport)
                     {
                         var end = Pathfinder.GetClosestNode(mostRecentBody.Position);
 
                         var path = Pathfinder.FindPath(start, end, out float dist);
-                        CommandGoToPath(path);
+                        brain.CommandGoToPath(path);
 
-                        updateAction = new AgentUpdateAction(() =>
+                        brain.updateAction = new AgentUpdateAction(() =>
                         {
-                            bool canReport = CanReportBody(mostRecentBody.Position);
+                            bool canReport = brain.CanReportBody(mostRecentBody.Position);
                             if (canReport)
                             {
-                                myAgent.CmdReportDeadBody(playerInfoToReport);
+                                brain.AgentControl.CmdReportDeadBody(playerInfoToReport);
                                 return true;
                             }
                             return false;
@@ -88,11 +149,11 @@ namespace AMG.AI.Mind
                     }
                     else
                     {
-                        myAgent.CmdReportDeadBody(playerInfoToReport);
+                        brain.AgentControl.CmdReportDeadBody(playerInfoToReport);
                     }
                 }
                 else
-                    LogManager.LogError($"[Agente {myAgent.PlayerId}] Tentou reportar corpo do ID {mostRecentBody.PlayerId}, mas o registro não existe mais!");
+                    LogManager.LogError($"[Agente {brain.AgentControl.PlayerId}] Tentou reportar corpo do ID {mostRecentBody.PlayerId}, mas o registro não existe mais!");
             }
             else
             {
@@ -100,9 +161,9 @@ namespace AMG.AI.Mind
                 Vector2 bodyPos = mostRecentBody.Position;
 
                 List<Waypoint> patrolPoints = [];
-                Waypoint agentNodeStart = Pathfinder.GetClosestNode(myAgent.transform.position);
+                Waypoint agentNodeStart = Pathfinder.GetClosestNode(brain.AgentControl.transform.position);
 
-                Vector2 agentPos2D = myAgent.transform.position;
+                Vector2 agentPos2D = brain.AgentControl.transform.position;
                 Vector2 agentToBodyDir = (bodyPos - agentPos2D).normalized;
 
                 List<Waypoint> candidateNodes = [];
@@ -152,44 +213,43 @@ namespace AMG.AI.Mind
                         break;
                 }
 
-                LogManager.LogDebug($"[Agente {myAgent.PlayerId}] Encontrou {patrolPoints.Count} pontos válidos na mesma área para patrulhar.");
+                LogManager.LogDebug($"[Agente {brain.AgentControl.PlayerId}] Encontrou {patrolPoints.Count} pontos válidos na mesma área para patrulhar.");
 
-                updateAction = new AgentUpdateAction(() =>
+                brain.updateAction = new AgentUpdateAction(() =>
                 {
                     if (patrolPoints.Count == 0)
                     {
                         if (playerInfoToReport != null)
                         {
-                            bool canReport = CanReportBody(bodyPos);
+                            bool canReport = brain.CanReportBody(bodyPos);
                             if (!canReport)
                             {
-                                if (currentPath == null)
+                                if (brain.currentPath == null)
                                 {
-                                    var startNode = Pathfinder.GetClosestNode(myAgent.transform.position);
+                                    var startNode = brain.WaypointPosition;
                                     var endNode = Pathfinder.GetClosestNode(bodyPos);
                                     var path = Pathfinder.FindPath(startNode, endNode, out float dist);
-                                    CommandGoToPath(path);
+                                    brain.CommandGoToPath(path);
                                 }
                                 return false;
                             }
                             else
                             {
-                                myAgent.CmdReportDeadBody(playerInfoToReport);
-                                currentPath = null;
-                                currentPathIndex = 0;
+                                brain.AgentControl.CmdReportDeadBody(playerInfoToReport);
+                                brain.ResetPath();
                                 return true;
                             }
                         }
                         else
                         {
-                            LogManager.LogError($"[Agente {myAgent.PlayerId}] Registro do corpo sumiu!");
+                            LogManager.LogError($"[Agente {brain.AgentControl.PlayerId}] Registro do corpo sumiu!");
                             return true;
                         }
                     }
 
-                    if (currentPath == null)
+                    if (brain.currentPath == null)
                     {
-                        Waypoint currentAgentNode = Pathfinder.GetClosestNode(myAgent.transform.position);
+                        Waypoint currentAgentNode = brain.WaypointPosition;
                         Waypoint closestTarget = null;
                         List<Waypoint> bestPath = null;
                         float shortestDistance = float.MaxValue;
@@ -207,7 +267,7 @@ namespace AMG.AI.Mind
 
                         if (closestTarget != null && bestPath != null)
                         {
-                            CommandGoToPath(bestPath);
+                            brain.CommandGoToPath(bestPath);
                             patrolPoints.Remove(closestTarget);
                         }
                         else
@@ -224,44 +284,6 @@ namespace AMG.AI.Mind
                     IsOnlyPredefinedAction = false,
                 };
             }
-        }
-
-        private List<RoundDeadBody> GetNearbyBodies()
-        {
-            List<RoundDeadBody> nearbyBodies = [];
-
-            if (!sawABody && Utils.Round.CurrentRoundDeadBodies != null && Utils.Round.CurrentRoundDeadBodies.Count > 0)
-            {
-                List<RoundDeadBody> bodies = Utils.Round.CurrentRoundDeadBodies;
-
-                foreach (var body in bodies)
-                {
-                    var origin = myAgent.transform.position;
-                    var target = body.Position;
-
-                    Vector2 origin2D = new Vector2(origin.x, origin.y + 0.5f);
-
-                    float distToBody = Vector2.Distance(origin2D, target);
-                    if (distToBody > 5f) continue;
-
-                    var canSee = Utils.CanSeeTheTarget(origin2D, target, distToBody);
-                    if (canSee) nearbyBodies.Add(body);
-                }
-            }
-
-            return nearbyBodies;
-        }
-
-        private bool ExecuteHaveSeenNearbyBodiesAction()
-        {
-            var nearbyBodies = GetNearbyBodies();
-            if (nearbyBodies.Count > 0)
-            {
-                SawABodyAction(nearbyBodies);
-                sawABody = true;
-                return true;
-            }
-            return false;
         }
     }
 }

@@ -1,8 +1,5 @@
-﻿using AMG.AI.Navigation;
-using AMG.AI.Tools;
+﻿using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace AMG.AI.Mind
 {
@@ -12,22 +9,29 @@ namespace AMG.AI.Mind
         {
             ReplaceNameTag(DefaultTags.States.Navigating);
 
-            bool hasReachedDestination = ProcessPathMovement();
+            bool? hasReachedDestination = ProcessPathMovement();
 
-            if (hasReachedDestination)
+            if (hasReachedDestination == true)
             {
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
-                currentPath = null;
-                currentPathIndex = 0;
+                ResetPath();
 
-                if (currentLocalTask != null)
+                if (currentSabotageStep != null)
                 {
-                    StartSimulatedTask(currentLocalTask, 5f);
+                    SetState(AgentState.FixingSabotage);
+                }
+                else if (currentLocalTask != null)
+                {
+                    SetState(AgentState.DoingTask);
                 }
                 else
                 {
-                    SetState(AgentState.Wandering);
+                    SetState(AgentState.Calculating);
                 }
+            }
+            else if (hasReachedDestination == null)
+            {
+                ResetPath();
+                SetState(AgentState.Calculating);
             }
         }
     }

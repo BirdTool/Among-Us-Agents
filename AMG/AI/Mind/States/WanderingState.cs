@@ -1,6 +1,8 @@
-﻿using AMG.AI.Navigation;
+using AMG.AI.Navigation;
 using AMG.AI.Tools;
+using AMG.Enums.AgentEnums;
 using AMG.Utilities;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AMG.AI.Mind
@@ -32,31 +34,44 @@ namespace AMG.AI.Mind
                 return;
             }
 
-            bool hasReachedDestination = ProcessPathMovement();
+            bool? hasReachedDestination = ProcessPathMovement();
 
-            if (hasReachedDestination)
+            if (hasReachedDestination == true || hasReachedDestination == null)
             {
                 currentPath = null;
                 currentPathIndex = 0;
                 myAgent.MyPhysics.body.velocity = Vector2.zero;
+                SetState(AgentState.Calculating);
             }
         }
 
         private void CalculateSmartPath()
         {
-            var agentPosition = Pathfinder.GetClosestNode(myAgent.transform.position);
-            var randomWaypoint = WaypointManager.AllWaypoints.GetRandomItemSecureOrDefault();
-            var path = Pathfinder.FindPath(agentPosition, randomWaypoint, out float dist);
-            var emergencyBreak = 0;
+            var agentWaypoint = Pathfinder.GetClosestNode(myAgent.transform.position);
+            if (agentWaypoint == null) return;
 
-            while (dist < 10f && emergencyBreak < 500)
+            Vector2 agentPos = myAgent.transform.position;
+
+            // Pre-filter by straight-line distance — cheap O(n), no A* needed here.
+            // Prefer waypoints that are at least 10 units away so the agent gets a meaningful wander target.
+            Waypoint target = null;
+            var allWaypoints = WaypointManager.AllWaypoints;
+
+            // Build a small candidate list of far-away waypoints and pick one at random.
+            var farCandidates = new List<Waypoint>(allWaypoints.Count / 2);
+            foreach (var wp in allWaypoints)
             {
-                randomWaypoint = WaypointManager.AllWaypoints.GetRandomItemSecureOrDefault();
-                path = Pathfinder.FindPath(agentPosition, randomWaypoint, out dist);
-                emergencyBreak++;
+                if (Vector2.Distance(agentPos, wp.Position) >= 10f)
+                    farCandidates.Add(wp);
             }
 
-            currentPath = path;
+            target = farCandidates.Count > 0
+                ? farCandidates.GetRandomItemSecureOrDefault()
+                : allWaypoints.GetRandomItemSecureOrDefault();
+
+            if (target == null) return;
+
+            currentPath = Pathfinder.FindPath(agentWaypoint, target, out _);
             currentPathIndex = 0;
         }
 

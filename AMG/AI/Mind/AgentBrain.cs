@@ -1,7 +1,7 @@
-using AMG.AI.Navigation;
+using AMG.AI.Mind.Decisions;
 using AMG.AI.Tools;
-using AMG.Enums;
 using AMG.Enums.AgentEnums;
+using AMG.Interfaces;
 using AMG.Models;
 using AMG.Utilities;
 using System;
@@ -20,18 +20,28 @@ namespace AMG.AI.Mind
         private TextMeshPro nameTextComp;
         private SpriteRenderer spriteRenderer;
         public PlayerTask currentLocalTask = null;
+        public bool isGoingToFixASabotage = false;
+        public bool _noticedASabotage = false;
+
+        public float delayTime = 0.3f;
+        public float delayDisturb = 0f; // Range of delayTime's disturb
 
         public AgentState currentState = AgentState.Stopped;
 
         // Chamado
-        // private Waypoint targetNode = null;
-        private float waitTimer = 0f;
+        // private Waypoifnt targetNode = null;
+        // private float waitTimer = 0f;
 
         public AgentUpdateAction updateAction = null;
 
         public bool sawABody = false; // Defined as false every meeting
 
         private Dictionary<AgentState, Action> _updateActions;
+        private Dictionary<AgentState, AgentTag> _updateTags;
+
+        public SabotageStep currentSabotageStep = null;
+
+        public PlayerControl AgentControl => myAgent;
 
         void Awake()
         {
@@ -39,7 +49,7 @@ namespace AMG.AI.Mind
             nameTextComp = this.GetComponentInChildren<TextMeshPro>();
             spriteRenderer = this.GetComponent<SpriteRenderer>();
 
-            tags = new List<AgentTag>();
+            tags = [];
             speed = 3.2f;
 
             if (nameTextComp != null)
@@ -57,8 +67,26 @@ namespace AMG.AI.Mind
                 [AgentState.Stopped] = UpdateStopped,
                 [AgentState.Navigating] = UpdateNavigating,
                 [AgentState.OnMeeting] = UpdateMeetingState,
-                [AgentState.SmartWandering] = UpdateSmartWandering
+                [AgentState.SmartWandering] = UpdateSmartWandering,
+                [AgentState.DoingTask] = UpdateDoingTask,
+                [AgentState.Calculating] = UpdateCalculating,
+                [AgentState.FixingSabotage] = UpdateFixingSabotage
             };
+
+            _updateTags = new()
+            {
+                [AgentState.Wandering] = DefaultTags.States.Wandering,
+                [AgentState.Stopped] = DefaultTags.States.Stopped,
+                [AgentState.Navigating] = DefaultTags.States.Navigating,
+                [AgentState.OnMeeting] = DefaultTags.States.Stopped,
+                [AgentState.SmartWandering] = DefaultTags.States.SmartWandering,
+                [AgentState.DoingTask] = DefaultTags.States.DoingTask,
+                [AgentState.Calculating] = DefaultTags.States.Calculating,
+                [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage
+            };
+
+            Utils.OnSabotageStarted += HandleSabotageStarted;
+            Utils.OnSabotageEnded += HandleSabotageEnded;
 
             ChangeRandomDirection();
         }
@@ -73,8 +101,8 @@ namespace AMG.AI.Mind
 
                 if (isActionFinished)
                 {
-                    updateAction = null;
                     updateAction.IsOnlyPredefinedAction = false;
+                    updateAction = null;
                 }
                 else if (updateAction.IsOnlyPredefinedAction)
                 {
@@ -90,35 +118,52 @@ namespace AMG.AI.Mind
                 }
             }
 
-            ExecuteHaveSeenNearbyBodiesAction(); // Execute always when there are bodies nearby
+            var parallelActions = DecisionsGroup.AllParallelDecisions;
+            foreach (var parallelAction in parallelActions)
+            {
+                parallelAction.Evaluate(this);
+            }
 
-            if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { currentState = AgentState.OnMeeting; }
+            if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { SetState(AgentState.OnMeeting); }
+
+            /*
+            if (!_noticedASabotage && Utils.IsAnySabotageActive)
+            {
+                _noticedASabotage = true;
+                SetState(AgentState.Calculating);
+            }
+            else if (_noticedASabotage && !Utils.IsAnySabotageActive)
+            {
+                _noticedASabotage = false;
+                isGoingToFixASabotage = false;
+                currentSabotageStep = null;
+                SetState(AgentState.Calculating);
+            }
+            */
 
             _updateActions[currentState]?.Invoke();
         }
 
-        public void SetState(AgentState newState)
+        private void OnDestroy()
         {
-            if (currentState != newState)
-            {
-                currentState = newState;
-                switch (newState)
-                {
-                    case AgentState.Wandering:
-                        ReplaceNameTag(DefaultTags.States.Wandering);
-                        break;
-                    case AgentState.OnMeeting:
-                    case AgentState.Stopped:
-                        ReplaceNameTag(DefaultTags.States.Stopped);
-                        break;
-                    case AgentState.Navigating:
-                        ReplaceNameTag(DefaultTags.States.Navigating);
-                        break;
-                    case AgentState.SmartWandering:
-                        ReplaceNameTag(DefaultTags.States.SmartWandering);
-                        break;
-                }
-            }
+            Utils.OnSabotageStarted -= HandleSabotageStarted;
+            Utils.OnSabotageEnded -= HandleSabotageEnded;
+        }
+
+        private void HandleSabotageStarted(ISabotage newSabotage)
+        {
+            if (myAgent.Data.IsDead) return;
+            
+            _noticedASabotage = true;
+            SetState(AgentState.Calculating);
+        }
+
+        private void HandleSabotageEnded()
+        {
+            _noticedASabotage = false;
+            isGoingToFixASabotage = false;
+            currentSabotageStep = null;
+            SetState(AgentState.Calculating);
         }
 
         private void UpdateStopped()
@@ -126,24 +171,10 @@ namespace AMG.AI.Mind
             ReplaceNameTag(DefaultTags.States.Stopped);
         }
 
-        public void StartSimulatedTask(PlayerTask task, float duration)
+        public void TriggerCalculatingDelay(float delay)
         {
-            if (task == null) return;
-
-            currentLocalTask = task;
-            waitTimer = duration;
-            currentState = AgentState.Stopped;
-
-            if (myAgent.MyPhysics?.body != null)
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
-
-            ReplaceNameTag(IdentifierEnum.Emotion, "Focused", "#FFFF00");
-        }
-
-        public bool CanReportBody(Vector2 bodyPosition)
-        {
-            float dist = Vector2.Distance(myAgent.transform.position, bodyPosition);
-            return dist < 3.4f;
+            SetState(AgentState.Calculating);
+            _calculatingTimer.StartDelay(delay);
         }
     }
 }

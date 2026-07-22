@@ -1,11 +1,47 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using AMG.Utilities;
+
 
 namespace AMG.AI.Navigation
 {
     public static class Pathfinder
     {
+        // ── Path cache ───────────────────────────────────────────────────────
+        // Shared across all agents. Invalidated when any door opens/closes.
+        // Also expires after PATH_CACHE_TTL seconds as a safety net.
+        private const float PATH_CACHE_TTL = 5f;
+
+        private readonly struct CachedPath
+        {
+            public readonly List<Waypoint> Path;
+            public readonly float TotalDistance;
+            public readonly float CachedAt;
+
+            public CachedPath(List<Waypoint> path, float dist)
+            {
+                Path = path;
+                TotalDistance = dist;
+                CachedAt = Time.time;
+            }
+
+            public bool IsExpired => Time.time - CachedAt > PATH_CACHE_TTL;
+        }
+
+        private static readonly Dictionary<(Waypoint, Waypoint), CachedPath> _pathCache = [];
+
+        /// <summary>Wires the cache invalidation to door-state events. Called once on startup.</summary>
+        public static void Initialize()
+        {
+            Utils.OnDoorStateChanged += InvalidateCache;
+        }
+
+        public static void InvalidateCache()
+        {
+            _pathCache.Clear();
+            LogManager.LogDebug("[AI GPS] Cache de caminhos invalidado (estado de porta alterado).");
+        }
+
         public static Waypoint GetClosestNode(Vector2 pos)
         {
             Waypoint best = null;
@@ -44,67 +80,76 @@ namespace AMG.AI.Navigation
 
             if (startNode == null || targetNode == null) return null;
 
-            List<Waypoint> openSet = new List<Waypoint> { startNode };
-            HashSet<Waypoint> closedSet = new HashSet<Waypoint>();
-            Dictionary<Waypoint, Waypoint> cameFrom = new Dictionary<Waypoint, Waypoint>();
-
-            Dictionary<Waypoint, float> gScore = new Dictionary<Waypoint, float>();
-            Dictionary<Waypoint, float> fScore = new Dictionary<Waypoint, float>();
-
-            foreach (var wp in WaypointManager.AllWaypoints)
+            // ── Cache lookup ─────────────────────────────────────────────────
+            var cacheKey = (startNode, targetNode);
+            if (_pathCache.TryGetValue(cacheKey, out var cached) && !cached.IsExpired)
             {
-                gScore[wp] = float.MaxValue;
-                fScore[wp] = float.MaxValue;
+                totalDistance = cached.TotalDistance;
+                // Return a copy so callers can't mutate the cached list
+                return cached.Path != null ? new List<Waypoint>(cached.Path) : null;
             }
 
-            gScore[startNode] = 0;
-            fScore[startNode] = Vector2.Distance(startNode.Position, targetNode.Position);
+            // ── A* search ────────────────────────────────────────────────────
+            var cameFrom = new Dictionary<Waypoint, Waypoint>();
+            var gScore = new Dictionary<Waypoint, float> { [startNode] = 0f };
+            var closedSet = new HashSet<Waypoint>();
+
+            var openSet = new PriorityQueue<Waypoint, float>();
+            openSet.Enqueue(startNode, Vector2.Distance(startNode.Position, targetNode.Position));
 
             int emergencyBreak = 0;
             while (openSet.Count > 0 && emergencyBreak < 5000)
             {
                 emergencyBreak++;
 
-                Waypoint current = openSet[0];
-                for (int i = 1; i < openSet.Count; i++)
-                {
-                    if (fScore[openSet[i]] < fScore[current])
-                        current = openSet[i];
-                }
+                Waypoint current = openSet.Dequeue();
+
+                if (!closedSet.Add(current)) continue;
 
                 if (current == targetNode)
                 {
                     totalDistance = gScore[current];
 
-                    List<Waypoint> path = new List<Waypoint> { current };
+                    List<Waypoint> path = [current];
                     while (cameFrom.ContainsKey(current))
                     {
                         current = cameFrom[current];
                         path.Add(current);
                     }
                     path.Reverse();
-                    return path;
-                }
 
-                openSet.Remove(current);
-                closedSet.Add(current);
+                    // Store in cache (both directions since the graph is undirected)
+                    var entry = new CachedPath(path, totalDistance);
+                    _pathCache[cacheKey] = entry;
+                    _pathCache[(targetNode, startNode)] = entry;
+
+                    return new List<Waypoint>(path);
+                }
 
                 foreach (var neighbor in current.Neighbors)
                 {
                     if (closedSet.Contains(neighbor)) continue;
 
+                    if (current.Room != neighbor.Room)
+                    {
+                        if (Utils.IsRoomClosed(current.Room)) continue;
+                        if (Utils.IsRoomClosed(neighbor.Room)) continue;
+                    }
+
                     float tentativeGScore = gScore[current] + Vector2.Distance(current.Position, neighbor.Position);
 
-                    if (!openSet.Contains(neighbor))
-                        openSet.Add(neighbor);
-                    else if (tentativeGScore >= gScore[neighbor])
+                    if (gScore.TryGetValue(neighbor, out float existingGScore) && tentativeGScore >= existingGScore)
                         continue;
 
                     cameFrom[neighbor] = current;
                     gScore[neighbor] = tentativeGScore;
-                    fScore[neighbor] = gScore[neighbor] + Vector2.Distance(neighbor.Position, targetNode.Position);
+                    float neighborFScore = tentativeGScore + Vector2.Distance(neighbor.Position, targetNode.Position);
+                    openSet.Enqueue(neighbor, neighborFScore);
                 }
             }
+
+            // Cache the null result too — prevents hammering a blocked graph
+            _pathCache[cacheKey] = new CachedPath(null, 0f);
 
             LogManager.LogWarning("[AI GPS] Não foi possível conectar esses dois pontos no grafo.");
             return null;

@@ -27,7 +27,7 @@ namespace AMG.AI.Control
 
             if (agent.Control.myTasks == null || agent.Control.myTasks.Count == 0)
             {
-                brain?.ReplaceNameTag(Enums.IdentifierEnum.Think, "Sem tarefas atribuídas!", "#ff3c3c");
+                brain?.ReplaceNameTag(Enums.IdentifierEnum.Think, "There's no task!", "#ff3c3c");
                 return;
             }
 
@@ -75,13 +75,12 @@ namespace AMG.AI.Control
                 if (brain != null)
                 {
                     brain.CommandGoToPath(bestPath);
-                    brain.ReplaceNameTag(DefaultTags.Thoughts.DoingTask);
                     brain.currentLocalTask = nearbyTask;
                 }
             }
             else
             {
-                brain?.ReplaceNameTag(Enums.IdentifierEnum.Think, "Nenhuma rota válida!", "#ff3c3c");
+                brain?.ReplaceNameTag(Enums.IdentifierEnum.Think, "There's no valid routes!", "#ff3c3c");
             }
         }
 
@@ -90,6 +89,16 @@ namespace AMG.AI.Control
             foreach (var agent in AgentManager.Agents)
             {
                 MakeAgentDoTask(agent.Control.PlayerId);
+            }
+        }
+
+        public static void SetAllAgentAsCalculating()
+        {
+            foreach (var agent in AgentManager.Agents)
+            {
+                var brain = agent.Control.GetComponent<AgentBrain>();
+
+                brain.SetState(AgentState.Calculating);
             }
         }
 

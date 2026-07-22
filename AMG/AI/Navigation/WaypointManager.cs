@@ -1,21 +1,23 @@
-﻿using AMG.AI.Tools;
-using AMG.Utilities;
-using Il2CppInterop.Runtime.Injection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using AMG.AI.Tools;
+using AMG.Utilities;
+using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 
 namespace AMG.AI.Navigation
 {
-    public enum WaypointType { NODE, TASK, VENT, SABOTAGE }
+    public enum WaypointType { NODE, TASK, VENT, SABOTAGE } // Deprecated
 
     public class Waypoint
     {
         public WaypointType Type;
         public Vector2 Position;
-        public List<Waypoint> Neighbors = new List<Waypoint>();
+        public List<Waypoint> Neighbors = [];
         private int stuckHot = 0;
+
+        public SystemTypes Room = SystemTypes.Hallway;
 
         public void IncreaseStuckHot()
         {
@@ -40,15 +42,29 @@ namespace AMG.AI.Navigation
 
     public static class WaypointManager
     {
-        public static List<Waypoint> AllWaypoints = [];
+        public static MapNames CurrentMap => (MapNames)Utils.GetCurrentMapID();
+
+        public static List<Waypoint> AllWaypoints
+        {
+            get
+            {
+                if (!WaypointsByMap.ContainsKey(CurrentMap))
+                {
+                    WaypointsByMap[CurrentMap] = [];
+                }
+                return WaypointsByMap[CurrentMap];
+            }
+        }
+
+        private static readonly Dictionary<MapNames, List<Waypoint>> WaypointsByMap = [];
 
         public static void LoadWaypoints()
         {
-            string filePath = Path.Combine(Application.dataPath, "AI_Skeld_Waypoints.txt");
+            if (AllWaypoints.Count > 0) return;
+            string filePath = Path.Combine(Application.dataPath, $"AI_{CurrentMap}_Waypoints.txt");
             if (!File.Exists(filePath)) return;
 
             string[] lines = File.ReadAllLines(filePath);
-            AllWaypoints.Clear();
 
             foreach (string line in lines)
             {
@@ -87,7 +103,45 @@ namespace AMG.AI.Navigation
                 }
             }
 
+            MapWaypointsToRooms();
+
             LogManager.LogDebug($"[AI Nav] Malha gerada! {AllWaypoints.Count} Pontos e {totalConnections} Conexões criadas.");
+        }
+
+        public static void MapWaypointsToRooms()
+        {
+            if (ShipStatus.Instance == null || ShipStatus.Instance.AllRooms == null) return;
+
+            Dictionary<SystemTypes, int> pointsTracked = [];
+
+            foreach (var room in ShipStatus.Instance.AllRooms)
+            {
+                if (room.roomArea == null)
+                {
+                    LogManager.LogError($"[AI Nav] Sala {room.RoomId} não tem uma área.");
+                    continue;
+                }
+
+                foreach (var waypoint in AllWaypoints)
+                {
+                    if (room.roomArea.OverlapPoint(waypoint.Position))
+                    {
+                        waypoint.Room = room.RoomId;
+
+                        if (!pointsTracked.ContainsKey(room.RoomId))
+                            pointsTracked.Add(room.RoomId, 0);
+
+                        pointsTracked[room.RoomId]++;
+                    }
+                }
+            }
+
+            LogManager.LogDebug($"[AI Nav] Todos os nós foram mapeados para suas respectivas salas!");
+
+            foreach (var (room, count) in pointsTracked)
+            {
+                LogManager.LogDebug($"[AI Nav] Sala {room} tem {count} pontos.");
+            }
         }
     }
 }

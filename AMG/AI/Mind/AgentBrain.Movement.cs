@@ -2,14 +2,15 @@
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace AMG.AI.Mind
 {
     public partial class AgentBrain
     {
-        private List<Waypoint> currentPath = null;
-        private int currentPathIndex = 0;
+        public List<Waypoint> currentPath { get; private set; } = null;
+        public int currentPathIndex { get; private set; } = 0;
         private float speed = 3.2f;
 
         private Vector2 lastPosition = Vector2.zero;
@@ -19,13 +20,36 @@ namespace AMG.AI.Mind
         private Vector2 evadeDirection = Vector2.zero;
 
         private float lastEvasionSign = 1f;
+        private bool _stopForced = false;
 
-        private bool ProcessPathMovement()
+        // True if the path is completed
+        private bool? ProcessPathMovement()
         {
+            if (_stopForced) 
+            { 
+                _stopForced = false; 
+                return null; 
+            }
+            
             if (currentPath == null || currentPathIndex >= currentPath.Count) return true;
 
             Waypoint currentStep = currentPath[currentPathIndex];
             Vector2 currentPos = transform.position;
+
+            if (currentPathIndex > 0)
+            {
+                Waypoint previousStep = currentPath[currentPathIndex - 1];
+                if (previousStep.Room != currentStep.Room &&
+                    (Utils.IsRoomClosed(previousStep.Room) || Utils.IsRoomClosed(currentStep.Room)))
+                {
+                    currentPath = null;
+
+                    if (myAgent.MyPhysics?.body != null)
+                        myAgent.MyPhysics.body.velocity = Vector2.zero;
+
+                    return null;
+                }
+            }
 
             if (isEvading)
             {
@@ -56,7 +80,7 @@ namespace AMG.AI.Mind
 
                     if (stuckTimer > 0.4f)
                     {
-                        if (currentStep != null) currentStep.IncreaseStuckHot();
+                        currentStep?.IncreaseStuckHot();
 
                         isEvading = true;
                         evadeTimer = 0.3f;
@@ -77,6 +101,17 @@ namespace AMG.AI.Mind
             {
                 currentPathIndex++;
                 stuckTimer = 0f;
+            }
+
+            var nextStep = currentPath.ElementAtOrDefault(currentPathIndex + 1);
+            if (nextStep != null && currentStep.Room != nextStep.Room)
+            {
+                if (Utils.IsRoomClosed(currentStep.Room) || Utils.IsRoomClosed(nextStep.Room))
+                {
+                    currentPath = null; 
+                    
+                    return null; // It's not completed, but there's no path to follow anyway
+                }
             }
 
             return currentPathIndex >= currentPath.Count;
@@ -103,7 +138,7 @@ namespace AMG.AI.Mind
             }
         }
 
-        public void ResetPath()
+        public void ResetPath(bool isForced = false)
         {
             currentPath = null;
             currentPathIndex = 0;
@@ -111,6 +146,8 @@ namespace AMG.AI.Mind
 
             if (myAgent.MyPhysics?.body != null)
                 myAgent.MyPhysics.body.velocity = Vector2.zero;
+
+            if (isForced) _stopForced = true;
         }
     }
 }
