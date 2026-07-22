@@ -7,44 +7,6 @@ namespace AMG.Utilities
     {
         public static class Sabotages
         {
-            /* About to be deleted
-            public static List<Vector3> GetActiveSabotageLocations(ShipStatus shipStatus)
-            {
-                List<Vector3> locations = [];
-                List<TaskTypes> targetTasks = [];
-
-                if (IsReactorSabotaged(shipStatus))
-                {
-                    if (IsPolusMap) targetTasks.Add(TaskTypes.ResetSeismic);
-                    else targetTasks.Add(TaskTypes.ResetReactor);
-                }
-
-                if (IsOxygenSabotaged(shipStatus)) targetTasks.Add(TaskTypes.RestoreOxy);
-                if (IsCommsSabotaged(shipStatus)) targetTasks.Add(TaskTypes.FixComms);
-                if (IsElectricalSabotaged(shipStatus)) targetTasks.Add(TaskTypes.FixLights);
-
-                if (targetTasks.Count == 0) return locations;
-
-                var allConsoles = UnityEngine.Object.FindObjectsOfType<Console>();
-
-                foreach (var console in allConsoles)
-                {
-                    if (console.ValidTasks == null) continue;
-
-                    foreach (var validTask in console.ValidTasks)
-                    {
-                        if (targetTasks.Contains(validTask.taskType))
-                        {
-                            locations.Add(console.transform.position);
-                            break;
-                        }
-                    }
-                }
-
-                return locations;
-            }
-            */
-
             public static bool IsReactorSabotaged(ShipStatus shipStatus)
             {
                 if (IsPolusMap)

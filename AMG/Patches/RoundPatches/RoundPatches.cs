@@ -1,5 +1,6 @@
-﻿using AMG.AI.Control;
+using AMG.AI.Control;
 using AMG.AI.Mind;
+using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using HarmonyLib;
@@ -21,6 +22,7 @@ namespace AMG.Patches.RoundPatches
             Utils.Round.AddRound();
             TaskAssignment.SetCommonTask();
             ShipStartedAt = Time.time;
+            Pathfinder.Initialize();
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]

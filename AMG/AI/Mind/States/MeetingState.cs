@@ -52,7 +52,7 @@ namespace AMG.AI.Mind
             }
             else
             {
-                SetState(AgentState.Wandering);
+                SetState(AgentState.Calculating);
                 _isVoteTimerStarted = false;
             }
         }

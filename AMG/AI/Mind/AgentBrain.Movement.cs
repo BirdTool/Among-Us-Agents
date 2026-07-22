@@ -36,6 +36,21 @@ namespace AMG.AI.Mind
             Waypoint currentStep = currentPath[currentPathIndex];
             Vector2 currentPos = transform.position;
 
+            if (currentPathIndex > 0)
+            {
+                Waypoint previousStep = currentPath[currentPathIndex - 1];
+                if (previousStep.Room != currentStep.Room &&
+                    (Utils.IsRoomClosed(previousStep.Room) || Utils.IsRoomClosed(currentStep.Room)))
+                {
+                    currentPath = null;
+
+                    if (myAgent.MyPhysics?.body != null)
+                        myAgent.MyPhysics.body.velocity = Vector2.zero;
+
+                    return null;
+                }
+            }
+
             if (isEvading)
             {
                 evadeTimer -= Time.deltaTime;
@@ -65,7 +80,7 @@ namespace AMG.AI.Mind
 
                     if (stuckTimer > 0.4f)
                     {
-                        if (currentStep != null) currentStep.IncreaseStuckHot();
+                        currentStep?.IncreaseStuckHot();
 
                         isEvading = true;
                         evadeTimer = 0.3f;

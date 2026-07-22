@@ -1,8 +1,9 @@
-﻿using AMG.AI.Mind.Decisions;
+using AMG.AI.Mind.Decisions;
 using AMG.AI.Tools;
 using AMG.Interfaces;
 using AMG.Utilities;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace AMG.AI.Mind
 {
@@ -11,9 +12,37 @@ namespace AMG.AI.Mind
         private readonly CooldownTimer _calculatingTimer = new();
         private int _calculatingTries = 0;
 
+        // Door-lockout wandering
+        private bool _isWaitingForDoor = false;
+        private float _doorWaitTimeout = 0f;
+
+        private void OnDoorOpenedWhileWaiting()
+        {
+            if (!_isWaitingForDoor) return;
+            _isWaitingForDoor = false;
+            Utils.OnDoorStateChanged -= OnDoorOpenedWhileWaiting;
+            SetState(Enums.AgentEnums.AgentState.Calculating);
+            LogManager.LogDebug($"[AI Brain] {baseName} retomando cálculo — porta aberta!");
+        }
+
         private void UpdateCalculating()
         {
             ResetPath();
+
+            // If we were waiting for a door, check timeout
+            if (_isWaitingForDoor)
+            {
+                if (Time.time >= _doorWaitTimeout)
+                {
+                    _isWaitingForDoor = false;
+                    Utils.OnDoorStateChanged -= OnDoorOpenedWhileWaiting;
+                    LogManager.LogDebug($"[AI Brain] {baseName} timeout de espera de porta expirou. Re-calculando.");
+                }
+                else
+                {
+                    return; // Still waiting — let the Wandering state run (registered in _updateActions)
+                }
+            }
 
             if (_calculatingTries >= 3)
             {
@@ -64,12 +93,27 @@ namespace AMG.AI.Mind
 
                 if (!decisionExecuted)
                 {
-                    LogManager.LogDebug("[AI Brain] Nenhuma decisão pôde ser executada! Incrementando falha e aguardando...");
-                    SetState(Enums.AgentEnums.AgentState.Calculating);
                     _calculatingTries++;
-                    _calculatingTimer.StartDelay(0.4f);
+
+                    // Check if the agent is trapped behind a locked door.
+                    // If so, wander locally instead of retrying expensive A* every 0.4 s.
+                    bool isRoomLocked = Utils.IsRoomClosed(Utils.GetPlayerRoom(myAgent));
+                    if (isRoomLocked)
+                    {
+                        LogManager.LogDebug($"[AI Brain] {baseName} está preso em sala fechada. Aguardando porta abrindo...");
+                        _isWaitingForDoor = true;
+                        _doorWaitTimeout = Time.time + 2f; // Safety timeout: try again after 2s anyway
+                        Utils.OnDoorStateChanged += OnDoorOpenedWhileWaiting;
+                        SetState(Enums.AgentEnums.AgentState.Wandering); // Cheap random walk inside the room
+                    }
+                    else
+                    {
+                        LogManager.LogDebug("[AI Brain] Nenhuma decisão pôde ser executada! Incrementando falha e aguardando...");
+                        SetState(Enums.AgentEnums.AgentState.Calculating);
+                        _calculatingTimer.StartDelay(0.4f);
+                    }
                 }
             }
         }
     }
-}
+}

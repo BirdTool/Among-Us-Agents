@@ -1,4 +1,4 @@
-﻿using AMG.AI.Navigation;
+using AMG.AI.Navigation;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 using System.Collections.Generic;
@@ -10,9 +10,27 @@ namespace AMG.AI.Mind
     {
         public bool IsDead => myAgent.Data.IsDead;
         public Vector2 Vector2Position => myAgent.transform.position;
-        public Waypoint WaypointPosition => Pathfinder.GetClosestNode(Vector2Position);
         public bool IsCrewmate => !myAgent.Data.Role.IsImpostor;
         public bool IsImpostor => myAgent.Data.Role.IsImpostor;
+
+        // Cache for WaypointPosition — re-computed only when agent moves > 0.3 units
+        private Waypoint _cachedWaypointPosition;
+        private Vector2 _lastWaypointCachePosition = new Vector2(float.MinValue, float.MinValue);
+        private const float WAYPOINT_CACHE_THRESHOLD = 0.3f;
+
+        public Waypoint WaypointPosition
+        {
+            get
+            {
+                if (Vector2.Distance(Vector2Position, _lastWaypointCachePosition) > WAYPOINT_CACHE_THRESHOLD)
+                {
+                    _cachedWaypointPosition = Pathfinder.GetClosestNode(Vector2Position);
+                    _lastWaypointCachePosition = Vector2Position;
+                }
+                return _cachedWaypointPosition;
+            }
+        }
+
         
 
         public bool CanReportBody(Vector2 bodyPosition)
