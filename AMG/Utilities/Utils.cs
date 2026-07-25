@@ -334,5 +334,17 @@ namespace AMG.Utilities
         {
             return [.. UnityEngine.Object.FindObjectsOfType<AgentBrain>()];
         }
+
+        public static float GetDisturbTime(float delayTime, float multiplier)
+        {
+            if (multiplier <= 0f)
+                return delayTime;
+
+            float minDelay = Mathf.Max(0.05f, delayTime - (multiplier * 0.5f));
+
+            float maxDelay = delayTime + multiplier;
+
+            return RandomizerExtensions.GetSecureRandomFloat(minDelay, maxDelay);
+        }
     }
 }

@@ -57,17 +57,7 @@ namespace AMG.AI.Mind
             return nearbyBodies;
         }
 
-        public float GetReactionTime()
-        {
-            if (delayDisturb <= 0f)
-                return delayTime;
-
-            float minDelay = Mathf.Max(0.05f, delayTime - (delayDisturb * 0.5f));
-
-            float maxDelay = delayTime + delayDisturb;
-
-            return RandomizerExtensions.GetSecureRandomFloat(minDelay, maxDelay);
-        }
+        public float GetReactionTime() => Utils.GetDisturbTime(delayTime, delayDisturb);
 
         public void SetState(AgentState newState)
         {
