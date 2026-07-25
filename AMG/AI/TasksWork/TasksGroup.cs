@@ -1,5 +1,5 @@
-﻿using AMG.AI.TasksWork.CommonTasks;
 using AMG.Interfaces;
+using AMG.Models.TasksModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,13 @@ namespace AMG.AI.TasksWork
     {
         private static readonly Dictionary<TaskTypes, Func<ITaskWork>> TaskFactories = new()
         {
-            [TaskTypes.SwipeCard] = () => new CardTask(),
+            [TaskTypes.SwipeCard] = () => new MediumTimeTask(),
+            [TaskTypes.UploadData] = () => new AMG.Models.TasksModel.UploadDataTask(),
+            [TaskTypes.ClearAsteroids] = () => new AMG.Models.TasksModel.AsteroidsTask(),
+            [TaskTypes.ResetReactor] = () => new AMG.Models.TasksModel.ResetReactorTask(),
+            [TaskTypes.EmptyGarbage] = () => new AMG.Models.TasksModel.EmptyGarbageTask(),
+            [TaskTypes.EmptyChute] = () => new AMG.Models.TasksModel.EmptyGarbageTask(),
+            [TaskTypes.CleanO2Filter] = () => new AMG.Models.TasksModel.CleanO2Filter(),
         };
 
         public static ITaskWork GetTaskOrGeneric(TaskTypes task)
@@ -36,7 +42,7 @@ namespace AMG.AI.TasksWork
                 }
             }
 
-            return new GenericTask(isShort);
+            return isShort ? new ShortTimeTask() : new LongTimeTask();
         }
     }
 }
