@@ -1,9 +1,10 @@
-﻿using AMG.AI.Navigation;
+﻿using System.Collections.Generic;
+using AMG.AI.Navigation;
 using AMG.AI.Tools;
+using AMG.Enums.SafeRpcEnums; // Adicionado para ler os resultados do reporte
 using AMG.Interfaces;
 using AMG.Models;
 using AMG.Utilities;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace AMG.AI.Mind.Decisions.ParallelDecisions
@@ -73,15 +74,13 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
         private void SawABodyAction(List<RoundDeadBody> bodies, AgentBrain brain)
         {
             if (brain.IsDead) return;
-            LogManager.LogDebug("Agente viu um corpo!");
-            if (bodies.Count < 1)
-            {
-                LogManager.LogDebug("Não há corpos na função");
-                return;
-            }
+
+            if (bodies.Count < 1) return;
+
+            brain.currentLocalTask = null;
+            brain.isGoingToFixASabotage = false;
 
             brain.ReplaceNameTag(DefaultTags.Emotions.Scared, 20f);
-            LogManager.LogDebug("Tag de emoção definida como assutado");
 
             double shouldLookAround = 0;
             if (bodies.Count > 1) shouldLookAround += 0.7;
@@ -97,67 +96,47 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             if (mostRecentBody.TimeSinceDeath < 7) shouldLookAround += 0.6;
 
             // Check for someone else nearby
-            bool isThereSomeoneNearby = false;
-            Waypoint start = Pathfinder.GetClosestNode(mostRecentBody.Position);
-            foreach (PlayerControl player in Utils.Players.AllAlivePlayerNotMe)
-            {
-                Waypoint target = Pathfinder.GetClosestNode(player.transform.position);
-                List<Waypoint> currentCalculatedPath = Pathfinder.FindPath(start, target, out float pathDistance);
-
-                if (currentCalculatedPath != null && pathDistance < 10f)
-                {
-                    isThereSomeoneNearby = true;
-                    break;
-                }
-            }
+            bool isThereSomeoneNearby = brain.GetNearbyPlayers().Count > 0;
 
             if (isThereSomeoneNearby) shouldLookAround += 0.45;
 
-            // shouldLookAround = 1; // Test mode
+            var start = brain.WaypointPosition;
 
-            var playerInfoToReport = GameData.Instance.GetPlayerById(mostRecentBody.PlayerId);
             if (!Utils.ExecuteProbability(shouldLookAround))
             {
-                LogManager.LogDebug("Reportará sem olhar ao redor");
-                LogManager.LogDebug($"Chance de olhar ao redor: {shouldLookAround}");
+                var reportResult = brain.SafeReportBody(mostRecentBody);
 
-                if (playerInfoToReport != null)
+                if (reportResult == ReportDeadBodyRpcEnums.ERROR_BodyDoesNotExist)
                 {
-                    bool canReport = brain.CanReportBody(mostRecentBody.Position);
-                    if (!canReport)
-                    {
-                        var end = Pathfinder.GetClosestNode(mostRecentBody.Position);
-
-                        var path = Pathfinder.FindPath(start, end, out float dist);
-                        brain.CommandGoToPath(path);
-
-                        brain.updateAction = new AgentUpdateAction(() =>
-                        {
-                            bool canReport = brain.CanReportBody(mostRecentBody.Position);
-                            if (canReport)
-                            {
-                                brain.AgentControl.CmdReportDeadBody(playerInfoToReport);
-                                return true;
-                            }
-                            return false;
-                        })
-                        {
-                            ExecuteOnMeeting = false,
-                            DeleteOnMeeting = false,
-                            IsOnlyPredefinedAction = false,
-                        };
-                    }
-                    else
-                    {
-                        brain.AgentControl.CmdReportDeadBody(playerInfoToReport);
-                    }
-                }
-                else
                     LogManager.LogError($"[Agente {brain.AgentControl.PlayerId}] Tentou reportar corpo do ID {mostRecentBody.PlayerId}, mas o registro não existe mais!");
+                }
+                else if (reportResult != ReportDeadBodyRpcEnums.SUCCESS)
+                {
+                    var end = Pathfinder.GetClosestNode(mostRecentBody.Position);
+                    var path = Pathfinder.FindPath(start, end, out float dist);
+
+                    brain.CommandGoToPath(path);
+
+                    brain.updateAction = new AgentUpdateAction(() =>
+                    {
+                        var actionResult = brain.SafeReportBody(mostRecentBody);
+
+                        if (actionResult == ReportDeadBodyRpcEnums.ERROR_BodyDoesNotExist)
+                        {
+                            return true;
+                        }
+
+                        return actionResult == ReportDeadBodyRpcEnums.SUCCESS;
+                    })
+                    {
+                        ExecuteOnMeeting = false,
+                        DeleteOnMeeting = false,
+                        IsOnlyPredefinedAction = false,
+                    };
+                }
             }
             else
             {
-                LogManager.LogDebug($"Olhará ao redor, chance: {shouldLookAround}");
                 Vector2 bodyPos = mostRecentBody.Position;
 
                 List<Waypoint> patrolPoints = [];
@@ -213,36 +192,31 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
                         break;
                 }
 
-                LogManager.LogDebug($"[Agente {brain.AgentControl.PlayerId}] Encontrou {patrolPoints.Count} pontos válidos na mesma área para patrulhar.");
-
                 brain.updateAction = new AgentUpdateAction(() =>
                 {
+
                     if (patrolPoints.Count == 0)
                     {
-                        if (playerInfoToReport != null)
+                        var reportStatus = brain.SafeReportBody(mostRecentBody.PlayerId);
+
+                        if (reportStatus == ReportDeadBodyRpcEnums.ERROR_BodyDoesNotExist)
                         {
-                            bool canReport = brain.CanReportBody(bodyPos);
-                            if (!canReport)
+                            return true;
+                        }
+                        else if (reportStatus != ReportDeadBodyRpcEnums.SUCCESS)
+                        {
+                            if (brain.currentPath == null)
                             {
-                                if (brain.currentPath == null)
-                                {
-                                    var startNode = brain.WaypointPosition;
-                                    var endNode = Pathfinder.GetClosestNode(bodyPos);
-                                    var path = Pathfinder.FindPath(startNode, endNode, out float dist);
-                                    brain.CommandGoToPath(path);
-                                }
-                                return false;
+                                var startNode = brain.WaypointPosition;
+                                var endNode = Pathfinder.GetClosestNode(bodyPos);
+                                var path = Pathfinder.FindPath(startNode, endNode, out float dist);
+                                brain.CommandGoToPath(path);
                             }
-                            else
-                            {
-                                brain.AgentControl.CmdReportDeadBody(playerInfoToReport);
-                                brain.ResetPath();
-                                return true;
-                            }
+                            return false;
                         }
                         else
                         {
-                            LogManager.LogError($"[Agente {brain.AgentControl.PlayerId}] Registro do corpo sumiu!");
+                            brain.ResetPath();
                             return true;
                         }
                     }
@@ -272,7 +246,6 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
                         }
                         else
                         {
-                            LogManager.LogWarning("[AI] Nenhum ponto de patrulha acessível, abortando patrulha.");
                             patrolPoints.Clear();
                         }
                     }

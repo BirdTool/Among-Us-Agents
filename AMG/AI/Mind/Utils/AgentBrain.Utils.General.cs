@@ -31,14 +31,6 @@ namespace AMG.AI.Mind
             }
         }
 
-        
-
-        public bool CanReportBody(Vector2 bodyPosition)
-        {
-            float dist = Vector2.Distance(myAgent.transform.position, bodyPosition);
-            return dist < 3.4f;
-        }
-
         public List<RoundDeadBody> GetNearbyBodies()
         {
             List<RoundDeadBody> nearbyBodies = [];

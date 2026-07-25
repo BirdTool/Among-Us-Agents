@@ -96,7 +96,7 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
             _utilityCache[agentId] = utility;
             _nextUpdateTime[agentId] = Time.time + 1f;
 
-            LogManager.LogDebug($"[TaskDecision-CalculateUtility] AgentId: {agentId}, Utility: {utility}");
+            // LogManager.LogDebug($"[TaskDecision-CalculateUtility] AgentId: {agentId}, Utility: {utility}");
             return utility;
         }
 
@@ -143,7 +143,7 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
                         Pathfinder.FindPath(startNode, endNode, out float realWalkDistance);
                         if (realWalkDistance <= 5f)
                         {
-                            LogManager.LogDebug($"[TaskDecision-Crewmate] Painel de {task.TaskType} esta perto!");
+                            // LogManager.LogDebug($"[TaskDecision-Crewmate] Painel de {task.TaskType} esta perto!");
                             tasksNearby++;
                             break;
                         }
@@ -155,7 +155,7 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
 
             if (validTasksCount == 0)
             {
-                LogManager.LogDebug("[TaskDecision-Crewmate] Falha: Nenhuma task pendente com localizacao valida encontada.");
+                // LogManager.LogDebug("[TaskDecision-Crewmate] Falha: Nenhuma task pendente com localizacao valida encontada.");
                 return 0f;
             }
 
