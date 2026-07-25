@@ -4,6 +4,7 @@ using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
 using InnerNet;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -309,27 +310,6 @@ namespace AMG.Utilities
             OnDoorStateChanged?.Invoke();
         }
 
-        /// <summary>
-        /// Returns true when every door in <paramref name="room"/> is closed.
-        /// Always reads live door state — no caching — so it is safe to call
-        /// every frame from movement and parallel-decision checks.
-        /// </summary>
-        public static bool IsRoomClosed(SystemTypes room)
-        {
-            if (ShipStatus.Instance == null) return false;
-
-            bool hasDoor = false;
-            foreach (var door in ShipStatus.Instance.AllDoors)
-            {
-                if (door.Room != room) continue;
-                hasDoor = true;
-                if (door.IsOpen) return false; // Any open door → room accessible
-            }
-
-            // True only if at least one door exists AND none were open
-            return hasDoor;
-        }
-
         public static List<AgentBrain> GetAllBrains()
         {
             return [.. UnityEngine.Object.FindObjectsOfType<AgentBrain>()];
@@ -345,6 +325,63 @@ namespace AMG.Utilities
             float maxDelay = delayTime + multiplier;
 
             return RandomizerExtensions.GetSecureRandomFloat(minDelay, maxDelay);
+        }
+
+        private static readonly ConcurrentDictionary<SystemTypes, bool> _closedRoomsSnapshot = new();
+
+        /// <summary>
+        /// [MAIN THREAD APENAS] Tira uma "fotografia" do estado das portas.
+        /// Chame isso no Update() principal do seu mod ou quando uma porta mudar de estado.
+        /// </summary>
+        public static void TakeDoorsSnapshot()
+        {
+            if (ShipStatus.Instance == null)
+            {
+                _closedRoomsSnapshot.Clear();
+                return;
+            }
+
+            // Usamos um dicionário temporário para calcular, assim não travamos
+            // a leitura da outra thread enquanto fazemos o loop.
+            var tempSnapshot = new Dictionary<SystemTypes, bool>();
+
+            foreach (var door in ShipStatus.Instance.AllDoors)
+            {
+                // Se a sala da porta ainda não está no registro, assumimos que está fechada por padrão
+                if (!tempSnapshot.ContainsKey(door.Room))
+                {
+                    tempSnapshot[door.Room] = true;
+                }
+
+                // Se acharmos PELO MENOS UMA porta aberta nessa sala, ela se torna acessível!
+                if (door.IsOpen)
+                {
+                    tempSnapshot[door.Room] = false;
+                }
+            }
+
+            // Transfere os resultados calculados para o nosso cache Thread-Safe
+            _closedRoomsSnapshot.Clear();
+            foreach (var room in tempSnapshot)
+            {
+                _closedRoomsSnapshot[room.Key] = room.Value;
+            }
+        }
+
+        /// <summary>
+        /// [100% THREAD-SAFE] Lê o Snapshot. Pode ser chamado em qualquer Task!
+        /// Substitui a sua função antiga.
+        /// </summary>
+        public static bool IsRoomClosed(SystemTypes room)
+        {
+            // Tenta pegar o estado no snapshot. Se a sala não tiver portas,
+            // ela não vai estar no dicionário, então TryGetValue retorna falso (Acessível).
+            if (_closedRoomsSnapshot.TryGetValue(room, out bool isClosed))
+            {
+                return isClosed;
+            }
+            
+            return false; 
         }
     }
 }

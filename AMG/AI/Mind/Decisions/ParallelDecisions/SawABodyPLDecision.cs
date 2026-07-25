@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.SafeRpcEnums; // Adicionado para ler os resultados do reporte
@@ -13,6 +14,64 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
     {
         private Dictionary<byte, CooldownTimer> _agentCognitiveTimes = [];
         private Dictionary<byte, List<RoundDeadBody>> _agentsPendingBodiesToReact = [];
+
+        private readonly struct BodyReactionInput
+        {
+            public Vector2 AgentPosition { get; init; }
+            public Waypoint AgentStart { get; init; }
+            public List<RoundDeadBody> Bodies { get; init; }
+            public bool SomeoneNearby { get; init; }
+        }
+
+        private readonly struct BodyReactionPlan
+        {
+            public RoundDeadBody TargetBody { get; init; }
+            public bool ShouldLookAround { get; init; }
+            public List<Waypoint> PatrolPoints { get; init; }
+        }
+
+        // background
+        private BodyReactionPlan ComputeReactionPlan(BodyReactionInput input)
+        {
+            RoundDeadBody mostRecentBody = null;
+            double shouldLookAround = input.Bodies.Count > 1 ? 0.7 : 0;
+
+            foreach (var body in input.Bodies)
+                if (mostRecentBody == null || body.TimeOfDeath > mostRecentBody.TimeOfDeath)
+                    mostRecentBody = body;
+
+            if (mostRecentBody.TimeSinceDeath < 7) shouldLookAround += 0.6;
+            if (input.SomeoneNearby) shouldLookAround += 0.45;
+
+            if (!Utils.ExecuteProbability(shouldLookAround))
+                return new BodyReactionPlan { TargetBody = mostRecentBody, ShouldLookAround = false };
+
+            Vector2 bodyPos = mostRecentBody.Position;
+            Waypoint agentNode = Pathfinder.GetClosestNode(input.AgentPosition);
+            Vector2 dir = (bodyPos - input.AgentPosition).normalized;
+
+            var candidates = new List<Waypoint>();
+            foreach (var wp in WaypointManager.AllWaypoints)
+            {
+                float d = Vector2.Distance(bodyPos, wp.Position);
+                if (d < 2.5f || d > 12f) continue;
+                if (Vector2.Dot(dir, (wp.Position - bodyPos).normalized) >= -0.4f)
+                    candidates.Add(wp);
+            }
+            candidates.Sort((a, b) => Vector2.Distance(bodyPos, a.Position).CompareTo(Vector2.Distance(bodyPos, b.Position)));
+
+            var patrolPoints = new List<Waypoint>();
+            foreach (var node in candidates)
+            {
+                if (patrolPoints.Exists(p => Vector2.Distance(node.Position, p.Position) < 2.5f)) continue;
+                var path = Pathfinder.FindPath(agentNode, node, out float dist);
+                if (path == null || dist > 18f) continue;
+                patrolPoints.Add(node);
+                if (patrolPoints.Count >= 2) break;
+            }
+
+            return new BodyReactionPlan { TargetBody = mostRecentBody, ShouldLookAround = true, PatrolPoints = patrolPoints };
+        }
 
         private CooldownTimer GetAgentCognitiveTimer(byte agentId)
         {
@@ -37,72 +96,54 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             if (brain.sawABody) return;
 
             byte id = brain.AgentControl.PlayerId;
-
             var cognitiveTimer = GetAgentCognitiveTimer(id);
             var pendingBodiesToReact = GetAgentPendingBodies(id);
-
             var nearbyBodies = brain.GetNearbyBodies();
 
-            if (nearbyBodies.Count > 0)
+            if (nearbyBodies.Count > 0 && !cognitiveTimer.IsRunning && pendingBodiesToReact == null)
             {
-                if (!cognitiveTimer.IsRunning && pendingBodiesToReact == null)
-                {
-                    var reactionTime = brain.GetReactionTime();
-                    cognitiveTimer.StartDelay(reactionTime);
-                    _agentsPendingBodiesToReact[id] = nearbyBodies;
-
-                    return;
-                }
+                cognitiveTimer.StartDelay(brain.GetReactionTime());
+                _agentsPendingBodiesToReact[id] = nearbyBodies;
+                return;
             }
 
-            if (pendingBodiesToReact != null)
+            if (pendingBodiesToReact != null && cognitiveTimer.Consume())
             {
-                if (cognitiveTimer.Consume())
+                brain.sawABody = true; // main thread, sem problema
+
+                var input = new BodyReactionInput
                 {
-                    brain.sawABody = true;
+                    AgentPosition = brain.AgentControl.transform.position,
+                    AgentStart = brain.WaypointPosition,
+                    Bodies = pendingBodiesToReact,
+                    SomeoneNearby = brain.GetNearbyPlayers().Count > 0
+                };
+                _agentsPendingBodiesToReact.Remove(id);
 
-                    SawABodyAction(pendingBodiesToReact, brain);
-
-                    _agentsPendingBodiesToReact.Remove(id);
-                    return;
-                }
+                Task.Run(() => ComputeReactionPlan(input))
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            LogManager.LogError($"[SawABodyPLDecision] {t.Exception}");
+                            return;
+                        }
+                        MainThreadDispatcher.Enqueue(() => ApplyReactionPlan(brain, t.Result));
+                    });
             }
-
-            return;
         }
 
-        private void SawABodyAction(List<RoundDeadBody> bodies, AgentBrain brain)
+        private void ApplyReactionPlan(AgentBrain brain, BodyReactionPlan plan)
         {
             if (brain.IsDead) return;
 
-            if (bodies.Count < 1) return;
-
             brain.currentLocalTask = null;
             brain.isGoingToFixASabotage = false;
-
             brain.ReplaceNameTag(DefaultTags.Emotions.Scared, 20f);
 
-            double shouldLookAround = 0;
-            if (bodies.Count > 1) shouldLookAround += 0.7;
-            RoundDeadBody mostRecentBody = null;
-            foreach (RoundDeadBody body in bodies)
-            {
-                if (mostRecentBody == null || body.TimeOfDeath > mostRecentBody.TimeOfDeath)
-                {
-                    mostRecentBody = body;
-                }
-            }
+            RoundDeadBody mostRecentBody = plan.TargetBody;
 
-            if (mostRecentBody.TimeSinceDeath < 7) shouldLookAround += 0.6;
-
-            // Check for someone else nearby
-            bool isThereSomeoneNearby = brain.GetNearbyPlayers().Count > 0;
-
-            if (isThereSomeoneNearby) shouldLookAround += 0.45;
-
-            var start = brain.WaypointPosition;
-
-            if (!Utils.ExecuteProbability(shouldLookAround))
+            if (!plan.ShouldLookAround)
             {
                 var reportResult = brain.SafeReportBody(mostRecentBody);
 
@@ -112,6 +153,7 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
                 }
                 else if (reportResult != ReportDeadBodyRpcEnums.SUCCESS)
                 {
+                    var start = brain.WaypointPosition;
                     var end = Pathfinder.GetClosestNode(mostRecentBody.Position);
                     var path = Pathfinder.FindPath(start, end, out float dist);
 
@@ -122,9 +164,7 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
                         var actionResult = brain.SafeReportBody(mostRecentBody);
 
                         if (actionResult == ReportDeadBodyRpcEnums.ERROR_BodyDoesNotExist)
-                        {
                             return true;
-                        }
 
                         return actionResult == ReportDeadBodyRpcEnums.SUCCESS;
                     })
@@ -138,71 +178,16 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             else
             {
                 Vector2 bodyPos = mostRecentBody.Position;
-
-                List<Waypoint> patrolPoints = [];
-                Waypoint agentNodeStart = Pathfinder.GetClosestNode(brain.AgentControl.transform.position);
-
-                Vector2 agentPos2D = brain.AgentControl.transform.position;
-                Vector2 agentToBodyDir = (bodyPos - agentPos2D).normalized;
-
-                List<Waypoint> candidateNodes = [];
-                foreach (var wp in WaypointManager.AllWaypoints)
-                {
-                    float distToBody = Vector2.Distance(bodyPos, wp.Position);
-
-                    if (distToBody >= 2.5f && distToBody <= 12f)
-                    {
-                        if (distToBody < 0.1f) continue;
-
-                        Vector2 bodyToNodeDir = (wp.Position - bodyPos).normalized;
-
-                        if (Vector2.Dot(agentToBodyDir, bodyToNodeDir) >= -0.4f)
-                        {
-                            candidateNodes.Add(wp);
-                        }
-                    }
-                }
-
-                candidateNodes.Sort((a, b) =>
-                    Vector2.Distance(bodyPos, a.Position).CompareTo(Vector2.Distance(bodyPos, b.Position))
-                );
-
-                foreach (Waypoint node in candidateNodes)
-                {
-                    bool isRedundant = false;
-                    foreach (Waypoint existingPoint in patrolPoints)
-                    {
-                        if (Vector2.Distance(node.Position, existingPoint.Position) < 2.5f)
-                        {
-                            isRedundant = true;
-                            break;
-                        }
-                    }
-
-                    if (isRedundant) continue;
-
-                    var testPath = Pathfinder.FindPath(agentNodeStart, node, out float walkingDistToNode);
-
-                    if (testPath == null || walkingDistToNode > 18f)
-                        continue;
-
-                    patrolPoints.Add(node);
-
-                    if (patrolPoints.Count >= 2)
-                        break;
-                }
+                var patrolPoints = plan.PatrolPoints ?? new List<Waypoint>();
 
                 brain.updateAction = new AgentUpdateAction(() =>
                 {
-
                     if (patrolPoints.Count == 0)
                     {
                         var reportStatus = brain.SafeReportBody(mostRecentBody.PlayerId);
 
                         if (reportStatus == ReportDeadBodyRpcEnums.ERROR_BodyDoesNotExist)
-                        {
                             return true;
-                        }
                         else if (reportStatus != ReportDeadBodyRpcEnums.SUCCESS)
                         {
                             if (brain.currentPath == null)
