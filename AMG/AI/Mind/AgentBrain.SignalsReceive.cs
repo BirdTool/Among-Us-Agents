@@ -1,24 +1,21 @@
 using AMG.Enums;
+using AMG.Interfaces;
+using AMG.Models.Signals;
 
 namespace AMG.AI.Mind
 {
     public partial class AgentBrain
     {
-        private void OnSignalReceived(SignalsEnum signal)
+        private void OnSignalReceived(ISignalClass signal)
         {
             switch (signal)
             {
-                case SignalsEnum.KILL:
-                    break;
-                case SignalsEnum.VENT:
-                    break;
-                case SignalsEnum.SHAPESHIFTER_ABILITY:
-                    break;
-                case SignalsEnum.PHANTOM_ABILITY:
+                case KillSignal killSignal:
+                    OnKillSignalReceived(killSignal);
                     break;
             }
         }
 
-        public void SignalReceive(SignalsEnum signal) => OnSignalReceived(signal);
+        public void SignalReceive(ISignalClass signal) => OnSignalReceived(signal);
     }
 }

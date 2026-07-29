@@ -2,13 +2,19 @@
 using AMG.Utilities;
 using AMG.AI.Tools;
 using System.Linq;
+using AMG.AI.Mind.ChatDecisions;
+using AMG.Enums.SafeRpcEnums;
 
 namespace AMG.AI.Mind
 {
     public partial class AgentBrain
     {
-        private CooldownTimer _voteTimer = new CooldownTimer();
-        private bool _isVoteTimerStarted = false;
+        private readonly CooldownTimer _chatTimer = new();
+        private ChatOutput _chatOutput;
+        private bool _isThinkingAboutChat = false; 
+        
+        private SendingMessageType? _pendingChatType;
+        private string _pendingChatText;
 
         public static bool IsAuthorizedToVote = false;
 
@@ -19,41 +25,60 @@ namespace AMG.AI.Mind
             if (Utils.IsMeeting || Utils.IsExiling)
             {
                 SetState(AgentState.OnMeeting);
+                if (updateAction != null && updateAction.DeleteOnMeeting) updateAction = null;
+                _chatOutput ??= new ChatOutput(this);
 
-                if (Utils.IsMeetingVoting && !MeetingHud.Instance.DidVote(myAgent.PlayerId))
+                if (!_chatTimer.IsRunning && !_isThinkingAboutChat)
                 {
-                    if (!_isVoteTimerStarted)
-                    {
-                        float humanReactionTime = RandomizerExtensions.GetSecureRandomFloat(3f, 8f);
-                        _voteTimer.StartDelay(humanReactionTime);
-                        _isVoteTimerStarted = true;
-                    }
+                    _pendingChatType = _chatOutput.Evaluate();
 
-                    if (_voteTimer.Consume())
+                    if (_pendingChatType != null)
                     {
-                        var candidates = Utils.Players.AllAlivePlayerNotMe;
-                        int cnt = candidates.Count();
-                        if (cnt > 0)
+                        _pendingChatText = _chatOutput.GetMessage(_pendingChatType.Value);
+                        
+                        if (!string.IsNullOrEmpty(_pendingChatText))
                         {
-                            var randomPlayerToVote = candidates.ElementAt(RandomizerExtensions.GetSecureRandomInt(0, cnt));
-
-                            IsAuthorizedToVote = true;
-                            MeetingHud.Instance.CmdCastVote(myAgent.PlayerId, randomPlayerToVote.PlayerId);
-                            IsAuthorizedToVote = false;
+                            float baseReaction = GetReactionTime() + RandomizerExtensions.GetSecureRandomFloat(0, 3f);
+                            float typingSpeed = (_pendingChatText.Length * 0.15f) + GetReactionTime();
+                            
+                            _chatTimer.StartDelay(baseReaction + typingSpeed);
+                            _isThinkingAboutChat = true;
                         }
                     }
                 }
-                else if (!Utils.IsMeetingVoting)
-                {
-                    _isVoteTimerStarted = false;
-                }
 
+                if (_isThinkingAboutChat)
+                {
+                    if (_chatTimer.Consume())
+                    {
+                        if (_pendingChatType != null && !string.IsNullOrEmpty(_pendingChatText))
+                        {
+                            var result = SafeSendChat(_pendingChatText);
+                            
+                            if (result == ChatRpcEnums.SUCCESS)
+                            {
+                                _chatOutput.MarkAsSent(_pendingChatType.Value);
+                                LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Enviou mensagem de chat com SUCESSO!");
+                            }
+                        }
+                        
+                        _isThinkingAboutChat = false; 
+                        _pendingChatType = null;
+                        _pendingChatText = null;
+                    }
+                }
                 return;
             }
             else
             {
+                bodiesSeenDead.Clear();
+                
+                _isThinkingAboutChat = false; 
+                _pendingChatType = null;
+                _pendingChatText = null;
+                _chatOutput = null; 
+                
                 SetState(AgentState.Calculating);
-                _isVoteTimerStarted = false;
             }
         }
     }

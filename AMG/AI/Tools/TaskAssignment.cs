@@ -4,9 +4,6 @@ using System;
 using System.Collections.Generic;
 using static NetworkedPlayerInfo;
 
-// Issues to fix:
-// The task bar doesn't increase when the agent does its task [IMPORTANT, I'M TRYING TO FIX IT]
-
 namespace AMG.AI.Tools
 {
     public static class TaskAssignment
@@ -94,8 +91,6 @@ namespace AMG.AI.Tools
 
                     var taskInfo = new TaskInfo((byte)spawnedTask.Id, (uint)spawnedTask.TaskType);
                     pInfo.Tasks.Add(taskInfo);
-
-                    LogManager.LogDebug($"[TaskAssignment] Registrado no GameData: Id={spawnedTask.Id}, Type={spawnedTask.TaskType}");
                 }
 
                 spawnedTask.Initialize();
@@ -104,9 +99,6 @@ namespace AMG.AI.Tools
             }
 
             GameData.Instance?.RecomputeTaskCounts();
-
-            if (GameData.Instance != null)
-                LogManager.LogDebug($"[TaskAssignment] Após recálculo: TotalTasks={GameData.Instance.TotalTasks}, CompletedTasks={GameData.Instance.CompletedTasks}");
         }
 
         public static void AssignTasks(List<PlayerControl> playerList)

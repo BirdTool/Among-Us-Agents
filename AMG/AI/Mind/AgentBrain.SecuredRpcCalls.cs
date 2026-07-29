@@ -8,6 +8,7 @@ namespace AMG.AI.Mind
     public partial class AgentBrain
     {
         private static RoundDeadBody GetDeadBodyByPlayerId(byte playerId) => Utils.Round.CurrentRoundDeadBodies.FirstOrDefault(b => b.PlayerId == playerId);
+        private float _lastMessage = 0;
 
         public ReportDeadBodyRpcEnums SafeReportBodyNotExecute(byte playerId)
         {
@@ -104,6 +105,65 @@ namespace AMG.AI.Mind
             bool didKillSucceed = result == SafeKillRpcEnums.SUCCESS;
             
             AgentControl.RpcMurderPlayer(Utils.Players.GetPlayerByPlayerId(targetId), didKillSucceed);
+
+            return result;
+        }
+
+        public VoteRpcEnums SafeVoteNotExecute(byte playerId)
+        {
+            if (IsDead) return VoteRpcEnums.ERROR_AgentIsDead;
+            if (!Utils.IsMeeting) return VoteRpcEnums.ERROR_IsNotInMeeting;
+            if (!Utils.IsMeetingVoting) return VoteRpcEnums.ERROR_IsNotInVoteTime;
+            
+            if (playerId != unchecked((byte)-1) && playerId != 255)
+            {
+                var target = Utils.Players.GetPlayerByPlayerId(playerId);
+                if (target == null) return VoteRpcEnums.ERROR_TargetDoesNotExist;
+                if (target.Data.IsDead) return VoteRpcEnums.ERROR_TargetIsDead;
+            }
+            if (MeetingHud.Instance.DidVote(myAgent.PlayerId)) return VoteRpcEnums.ERROR_AlreadyVoted;
+
+            return VoteRpcEnums.SUCCESS;
+        }
+
+        public VoteRpcEnums SafeVote(byte playerId)
+        {
+            if (playerId == unchecked((byte)-1)) playerId = byte.MaxValue;
+            var result = SafeVoteNotExecute(playerId);
+            
+            if (result != VoteRpcEnums.SUCCESS) 
+            {
+                return result;
+            }
+            
+            IsAuthorizedToVote = true;
+            MeetingHud.Instance.CmdCastVote(myAgent.PlayerId, playerId);
+            IsAuthorizedToVote = false;
+
+            return result;
+        }
+
+        public ChatRpcEnums SafeSendChatNotExecute(string content)
+        {
+            if (!Utils.IsMeeting || IsDead) return ChatRpcEnums.ERROR_IsNotInMeeting;
+            if (content.Length > 100) return ChatRpcEnums.ERROR_ContentIsBiggerThan100;
+            if (string.IsNullOrEmpty(content)) return ChatRpcEnums.ERROR_ContentIsEmpty;
+            if (Time.time - _lastMessage < 3f) return ChatRpcEnums.ERROR_InCooldown;
+
+            return ChatRpcEnums.SUCCESS;
+        }
+
+        public ChatRpcEnums SafeSendChat(string content)
+        {
+            var result = SafeSendChatNotExecute(content);
+            
+            if (result != ChatRpcEnums.SUCCESS) 
+            {
+                return result;
+            }
+            
+            AgentControl.RpcSendChat(content);
+            _lastMessage = Time.time;
 
             return result;
         }
