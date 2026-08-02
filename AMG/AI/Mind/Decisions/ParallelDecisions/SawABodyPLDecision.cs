@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using AMG.AI.Navigation;
 using AMG.AI.Tools;
-using AMG.Enums.SafeRpcEnums; // Adicionado para ler os resultados do reporte
+using AMG.Enums.SafeRpcEnums;
 using AMG.Interfaces;
 using AMG.Models;
 using AMG.Utilities;
@@ -34,10 +34,17 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
 
         public void Evaluate(AgentBrain brain)
         {
-            if (brain.sawABody) return;
-
             byte id = brain.AgentControl.PlayerId;
 
+            if (brain.sawABody) 
+            {
+                if (_agentsPendingBodiesToReact.ContainsKey(id))
+                {
+                    _agentsPendingBodiesToReact.Remove(id);
+                    GetAgentCognitiveTimer(id).Stop();
+                }
+                return;
+            }
             var cognitiveTimer = GetAgentCognitiveTimer(id);
             var pendingBodiesToReact = GetAgentPendingBodies(id);
 
@@ -50,6 +57,8 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
                     var reactionTime = brain.GetReactionTime();
                     cognitiveTimer.StartDelay(reactionTime);
                     _agentsPendingBodiesToReact[id] = nearbyBodies;
+
+                    brain.bodiesSeenDead.AddRange(nearbyBodies);
 
                     return;
                 }
@@ -130,7 +139,7 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
                     })
                     {
                         ExecuteOnMeeting = false,
-                        DeleteOnMeeting = false,
+                        DeleteOnMeeting = true,
                         IsOnlyPredefinedAction = false,
                     };
                 }

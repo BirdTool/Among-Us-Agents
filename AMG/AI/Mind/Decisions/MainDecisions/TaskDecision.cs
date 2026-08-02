@@ -285,7 +285,7 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
                 }
             }
 
-            LogManager.LogDebug($"[TaskDecision-Execute] SUCESSO! Agente comandado para task: {bestTaskData.Task.TaskType}");
+            // LogManager.LogDebug($"[TaskDecision-Execute] SUCESSO! Agente comandado para task: {bestTaskData.Task.TaskType}");
             brain.currentLocalTask = bestTaskData.Task;
             brain.CommandGoToPath(bestTaskData.Path);
 

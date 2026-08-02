@@ -18,6 +18,8 @@ namespace AMG.AI.Mind
         private Vector2 _lastWaypointCachePosition = new Vector2(float.MinValue, float.MinValue);
         private const float WAYPOINT_CACHE_THRESHOLD = 0.3f;
 
+        public byte AgentId => myAgent.PlayerId;
+
         public Waypoint WaypointPosition
         {
             get

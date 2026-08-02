@@ -5,7 +5,7 @@ namespace AMG.Utilities
 {
     public static partial class Utils
     {
-        public static class Colors
+        public static class Colours
         {
             internal static Dictionary<string, PlayerColorsEnum> colorMap = new()
         {
@@ -29,17 +29,24 @@ namespace AMG.Utilities
             { "coral", PlayerColorsEnum.Coral },
         };
 
-            internal static PlayerColorsEnum? GetPlayerColor(PlayerControl player)
+            public static PlayerColorsEnum? GetPlayerColor(PlayerControl player)
             {
-                if (colorMap.TryGetValue(player.Data.ColorName.ToLower(), out PlayerColorsEnum color))
+                var raw = player.Data.ColorName;
+                if (string.IsNullOrEmpty(raw)) return null;
+
+                var cleaned = raw.Trim().Trim('(', ')').Trim().ToLowerInvariant();
+
+                if (colorMap.TryGetValue(cleaned, out PlayerColorsEnum color))
                     return color;
 
                 return null;
             }
 
-            internal static PlayerColorsEnum? GetPlayerColor(string colorName)
+            public static PlayerColorsEnum? GetPlayerColor(string colorName)
             {
-                if (colorMap.TryGetValue(colorName.ToLower(), out PlayerColorsEnum color))
+                var cleaned = colorName.Trim().Trim('(', ')').Trim().ToLowerInvariant();
+                
+                if (colorMap.TryGetValue(cleaned, out PlayerColorsEnum color))
                     return color;
 
                 return null;

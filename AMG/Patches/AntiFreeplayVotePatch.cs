@@ -3,7 +3,7 @@ using AMG.AI.Control;
 using AMG.AI.Mind;
 using System.Linq;
 
-namespace AMG.AI.Patches
+namespace AMG.Patches
 {
     [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.CmdCastVote))]
     public static class AntiFreeplayVotePatch

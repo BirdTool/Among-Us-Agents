@@ -1,12 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using AMG.AI.Mind;
 using AMG.Interfaces;
 using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
 using InnerNet;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace AMG.Utilities
@@ -48,7 +48,7 @@ namespace AMG.Utilities
         internal static bool IsCrewmateRole(RoleTypes role) => !IsImpostorRole(role);
 
         internal static int RemainingKills => Players.AllAliveCrewmates.Count() - Players.AllAliveImpostors.Count();
-        
+
         public static int TotalTasks
         {
             get
@@ -282,16 +282,22 @@ namespace AMG.Utilities
             return RandomizerExtensions.GetSecureRandomInt(0, 100) < chance;
         }
 
-        public static bool CanSeeTheTarget(Vector2 origin, Vector2 destination, float distance)
+        public static bool CanSeeTheTarget(Vector2 origin, Vector2 destination, float maxDistance)
         {
-            Vector2 direction = (destination - origin).normalized;
+            Vector2 raisedOrigin = new(origin.x, origin.y + 0.5f);
+            Vector2 raisedDest = new(destination.x, destination.y + 0.5f);
 
-            RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, distance);
+            float actualDistance = Vector2.Distance(raisedOrigin, raisedDest);
+
+            if (actualDistance > maxDistance) return false;
+
+            Vector2 direction = (raisedDest - raisedOrigin).normalized;
+
+            RaycastHit2D[] hits = Physics2D.RaycastAll(raisedOrigin, direction, actualDistance);
 
             foreach (var hit in hits)
             {
                 if (hit.collider.isTrigger) continue;
-
                 if (hit.collider.gameObject.GetComponent<PlayerControl>() != null) continue;
 
                 return false;
