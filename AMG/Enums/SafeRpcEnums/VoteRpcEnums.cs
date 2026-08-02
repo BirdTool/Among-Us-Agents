@@ -8,6 +8,7 @@ namespace AMG.Enums.SafeRpcEnums
         ERROR_AlreadyVoted,
         ERROR_IsNotInMeeting,
         ERROR_IsNotInVoteTime,
+        FAILED_UnknownError,
         SUCCESS
     }
 }

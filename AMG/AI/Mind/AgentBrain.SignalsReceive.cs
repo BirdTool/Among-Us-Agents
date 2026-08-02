@@ -13,6 +13,9 @@ namespace AMG.AI.Mind
                 case KillSignal killSignal:
                     OnKillSignalReceived(killSignal);
                     break;
+                case VentSignal ventSignal:
+                    OnVentSignalReceived(ventSignal);
+                    break;
             }
         }
 

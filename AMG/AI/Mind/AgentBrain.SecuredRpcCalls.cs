@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AMG.Enums.SafeRpcEnums;
 using AMG.Utilities;
@@ -138,6 +139,13 @@ namespace AMG.AI.Mind
             
             IsAuthorizedToVote = true;
             MeetingHud.Instance.CmdCastVote(myAgent.PlayerId, playerId);
+            try {
+                MeetingHud.Instance.CastVote(myAgent.PlayerId, playerId);
+            } catch (Exception ex) {
+                LogManager.LogError($"[Agente {AgentControl.PlayerId}] Exceção ao votar (playerId={playerId}): {ex}");
+                IsAuthorizedToVote = false;
+                return VoteRpcEnums.FAILED_UnknownError;
+            }
             IsAuthorizedToVote = false;
 
             return result;

@@ -31,14 +31,33 @@ namespace AMG.AI.Mind.ChatDecisions
 
             return playersThatWereCaughtKillingAlive;
         }
+        public List<PlayerControl> GetPlayersThatSawVenting()
+        {
+            var memories = brain.GetMemories().Where(memory => memory.SawVenting);
+            if (!memories.Any()) return [];
+
+            List<PlayerControl> playersThatSawVentingAlive = [];
+            foreach (var memory in memories)
+            {
+                var player = Utils.Players.GetPlayerByPlayerId(memory.PlayerId);
+                if (player != null && !player.Data.IsDead)
+                {
+                    playersThatSawVentingAlive.Add(player);
+                }
+            }
+
+            return playersThatSawVentingAlive;
+        }
         
         public SendingMessageType? Evaluate()
         {
             var playersThatWereCaughtKillingAlive = GetPlayersThatWereCaughtKilling();
+            var playersThatSawVentingAlive = GetPlayersThatSawVenting();
             
             if (playersThatWereCaughtKillingAlive.Count > 0 && !_alreadySentMessages.Contains(SendingMessageType.SawKillingAffirming)) return SendingMessageType.SawKillingAffirming;
+            if (playersThatSawVentingAlive.Count > 0 && !_alreadySentMessages.Contains(SendingMessageType.VentingAffirming)) return SendingMessageType.VentingAffirming;
             if (brain.bodiesSeenDead.Count > 0 && !_alreadySentMessages.Contains(SendingMessageType.BodyLocationAffirming)) return SendingMessageType.BodyLocationAffirming;
-            if (SecondsSinceStart < 5 && !_alreadySentMessages.Contains(SendingMessageType.BodyLocationQuestion) && !_alreadySentMessages.Contains(SendingMessageType.BodyLocationAffirming) && !_alreadySentMessages.Contains(SendingMessageType.SawKillingAffirming)) return SendingMessageType.BodyLocationQuestion;
+            if (SecondsSinceStart < 5 && !_alreadySentMessages.Contains(SendingMessageType.BodyLocationQuestion) && !_alreadySentMessages.Contains(SendingMessageType.BodyLocationAffirming) && !_alreadySentMessages.Contains(SendingMessageType.SawKillingAffirming) && !_alreadySentMessages.Contains(SendingMessageType.VentingAffirming)) return SendingMessageType.BodyLocationQuestion;
 
             return null;
         }
@@ -135,6 +154,26 @@ namespace AMG.AI.Mind.ChatDecisions
                     return "I don't remember where the body was.";
                 case SendingMessageType.BodyLocationQuestion:
                     return "Where was the body?";
+                case SendingMessageType.VentingAffirming:
+                    var playersThatSawVentingAlive = GetPlayersThatSawVenting();
+                    if (playersThatSawVentingAlive.Count == 0) break;
+                    
+                    StringBuilder ventingMessage = new();
+                    ventingMessage.Append("I saw ");
+                    for (int i = 0; i < playersThatSawVentingAlive.Count; i++)
+                    {
+                        ventingMessage.Append(Utils.Colours.GetPlayerColor(playersThatSawVentingAlive[i]));
+                        if (i < playersThatSawVentingAlive.Count - 2)
+                        {
+                            ventingMessage.Append(", ");
+                        }
+                        else if (i == playersThatSawVentingAlive.Count - 2)
+                        {
+                            ventingMessage.Append(" and ");
+                        }
+                    }
+                    ventingMessage.Append(" venting!");
+                    return ventingMessage.ToString();
                 default:
                     break;
             }
