@@ -4,7 +4,6 @@ using AMG.AI.Tools;
 using System.Linq;
 using AMG.AI.Mind.ChatDecisions;
 using AMG.Enums.SafeRpcEnums;
-using Reactor.Utilities.Extensions;
 
 namespace AMG.AI.Mind
 {

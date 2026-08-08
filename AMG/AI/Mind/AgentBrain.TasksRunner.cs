@@ -1,11 +1,11 @@
-﻿using AMG.AI.Navigation;
+﻿using System.Collections.Generic;
+using System.Linq;
+using AMG.AI.Navigation;
 using AMG.AI.TasksWork;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
 using AMG.Utilities;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AMG.AI.Mind
 {
@@ -41,14 +41,12 @@ namespace AMG.AI.Mind
 
                     if (normalTask != null)
                     {
-                        normalTask.taskStep++;
+                        // normalTask.taskStep++;
+                        normalTask.NextStep();
 
                         if (normalTask.taskStep >= normalTask.MaxStep)
                         {
                             normalTask.taskStep = normalTask.MaxStep;
-
-                            myAgent.myTasks.Remove(gameTask);
-                            AITasks.Remove(taskId);
 
                             if (GameData.Instance != null)
                             {
@@ -106,13 +104,20 @@ namespace AMG.AI.Mind
 
         private void UpdateDoingTask()
         {
-            if (currentLocalTask == null)
+            if (currentLocalTask == null ||
+                currentLocalTask.IsComplete ||
+                !myAgent.myTasks.ToArray().Any(p => p.Id == currentLocalTask.Id))
             {
+                AITasks.Remove(currentLocalTask?.Id ?? 0);
+                currentLocalTask = null;
                 SetState(AgentState.Calculating);
+                return;
             }
+
             bool success = TryExecuteTask(currentLocalTask.Id);
             if (success)
             {
+                currentLocalTask = null;
                 SetState(AgentState.Calculating);
             }
         }

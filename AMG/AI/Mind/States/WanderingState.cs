@@ -18,8 +18,7 @@ namespace AMG.AI.Mind
             if (directionChangeTimer <= 0f) ChangeRandomDirection();
 
             Vector2 velocity = currentDirection * speed;
-            myAgent.MyPhysics.body.velocity = velocity;
-            FlipSprite(currentDirection);
+            SetVelocity(velocity);
 
             ReplaceNameTag(DefaultTags.States.Wandering);
         }
@@ -40,7 +39,7 @@ namespace AMG.AI.Mind
             {
                 currentPath = null;
                 currentPathIndex = 0;
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
+                SetVelocity(Vector2.zero);
                 SetState(AgentState.Calculating);
             }
         }

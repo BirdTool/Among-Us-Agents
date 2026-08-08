@@ -10,6 +10,7 @@ namespace AMG.AI.Mind
     {
         private static RoundDeadBody GetDeadBodyByPlayerId(byte playerId) => Utils.Round.CurrentRoundDeadBodies.FirstOrDefault(b => b.PlayerId == playerId);
         private float _lastMessage = 0;
+        private const byte SkipVotePlayerId = 253;
 
         public ReportDeadBodyRpcEnums SafeReportBodyNotExecute(byte playerId)
         {
@@ -116,7 +117,7 @@ namespace AMG.AI.Mind
             if (!Utils.IsMeeting) return VoteRpcEnums.ERROR_IsNotInMeeting;
             if (!Utils.IsMeetingVoting) return VoteRpcEnums.ERROR_IsNotInVoteTime;
             
-            if (playerId != unchecked((byte)-1) && playerId != 255)
+            if (playerId != unchecked((byte)-1) && playerId <= 250)
             {
                 var target = Utils.Players.GetPlayerByPlayerId(playerId);
                 if (target == null) return VoteRpcEnums.ERROR_TargetDoesNotExist;
@@ -129,7 +130,9 @@ namespace AMG.AI.Mind
 
         public VoteRpcEnums SafeVote(byte playerId)
         {
-            if (playerId == unchecked((byte)-1)) playerId = byte.MaxValue;
+            bool isSkipVote = playerId == unchecked((byte)-1)
+                || playerId >= 250;
+            if (isSkipVote) playerId = SkipVotePlayerId;
             var result = SafeVoteNotExecute(playerId);
             
             if (result != VoteRpcEnums.SUCCESS) 

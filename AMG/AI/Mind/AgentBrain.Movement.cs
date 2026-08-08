@@ -11,7 +11,8 @@ namespace AMG.AI.Mind
     {
         public List<Waypoint> currentPath { get; private set; } = null;
         public int currentPathIndex { get; private set; } = 0;
-        private float speed = 3.2f;
+        private const float ComfortFactor = 0.93f;
+        private float speed => myAgent.MyPhysics.Speed * 1.75f * ComfortFactor;
 
         private Vector2 lastPosition = Vector2.zero;
         private float stuckTimer = 0f;
@@ -42,10 +43,7 @@ namespace AMG.AI.Mind
                 if (previousStep.Room != currentStep.Room &&
                     (Utils.IsRoomClosed(previousStep.Room) || Utils.IsRoomClosed(currentStep.Room)))
                 {
-                    currentPath = null;
-
-                    if (myAgent.MyPhysics?.body != null)
-                        myAgent.MyPhysics.body.velocity = Vector2.zero;
+                    ResetPath();
 
                     return null;
                 }
@@ -55,7 +53,8 @@ namespace AMG.AI.Mind
             {
                 evadeTimer -= Time.deltaTime;
 
-                myAgent.MyPhysics.body.velocity = evadeDirection * (speed * 1.5f);
+                var newVelocity = evadeDirection * (speed * 1.5f);
+                SetVelocity(newVelocity);
                 FlipSprite(evadeDirection);
 
                 if (evadeTimer <= 0f)
@@ -71,7 +70,8 @@ namespace AMG.AI.Mind
             if (dist > 0.15f)
             {
                 Vector2 direction = (currentStep.Position - currentPos).normalized;
-                myAgent.MyPhysics.body.velocity = direction * speed;
+                var newVelocity = direction * speed;
+                SetVelocity(newVelocity);
                 FlipSprite(direction);
 
                 if (Vector2.Distance(currentPos, lastPosition) < 0.005f)
@@ -124,8 +124,7 @@ namespace AMG.AI.Mind
             currentPath = path;
             currentPathIndex = 0;
 
-            if (myAgent.MyPhysics?.body != null)
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
+            SetVelocity(Vector2.zero);
 
             SetState(AgentState.Navigating);
         }
@@ -144,8 +143,7 @@ namespace AMG.AI.Mind
             currentPathIndex = 0;
             isEvading = false;
 
-            if (myAgent.MyPhysics?.body != null)
-                myAgent.MyPhysics.body.velocity = Vector2.zero;
+            SetVelocity(Vector2.zero);
 
             if (isForced) _stopForced = true;
         }

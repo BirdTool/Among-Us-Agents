@@ -43,6 +43,16 @@ namespace AMG.AI.Mind
 
         public PlayerControl AgentControl => myAgent;
 
+        public static bool AgentControlsRealPlayer = false;
+        public Vector2 DesiredVelocity { get; private set; } = Vector2.zero;
+
+        private void SetVelocity(Vector2 v)
+        {
+            DesiredVelocity = v;
+            if (myAgent.MyPhysics?.body != null)
+                myAgent.MyPhysics.body.velocity = v;
+        }
+
         void Awake()
         {
             myAgent = this.GetComponent<PlayerControl>();
@@ -50,7 +60,7 @@ namespace AMG.AI.Mind
             spriteRenderer = this.GetComponent<SpriteRenderer>();
 
             tags = [];
-            speed = 3.2f;
+            // speed = 3.2f;
 
             if (nameTextComp != null)
             {

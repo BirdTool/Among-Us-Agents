@@ -170,23 +170,15 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.N))
             {
-                /*
-                var node = Pathfinder.GetClosestNode(PlayerControl.LocalPlayer.transform.position, 1f);
+                if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
 
-                if (node != null)
-                {
-                    RemoveNode(node);
-
-                    LogManager.LogDebug($"[AI GPS] Nó defeituoso em {node.Position} foi APAGADO com sucesso!");
-                }
-                else
-                {
-                    LogManager.LogWarning("[AI GPS] Nenhum nó próximo o suficiente para deletar.");
-                }
-                */
-
-                var location = Utils.Players.LocalPlayer.transform.position;
-                Utils.ShowPopup($"Current Location: X: {location.x}, Y: {location.y}");
+                PlayerControl agentComponent = Utils.Players.LocalPlayer;
+                AgentData agentData = new() { Name = agentComponent.Data.PlayerName };
+                AgentManager.AddAgent(agentComponent, agentData);
+                agentComponent.gameObject.AddComponent<AgentBrain>();
+                var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
+                AgentBrain.AgentControlsRealPlayer = true;
+                brain.MapGameTasksToAILogic();
             }
         }
 

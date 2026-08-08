@@ -4,14 +4,12 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
-using Reactor;
 using UnityEngine;
 
 namespace AMG;
 
 [BepInAutoPlugin]
 [BepInProcess("Among Us.exe")]
-[BepInDependency(ReactorPlugin.Id)]
 public partial class AMGPlugin : BasePlugin
 {
     public Harmony Harmony { get; } = new(Id);
