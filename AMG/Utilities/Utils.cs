@@ -288,22 +288,13 @@ namespace AMG.Utilities
             Vector2 raisedDest = new(destination.x, destination.y + 0.5f);
 
             float actualDistance = Vector2.Distance(raisedOrigin, raisedDest);
-
             if (actualDistance > maxDistance) return false;
 
             Vector2 direction = (raisedDest - raisedOrigin).normalized;
 
-            RaycastHit2D[] hits = Physics2D.RaycastAll(raisedOrigin, direction, actualDistance);
+            RaycastHit2D hit = Physics2D.Raycast(raisedOrigin, direction, actualDistance, Constants.ShadowMask);
 
-            foreach (var hit in hits)
-            {
-                if (hit.collider.isTrigger) continue;
-                if (hit.collider.gameObject.GetComponent<PlayerControl>() != null) continue;
-
-                return false;
-            }
-
-            return true;
+            return hit.collider == null;
         }
 
         /// <summary>
