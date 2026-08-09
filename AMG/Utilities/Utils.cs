@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AMG.AI.Mind;
+using AMG.AI.Navigation;
 using AMG.Interfaces;
 using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
@@ -342,6 +343,46 @@ namespace AMG.Utilities
             float maxDelay = delayTime + multiplier;
 
             return RandomizerExtensions.GetSecureRandomFloat(minDelay, maxDelay);
+        }
+
+        public static bool IsCloseToLocation(Waypoint location1, Waypoint location2, float distance)
+        {
+            if (location1 == null || location2 == null) return false;
+            var distanceInLine = Vector2.Distance(location1.Position, location2.Position);
+            if (distanceInLine > distance) return false;
+
+            var path = Pathfinder.FindPath(location1, location2, out float pathDistance);
+            if (path == null || pathDistance > distance)
+                return false;
+
+            return true;
+        }
+
+        public static bool IsCloseToAnyLocation(List<Waypoint> locations, Waypoint location, float distance)
+        {
+            foreach (var loc in locations)
+            {
+                if (IsCloseToLocation(loc, location, distance))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static bool IsCloseToLocation(Vector2 location1, Vector2 location2, float distance)
+        {
+            return IsCloseToLocation(location1.GetClosestNode(), location2.GetClosestNode(), distance);
+        }
+
+        public static bool IsCloseToAnyLocation(List<Vector2> locations, Vector2 location, float distance)
+        {
+            foreach (var loc in locations)
+            {
+                if (IsCloseToLocation(loc, location, distance))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

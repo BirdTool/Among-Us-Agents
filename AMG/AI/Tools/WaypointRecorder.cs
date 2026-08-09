@@ -112,6 +112,12 @@ namespace AMG.AI.Tools
                 SaveBufferToFile();
             }
 
+            if (Input.GetKeyDown(KeyCode.M))
+            {
+                var currentPos = PlayerControl.LocalPlayer.transform.position;
+                LogManager.Log($"[Vector2] Current Position: x: {currentPos.x}, y: {currentPos.y}");
+            }
+
             if (Input.GetKeyDown(KeyCode.G))
             {
                 LogManager.LogDebug("[AI Command] Chamando todos os agentes!");

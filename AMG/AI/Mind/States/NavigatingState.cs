@@ -1,5 +1,7 @@
-﻿using AMG.AI.Tools;
+﻿using System.Linq;
+using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
+using AMG.Utilities;
 
 namespace AMG.AI.Mind
 {
@@ -17,11 +19,25 @@ namespace AMG.AI.Mind
 
                 if (currentSabotageStep != null)
                 {
-                    SetState(AgentState.FixingSabotage);
+                    if (Utils.IsCloseToAnyLocation(currentSabotageStep.Locations, WaypointPosition, 1f))
+                    {
+                        SetState(AgentState.FixingSabotage);
+                    }
+                    else
+                    {
+                        SetState(AgentState.Calculating);
+                    }
                 }
                 else if (currentLocalTask != null)
                 {
-                    SetState(AgentState.DoingTask);
+                    if (Utils.IsCloseToAnyLocation([.. currentLocalTask.Locations], Vector2Position, 1f))
+                    {
+                        SetState(AgentState.DoingTask);
+                    }
+                    else
+                    {
+                        SetState(AgentState.Calculating);
+                    }
                 }
                 else
                 {
