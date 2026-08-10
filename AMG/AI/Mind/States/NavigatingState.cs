@@ -2,11 +2,14 @@
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
+using Steamworks;
 
 namespace AMG.AI.Mind
 {
     public partial class AgentBrain
     {
+        public Vent currentVentToEnter = null;
+        
         private void UpdateNavigating()
         {
             ReplaceNameTag(DefaultTags.States.Navigating);
@@ -19,7 +22,7 @@ namespace AMG.AI.Mind
 
                 if (currentSabotageStep != null)
                 {
-                    if (Utils.IsCloseToAnyLocation(currentSabotageStep.Locations, WaypointPosition, 1f))
+                    if (Utils.IsCloseToAnyLocation(currentSabotageStep.Locations, WaypointPosition, 1.5f))
                     {
                         SetState(AgentState.FixingSabotage);
                     }
@@ -30,9 +33,21 @@ namespace AMG.AI.Mind
                 }
                 else if (currentLocalTask != null)
                 {
-                    if (Utils.IsCloseToAnyLocation([.. currentLocalTask.Locations], Vector2Position, 1f))
+                    if (Utils.IsCloseToAnyLocation([.. currentLocalTask.Locations], Vector2Position, 1.5f))
                     {
                         SetState(AgentState.DoingTask);
+                    }
+                    else
+                    {
+                        SetState(AgentState.Calculating);
+                    }
+                }
+                else if (currentVentToEnter != null)
+                {
+                    if (Utils.IsCloseToLocation(Vector2Position, currentVentToEnter.transform.position, 1.8f))
+                    {
+                        SafeUseVent(currentVentToEnter);
+                        currentVentToEnter = null;
                     }
                     else
                     {

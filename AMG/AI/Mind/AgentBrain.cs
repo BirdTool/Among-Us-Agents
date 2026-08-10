@@ -1,11 +1,13 @@
 using AMG.AI.Mind.Decisions;
 using AMG.AI.Tools;
+using AMG.Enums;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
 using AMG.Models;
 using AMG.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -28,11 +30,8 @@ namespace AMG.AI.Mind
 
         public AgentState currentState = AgentState.Stopped;
 
-        // Chamado
-        // private Waypoifnt targetNode = null;
-        // private float waitTimer = 0f;
-
         public AgentUpdateAction updateAction = null;
+        public List<AgentTempParallelDecision> tempParallelDecisions = [];
 
         public bool sawABody = false; // Defined as false every meeting
 
@@ -45,6 +44,8 @@ namespace AMG.AI.Mind
 
         public static bool AgentControlsRealPlayer = false;
         public Vector2 DesiredVelocity { get; private set; } = Vector2.zero;
+
+        public static List<Func<bool>> OnReachedTheCurrentPath = [];
 
         private void SetVelocity(Vector2 v)
         {
@@ -120,6 +121,39 @@ namespace AMG.AI.Mind
                 }
             }
 
+            if (tempParallelDecisions.Count > 0)
+            {
+                
+                for (int i = tempParallelDecisions.Count - 1; i >= 0; i--)
+                {
+                    var decision = tempParallelDecisions[i];
+
+                    if (decision.IsTimeLimitExpired)
+                    {
+                        tempParallelDecisions.Remove(decision);
+                        continue;
+                    }
+                    if (decision.DeleteOnMeeting && Utils.IsMeeting)
+                    {
+                        tempParallelDecisions.Remove(decision);
+                        continue;
+                    }
+
+                    var isCompleted = decision.Execute();
+
+                    if (isCompleted)
+                    {
+                        tempParallelDecisions.Remove(decision);
+                    }
+                }
+            }
+
+            if (PlanManager != null && PlanManager.QueuePlans.Count > 0)
+            {
+                PlanManager.Execute();
+            }
+            
+
             foreach (var tag in tags)
             {
                 if (tag.ExpiresAt != null && Time.time > tag.ExpiresAt)
@@ -185,6 +219,14 @@ namespace AMG.AI.Mind
         {
             SetState(AgentState.Calculating);
             _calculatingTimer.StartDelay(delay);
+        }
+
+        public void ResetDestinations()
+        {
+            isGoingToFixASabotage = false;
+            currentLocalTask = null;
+            currentSabotageStep = null;
+            currentVentToEnter = null;
         }
     }
 }

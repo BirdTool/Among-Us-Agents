@@ -151,22 +151,8 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.T))
             {
-                var agents = AgentManager.Agents;
-                var agentReference = agents[0];
-                if (agentReference == null) return;
-                var state = Enums.AgentEnums.AgentState.SmartWandering;
-
-                var referenceBrain = agentReference.Control.GetComponent<AgentBrain>();
-                if (referenceBrain.currentState == state) state = Enums.AgentEnums.AgentState.Wandering;
-
-                foreach (var agent in agents)
-                {
-                    var brain = agent.Control.GetComponent<AgentBrain>();
-                    if (brain != null)
-                    {
-                        brain.SetState(state);
-                    }
-                }
+                AgentManager.WillBeImpostor = !AgentManager.WillBeImpostor;
+                LogManager.LogDebug($"[AI Manager] Will be impostor: {AgentManager.WillBeImpostor}");
             }
 
             if (Input.GetKeyDown(KeyCode.K))

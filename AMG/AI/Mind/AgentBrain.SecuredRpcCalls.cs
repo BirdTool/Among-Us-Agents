@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
+using AMG.AI.Tools;
 using AMG.Enums.SafeRpcEnums;
 using AMG.Utilities;
+using AmongUs.GameOptions;
 using UnityEngine;
 
 namespace AMG.AI.Mind
@@ -177,6 +179,76 @@ namespace AMG.AI.Mind
             _lastMessage = Time.time;
 
             return result;
+        }
+
+        public UseVentRpcEnums SafeUseVentNotExecute(Vent vent)
+        {
+            if (IsDead) return UseVentRpcEnums.ERROR_AgentIsDead;
+            
+            var isEngineer = AgentControl.Data.Role.Role == RoleTypes.Engineer;
+            
+            if (!IsImpostor && !isEngineer) return UseVentRpcEnums.ERROR_AgentIsNotImpostorOrEngineer;
+            
+            if (vent == null) return UseVentRpcEnums.ERROR_VentDoesNotExist;
+            if (Vector2.Distance(Vector2Position, vent.transform.position) > 3f) return UseVentRpcEnums.ERROR_AgentIsTooFarFromVent;
+
+            if (isEngineer)
+            {
+                var engineerRole = AgentControl.Data.Role.Cast<EngineerRole>();
+
+                if (engineerRole.cooldownSecondsRemaining > 0f)
+                {
+                    return UseVentRpcEnums.ERROR_AgentIsInCooldown; 
+                }
+            }
+
+            return UseVentRpcEnums.SUCCESS;
+        }
+
+        public UseVentRpcEnums SafeUseVent(Vent vent)
+        {
+            var result = SafeUseVentNotExecute(vent);
+            
+            if (result != UseVentRpcEnums.SUCCESS) 
+            {
+                return result;
+            }
+            
+            AgentControl.MyPhysics.RpcEnterVent(vent.Id);
+
+            return result;
+        }
+
+        public CloseDoorRoomEnums SafeCloseDoorNotExecute(SystemTypes doorRoom)
+        {
+            if (!IsImpostor) return CloseDoorRoomEnums.ERROR_AgentIsNotImpostor;
+            
+            var doorsInRoom = ShipStatus.Instance.AllDoors.Where(x => x.Room == doorRoom).ToList();
+            if (doorsInRoom.Count == 0) return CloseDoorRoomEnums.ERROR_DoorDoesNotExist;
+
+            if (doorsInRoom.All(x => !x.IsOpen)) return CloseDoorRoomEnums.ERROR_DoorIsAlreadyClosed;
+
+            if (DoorCooldownTracker.GetRoomDoorCooldown(doorRoom) > 0f)
+            {
+                return CloseDoorRoomEnums.ERROR_DoorOnCooldown;
+            }
+
+            if (Utils.CurrentSabotage != null) return CloseDoorRoomEnums.ERROR_SabotageIsRunning;
+
+            return CloseDoorRoomEnums.SUCCESS;
+        }
+        public CloseDoorRoomEnums SafeCloseDoor(SystemTypes doorRoom)
+        {
+            var result = SafeCloseDoorNotExecute(doorRoom);
+            
+            if (result != CloseDoorRoomEnums.SUCCESS) 
+            {
+                return result;
+            }
+
+            try { ShipStatus.Instance.RpcCloseDoorsOfType(doorRoom); } catch { }
+
+            return CloseDoorRoomEnums.SUCCESS;
         }
     }
 }

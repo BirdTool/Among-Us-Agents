@@ -3,6 +3,7 @@ using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Services.Core.Scheduler.Internal;
 using UnityEngine;
 
 namespace AMG.AI.Mind
@@ -114,7 +115,17 @@ namespace AMG.AI.Mind
                 }
             }
 
-            return currentPathIndex >= currentPath.Count;
+            bool isCompleted = currentPathIndex >= currentPath.Count;
+            if (isCompleted)
+            {
+                for (int i = OnReachedTheCurrentPath.Count - 1; i >= 0; i--)
+                {
+                    var action = OnReachedTheCurrentPath[i];
+                    action.Invoke();
+                    OnReachedTheCurrentPath.RemoveAt(i);
+                }
+            }
+            return isCompleted;
         }
 
         public void CommandGoToPath(List<Waypoint> path)
