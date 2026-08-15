@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UnityEngine;
 
-namespace AMG.Patches.ROundPatches
+namespace AMG.Patches.RoundPatches
 {
     [HarmonyPatch]
     public static class KillPatches

@@ -55,7 +55,7 @@ namespace AMG.AI.Mind
                                 if (HudManager.Instance != null)
                                     HudManager.Instance.taskDirtyTimer = 0f;
 
-                                LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída. {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}");
+                                // LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída. {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}");
                             }
                         }
                         else

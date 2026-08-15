@@ -33,33 +33,12 @@ namespace AMG.AI.Mind
             }
         }
 
-        public List<RoundDeadBody> GetNearbyBodies()
-        {
-            List<RoundDeadBody> nearbyBodies = [];
+        public List<RoundDeadBody> NearbyBodies => AgentPerception.GetNearbyDeadBodies(Vector2Position, 6f);
+        public List<RoundDeadBody> NearbyBodiesInVision => AgentPerception.GetNearbyDeadBodiesInVision(myAgent);
+        public List<PlayerControl> NearbyPlayers => AgentPerception.GetNearbyPlayers(Vector2Position, 6.5f);
+        public List<PlayerControl> NearbyPlayersInVision => AgentPerception.GetNearbyPlayersInVision(myAgent);
 
-            if (!sawABody && Utils.Round.CurrentRoundDeadBodies != null && Utils.Round.CurrentRoundDeadBodies.Count > 0)
-            {
-                List<RoundDeadBody> bodies = Utils.Round.CurrentRoundDeadBodies;
-
-                foreach (var body in bodies)
-                {
-                    var origin = myAgent.transform.position;
-                    var target = body.Position;
-
-                    Vector2 origin2D = new(origin.x, origin.y + 0.5f);
-
-                    float distToBody = Vector2.Distance(origin2D, target);
-                    if (distToBody > 5f) continue;
-
-                    var canSee = Utils.CanSeeTheTarget(origin2D, target, distToBody);
-                    if (canSee) nearbyBodies.Add(body);
-                }
-            }
-
-            return nearbyBodies;
-        }
-
-        public float GetReactionTime() => Utils.GetDisturbTime(delayTime, delayDisturb);
+        public float ReactionTime => Utils.GetDisturbTime(delayTime, delayDisturb);
 
         public void SetState(AgentState newState)
         {
@@ -72,27 +51,6 @@ namespace AMG.AI.Mind
                     ReplaceNameTag(tag);
                 }
             }
-        }
-
-        public List<PlayerControl> GetNearbyPlayers()
-        {
-            List<PlayerControl> nearbyPlayers = [];
-
-            foreach (var player in Utils.Players.AllAlivePlayerNotMe)
-            {
-                var origin = myAgent.transform.position;
-                var target = player.transform.position;
-
-                Vector2 origin2D = new(origin.x, origin.y + 0.5f);
-
-                float distToBody = Vector2.Distance(origin2D, target);
-                if (distToBody > 6.5f) continue;
-
-                var canSee = Utils.CanSeeTheTarget(origin2D, target, distToBody);
-                if (canSee) nearbyPlayers.Add(player);
-            }
-
-            return nearbyPlayers;
         }
     }
 }
