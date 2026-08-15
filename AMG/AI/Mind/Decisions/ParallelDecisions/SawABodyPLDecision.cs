@@ -48,13 +48,13 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             var cognitiveTimer = GetAgentCognitiveTimer(id);
             var pendingBodiesToReact = GetAgentPendingBodies(id);
 
-            var nearbyBodies = brain.GetNearbyBodies();
+            var nearbyBodies = brain.NearbyBodiesInVision;
 
             if (nearbyBodies.Count > 0)
             {
                 if (!cognitiveTimer.IsRunning && pendingBodiesToReact == null)
                 {
-                    var reactionTime = brain.GetReactionTime();
+                    var reactionTime = brain.ReactionTime;
                     cognitiveTimer.StartDelay(reactionTime);
                     _agentsPendingBodiesToReact[id] = nearbyBodies;
 
@@ -105,7 +105,7 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             if (mostRecentBody.TimeSinceDeath < 7) shouldLookAround += 0.6;
 
             // Check for someone else nearby
-            bool isThereSomeoneNearby = brain.GetNearbyPlayers().Count > 0;
+            bool isThereSomeoneNearby = brain.NearbyPlayers.Count > 0;
 
             if (isThereSomeoneNearby) shouldLookAround += 0.45;
 

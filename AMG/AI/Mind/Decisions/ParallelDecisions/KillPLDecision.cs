@@ -30,7 +30,7 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
 
             if (timer.IsRunning) return; // Wait until cooldown finishes before deciding again
 
-            var nearbyTarget = brain.GetNearbyPlayers()
+            var nearbyTarget = brain.NearbyPlayers
                 .Where(p => !p.Data.Role.IsImpostor)
                 .OrderBy(p => Vector2.Distance(p.transform.position, brain.Vector2Position))
                 .FirstOrDefault();
@@ -46,7 +46,7 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             int impostorsInRoom = playersInTheRoom.Count(p => p.Data.Role.IsImpostor);
             int crewmatesInRoom = playersInTheRoom.Count() - impostorsInRoom;
 
-            var nearbyPlayers = brain.GetNearbyPlayers();
+            var nearbyPlayers = brain.NearbyPlayers;
             int nearbyImpostors = nearbyPlayers.Count(p => p.Data.Role.IsImpostor);
             int nearbyCrewmates = nearbyPlayers.Count - nearbyImpostors;
 

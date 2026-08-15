@@ -46,8 +46,8 @@ namespace AMG.AI.Mind
                         
                         if (!string.IsNullOrEmpty(_pendingChatText))
                         {
-                            float baseReaction = GetReactionTime() + RandomizerExtensions.GetSecureRandomFloat(0, 3f);
-                            float typingSpeed = (_pendingChatText.Length * 0.15f) + GetReactionTime();
+                            float baseReaction = ReactionTime + RandomizerExtensions.GetSecureRandomFloat(0, 3f);
+                            float typingSpeed = (_pendingChatText.Length * 0.15f) + ReactionTime;
                             
                             _chatTimer.StartDelay(baseReaction + typingSpeed);
                             _isThinkingAboutChat = true;
@@ -84,7 +84,7 @@ namespace AMG.AI.Mind
                     
                     if (!_votingTimer.IsRunning && !_isDecidingToVote) 
                     {
-                        float reactionTime = GetReactionTime() + RandomizerExtensions.GetSecureRandomFloat(0, 4);
+                        float reactionTime = ReactionTime + RandomizerExtensions.GetSecureRandomFloat(0, 4);
                         _votingTimer.StartDelay(reactionTime);
                         _isDecidingToVote = true;
                     }
@@ -133,7 +133,7 @@ namespace AMG.AI.Mind
 
                 if (!_endMeetingTimer.IsRunning && !_isDecidingToMove)
                 {
-                    float baseReaction = GetReactionTime();
+                    float baseReaction = ReactionTime;
                     _endMeetingTimer.StartDelay(baseReaction);
                     _isDecidingToMove = true;
                 }

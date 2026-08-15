@@ -101,18 +101,13 @@ namespace AMG.AI.Mind
 
         public SafeKillRpcEnums SafeKill(byte targetId)
         {
-            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tentando matar o jogador {targetId}");
-            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tempo de cooldown: {KillCooldownManager.KillCooldown}s");
             var result = SafeKillNotExecute(targetId);
-            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Resultado: {result}");
             
             if (result != SafeKillRpcEnums.SUCCESS && result != SafeKillRpcEnums.FAILED_AngelProtected) 
             {
                 if (result == SafeKillRpcEnums.FAILED_AngelProtected) KillCooldownManager.StartCooldownAsHalf(AgentControl.PlayerId);
                 return result;
             }
-
-            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tempo dês da ultima kill: {(KillCooldownManager._killCooldowns.ContainsKey(AgentControl.PlayerId) ? Time.time - KillCooldownManager._killCooldowns[AgentControl.PlayerId] : "Nunca matou")}s");
 
             bool didKillSucceed = result == SafeKillRpcEnums.SUCCESS;
             

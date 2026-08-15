@@ -23,7 +23,7 @@ namespace AMG.AI.Mind
             murderMemory.SawKilling = true;
 
             var reactionTimer = new CooldownTimer();
-            reactionTimer.StartDelay(GetReactionTime() + RandomizerExtensions.GetSecureRandomFloat(0, 1.2f));
+            reactionTimer.StartDelay(ReactionTime + RandomizerExtensions.GetSecureRandomFloat(0, 1.2f));
 
             updateAction = new AgentUpdateAction(() =>
             {
