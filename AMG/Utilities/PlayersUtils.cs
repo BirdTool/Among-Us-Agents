@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using AMG.AI.Navigation;
+using UnityEngine;
 
 namespace AMG.Utilities
 {
@@ -45,6 +47,32 @@ namespace AMG.Utilities
 
             internal static IEnumerable<PlayerControl> AllAliveImpostorsNotMe => AllAliveImpostors.Where(player => player != LocalPlayer);
             internal static IEnumerable<PlayerControl> AllAliveCrewmatesNotMe => AllAliveCrewmates.Where(player => player != LocalPlayer);
+
+            internal static IEnumerable<PlayerControl> GetAllPlayersInARoom(SystemTypes room)
+            {
+                return AllPlayers.Where(player => 
+                {
+                    Vector2 position = player.transform.position;
+                    var waypoint = position.GetClosestNode();
+
+                    if (waypoint == null) return false;
+
+                    return waypoint.Room == room;
+                });
+            }
+
+            internal static IEnumerable<PlayerControl> GetAllAlivePlayersInARoom(SystemTypes room)
+            {
+                return AllAlivePlayers.Where(player => 
+                {
+                    Vector2 position = player.transform.position;
+                    var waypoint = position.GetClosestNode();
+
+                    if (waypoint == null) return false;
+
+                    return waypoint.Room == room;
+                });
+            }
         }
     }
 }

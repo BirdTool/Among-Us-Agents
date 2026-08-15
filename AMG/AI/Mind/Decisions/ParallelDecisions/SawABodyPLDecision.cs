@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.SafeRpcEnums;
@@ -48,13 +48,13 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             var cognitiveTimer = GetAgentCognitiveTimer(id);
             var pendingBodiesToReact = GetAgentPendingBodies(id);
 
-            var nearbyBodies = brain.GetNearbyBodies();
+            var nearbyBodies = brain.NearbyBodiesInVision;
 
             if (nearbyBodies.Count > 0)
             {
                 if (!cognitiveTimer.IsRunning && pendingBodiesToReact == null)
                 {
-                    var reactionTime = brain.GetReactionTime();
+                    var reactionTime = brain.ReactionTime;
                     cognitiveTimer.StartDelay(reactionTime);
                     _agentsPendingBodiesToReact[id] = nearbyBodies;
 
@@ -105,9 +105,23 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             if (mostRecentBody.TimeSinceDeath < 7) shouldLookAround += 0.6;
 
             // Check for someone else nearby
-            bool isThereSomeoneNearby = brain.GetNearbyPlayers().Count > 0;
+            bool isThereSomeoneNearby = brain.NearbyPlayers.Count > 0;
 
             if (isThereSomeoneNearby) shouldLookAround += 0.45;
+
+            if (brain.IsImpostor)
+            {
+                if (mostRecentBody.TimeSinceDeath < 30f)
+                {
+                    // Too fresh to self report safely
+                    shouldLookAround = 1.0;
+                }
+                else
+                {
+                    // It's been a while, we can self report to create an alibi
+                    shouldLookAround = 0.0;
+                }
+            }
 
             var start = brain.WaypointPosition;
 

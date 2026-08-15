@@ -18,8 +18,8 @@ namespace AMG.Models.TasksModel
     {
         public AsteroidsTask()
         {
-            RegularTimeToFinishTheStep = 1.2f;
-            TimeDisturb = 3.7f;
+            RegularTimeToFinishTheStep = 1f;
+            TimeDisturb = 2.4f;
         }
     }
 

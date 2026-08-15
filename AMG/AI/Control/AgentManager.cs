@@ -13,6 +13,7 @@ namespace AMG.AI.Control
     {
         public static readonly List<AgentListData> Agents = [];
         public static bool RecycleDummies = true;
+        public static bool WillBeImpostor = false;
 
         private static readonly List<string> FirstNames = new()
         {
@@ -118,7 +119,10 @@ namespace AMG.AI.Control
                 }
             }
 
-            agentComponent.RpcSetRole(RoleTypes.Crewmate);
+            if (WillBeImpostor)
+                agentComponent.RpcSetRole(RoleTypes.Impostor);
+            else
+                agentComponent.RpcSetRole(RoleTypes.Crewmate);
 
             var pInfo = GameData.Instance?.GetPlayerById(agentComponent.PlayerId);
             LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsRecycled={isRecycled}, IsImpostor={pInfo?.Role?.IsImpostor}");

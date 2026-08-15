@@ -112,6 +112,12 @@ namespace AMG.AI.Tools
                 SaveBufferToFile();
             }
 
+            if (Input.GetKeyDown(KeyCode.M))
+            {
+                var currentPos = PlayerControl.LocalPlayer.transform.position;
+                LogManager.Log($"[Vector2] Current Position: x: {currentPos.x}, y: {currentPos.y}");
+            }
+
             if (Input.GetKeyDown(KeyCode.G))
             {
                 LogManager.LogDebug("[AI Command] Chamando todos os agentes!");
@@ -145,22 +151,8 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.T))
             {
-                var agents = AgentManager.Agents;
-                var agentReference = agents[0];
-                if (agentReference == null) return;
-                var state = Enums.AgentEnums.AgentState.SmartWandering;
-
-                var referenceBrain = agentReference.Control.GetComponent<AgentBrain>();
-                if (referenceBrain.currentState == state) state = Enums.AgentEnums.AgentState.Wandering;
-
-                foreach (var agent in agents)
-                {
-                    var brain = agent.Control.GetComponent<AgentBrain>();
-                    if (brain != null)
-                    {
-                        brain.SetState(state);
-                    }
-                }
+                AgentManager.WillBeImpostor = !AgentManager.WillBeImpostor;
+                LogManager.LogDebug($"[AI Manager] Will be impostor: {AgentManager.WillBeImpostor}");
             }
 
             if (Input.GetKeyDown(KeyCode.K))
@@ -170,23 +162,15 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.N))
             {
-                /*
-                var node = Pathfinder.GetClosestNode(PlayerControl.LocalPlayer.transform.position, 1f);
+                if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
 
-                if (node != null)
-                {
-                    RemoveNode(node);
-
-                    LogManager.LogDebug($"[AI GPS] Nó defeituoso em {node.Position} foi APAGADO com sucesso!");
-                }
-                else
-                {
-                    LogManager.LogWarning("[AI GPS] Nenhum nó próximo o suficiente para deletar.");
-                }
-                */
-
-                var location = Utils.Players.LocalPlayer.transform.position;
-                Utils.ShowPopup($"Current Location: X: {location.x}, Y: {location.y}");
+                PlayerControl agentComponent = Utils.Players.LocalPlayer;
+                AgentData agentData = new() { Name = agentComponent.Data.PlayerName };
+                AgentManager.AddAgent(agentComponent, agentData);
+                agentComponent.gameObject.AddComponent<AgentBrain>();
+                var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
+                AgentBrain.AgentControlsRealPlayer = true;
+                brain.MapGameTasksToAILogic();
             }
         }
 

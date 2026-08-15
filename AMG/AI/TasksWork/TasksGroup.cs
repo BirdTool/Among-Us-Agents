@@ -31,7 +31,6 @@ namespace AMG.AI.TasksWork
 
             if (longTasks != null)
             {
-                // Manual way to avoid problems (instead of Any method)
                 for (int i = 0; i < longTasks.Count; i++)
                 {
                     if (longTasks[i]?.TaskType == task)

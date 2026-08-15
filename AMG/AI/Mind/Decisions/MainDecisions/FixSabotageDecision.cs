@@ -16,7 +16,7 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
             if (!Utils.IsAnySabotageActive || brain.IsDead) return 0f;
             float points = 100f;
             if (brain.IsCrewmate) { points += 70f; if (brain.AITasks.Count < 2) points += 35f; }
-            if (brain.IsImpostor) { points -= 30f; if (Utils.SecondsSinceShipStart < 60) points += 20f; if (Utils.RemainingTasks < 6) points -= 30f; if (brain.GetNearbyPlayers().Count > 3) points += 35f; }
+            if (brain.IsImpostor) { points -= 30f; if (Utils.SecondsSinceShipStart < 60) points += 20f; if (Utils.RemainingTasks < 6) points -= 30f; if (brain.NearbyPlayersInVision.Count > 3) points += 35f; }
             return points;
         }
 
@@ -68,13 +68,12 @@ namespace AMG.AI.Mind.Decisions.MainDecisions
 
             var start = Pathfinder.GetClosestNode(myPos);
             if (start == null) return false;
-
-            var path = Pathfinder.FindPath(start, bestWaypoint, out float totalDistance);
+            var path = Pathfinder.FindPath(start, bestWaypoint, out _);
 
             if (path == null || path.Count == 0)
             {
                 if (Vector2.Distance(myPos, bestWaypoint.Position) < 1.8f)
-                    path = new List<Waypoint> { bestWaypoint };
+                    path = [bestWaypoint];
                 else
                     return false;
             }

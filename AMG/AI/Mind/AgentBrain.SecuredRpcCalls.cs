@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
+using AMG.AI.Tools;
 using AMG.Enums.SafeRpcEnums;
 using AMG.Utilities;
+using AmongUs.GameOptions;
 using UnityEngine;
 
 namespace AMG.AI.Mind
@@ -10,6 +12,7 @@ namespace AMG.AI.Mind
     {
         private static RoundDeadBody GetDeadBodyByPlayerId(byte playerId) => Utils.Round.CurrentRoundDeadBodies.FirstOrDefault(b => b.PlayerId == playerId);
         private float _lastMessage = 0;
+        private const byte SkipVotePlayerId = 253;
 
         public ReportDeadBodyRpcEnums SafeReportBodyNotExecute(byte playerId)
         {
@@ -65,13 +68,15 @@ namespace AMG.AI.Mind
             if (IsDead) return SafeKillRpcEnums.ERROR_AgentIsDead;
             if (IsCrewmate) return SafeKillRpcEnums.ERROR_AgentIsNotImpostor;
             
-            if (myAgent.killTimer > 0f) return SafeKillRpcEnums.ERROR_CooldownNotReady;
+            if (myAgent.killTimer > 0f || !KillCooldownManager.CanKill(myAgent.PlayerId)) return SafeKillRpcEnums.ERROR_CooldownNotReady;
 
             var target = Utils.Players.GetPlayerByPlayerId(targetId);
             if (target == null) return SafeKillRpcEnums.ERROR_TargetDoesNotExist;
             if (targetId == myAgent.PlayerId) return SafeKillRpcEnums.ERROR_TargetIsItSelf;
             if (target.Data.IsDead) return SafeKillRpcEnums.ERROR_TargetIsDead;
             if (target.Data.Role.IsImpostor) return SafeKillRpcEnums.ERROR_TargetIsImpostor;
+
+            if (Utils.IsMeeting || Utils.IsExiling) return SafeKillRpcEnums.ERROR_IsMeeting;
 
             float[] nativeKillDistances = [1.0f, 1.8f, 2.5f];
             int killDistIndex = 1; 
@@ -100,12 +105,16 @@ namespace AMG.AI.Mind
             
             if (result != SafeKillRpcEnums.SUCCESS && result != SafeKillRpcEnums.FAILED_AngelProtected) 
             {
+                if (result == SafeKillRpcEnums.FAILED_AngelProtected) KillCooldownManager.StartCooldownAsHalf(AgentControl.PlayerId);
                 return result;
             }
 
             bool didKillSucceed = result == SafeKillRpcEnums.SUCCESS;
             
             AgentControl.RpcMurderPlayer(Utils.Players.GetPlayerByPlayerId(targetId), didKillSucceed);
+
+            if (didKillSucceed) KillCooldownManager.StartCooldown(AgentControl.PlayerId);
+            else if (result == SafeKillRpcEnums.FAILED_AngelProtected) KillCooldownManager.StartCooldownAsHalf(AgentControl.PlayerId);
 
             return result;
         }
@@ -116,7 +125,7 @@ namespace AMG.AI.Mind
             if (!Utils.IsMeeting) return VoteRpcEnums.ERROR_IsNotInMeeting;
             if (!Utils.IsMeetingVoting) return VoteRpcEnums.ERROR_IsNotInVoteTime;
             
-            if (playerId != unchecked((byte)-1) && playerId != 255)
+            if (playerId != unchecked((byte)-1) && playerId <= 250)
             {
                 var target = Utils.Players.GetPlayerByPlayerId(playerId);
                 if (target == null) return VoteRpcEnums.ERROR_TargetDoesNotExist;
@@ -129,7 +138,9 @@ namespace AMG.AI.Mind
 
         public VoteRpcEnums SafeVote(byte playerId)
         {
-            if (playerId == unchecked((byte)-1)) playerId = byte.MaxValue;
+            bool isSkipVote = playerId == unchecked((byte)-1)
+                || playerId >= 250;
+            if (isSkipVote) playerId = SkipVotePlayerId;
             var result = SafeVoteNotExecute(playerId);
             
             if (result != VoteRpcEnums.SUCCESS) 
@@ -174,6 +185,76 @@ namespace AMG.AI.Mind
             _lastMessage = Time.time;
 
             return result;
+        }
+
+        public UseVentRpcEnums SafeUseVentNotExecute(Vent vent)
+        {
+            if (IsDead) return UseVentRpcEnums.ERROR_AgentIsDead;
+            
+            var isEngineer = AgentControl.Data.Role.Role == RoleTypes.Engineer;
+            
+            if (!IsImpostor && !isEngineer) return UseVentRpcEnums.ERROR_AgentIsNotImpostorOrEngineer;
+            
+            if (vent == null) return UseVentRpcEnums.ERROR_VentDoesNotExist;
+            if (Vector2.Distance(Vector2Position, vent.transform.position) > 3f) return UseVentRpcEnums.ERROR_AgentIsTooFarFromVent;
+
+            if (isEngineer)
+            {
+                var engineerRole = AgentControl.Data.Role.Cast<EngineerRole>();
+
+                if (engineerRole.cooldownSecondsRemaining > 0f)
+                {
+                    return UseVentRpcEnums.ERROR_AgentIsInCooldown; 
+                }
+            }
+
+            return UseVentRpcEnums.SUCCESS;
+        }
+
+        public UseVentRpcEnums SafeUseVent(Vent vent)
+        {
+            var result = SafeUseVentNotExecute(vent);
+            
+            if (result != UseVentRpcEnums.SUCCESS) 
+            {
+                return result;
+            }
+            
+            AgentControl.MyPhysics.RpcEnterVent(vent.Id);
+
+            return result;
+        }
+
+        public CloseDoorRoomEnums SafeCloseDoorNotExecute(SystemTypes doorRoom)
+        {
+            if (!IsImpostor) return CloseDoorRoomEnums.ERROR_AgentIsNotImpostor;
+            
+            var doorsInRoom = ShipStatus.Instance.AllDoors.Where(x => x.Room == doorRoom).ToList();
+            if (doorsInRoom.Count == 0) return CloseDoorRoomEnums.ERROR_DoorDoesNotExist;
+
+            if (doorsInRoom.All(x => !x.IsOpen)) return CloseDoorRoomEnums.ERROR_DoorIsAlreadyClosed;
+
+            if (DoorCooldownTracker.GetRoomDoorCooldown(doorRoom) > 0f)
+            {
+                return CloseDoorRoomEnums.ERROR_DoorOnCooldown;
+            }
+
+            if (Utils.CurrentSabotage != null) return CloseDoorRoomEnums.ERROR_SabotageIsRunning;
+
+            return CloseDoorRoomEnums.SUCCESS;
+        }
+        public CloseDoorRoomEnums SafeCloseDoor(SystemTypes doorRoom)
+        {
+            var result = SafeCloseDoorNotExecute(doorRoom);
+            
+            if (result != CloseDoorRoomEnums.SUCCESS) 
+            {
+                return result;
+            }
+
+            try { ShipStatus.Instance.RpcCloseDoorsOfType(doorRoom); } catch { }
+
+            return CloseDoorRoomEnums.SUCCESS;
         }
     }
 }

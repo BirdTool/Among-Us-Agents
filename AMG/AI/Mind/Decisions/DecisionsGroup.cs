@@ -14,7 +14,8 @@ namespace AMG.AI.Mind.Decisions
         public static List<IParallelDecision> AllParallelDecisions { get; } = [
                 new SawABodyPLDecision(),
                 new SabotageStepPLDecision(),
-                new DoorClosedPLDecision()
+                new DoorClosedPLDecision(),
+                new KillPLDecision()
             ];
     }
 }

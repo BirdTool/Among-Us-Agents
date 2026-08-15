@@ -17,7 +17,7 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             var id = brain.AgentControl.PlayerId;
             if (!_checkTimers.ContainsKey(id)) _checkTimers.Add(id, Time.time);
             
-            if (Time.time - _checkTimers[id] < CHECK_COOLDOWN + brain.GetReactionTime()) return;
+            if (Time.time - _checkTimers[id] < CHECK_COOLDOWN + brain.ReactionTime) return;
             _checkTimers[id] = Time.time;
             
             var path = brain.currentPath;

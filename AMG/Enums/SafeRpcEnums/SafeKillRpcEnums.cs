@@ -10,6 +10,7 @@ namespace AMG.Enums.SafeRpcEnums
         ERROR_TargetDoesNotExist,
         ERROR_TargetIsItSelf,
         ERROR_CooldownNotReady,
+        ERROR_IsMeeting,
         FAILED_AngelProtected,
         SUCCESS
     }

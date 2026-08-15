@@ -23,7 +23,7 @@ namespace AMG.AI.Mind
                 if (currentSabotageStep.IsCompleted && currentSabotageStep is AMG.AI.Mind.Decisions.Sabotages.GenericSabotageStepBothSides)
                     return;
 
-                sabotageTimer.StartDelay(currentSabotageStep.TimeToFix + GetReactionTime());
+                sabotageTimer.StartDelay(currentSabotageStep.TimeToFix + ReactionTime);
                 return;
             }
 
