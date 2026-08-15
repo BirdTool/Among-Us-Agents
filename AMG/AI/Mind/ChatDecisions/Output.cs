@@ -23,7 +23,7 @@ namespace AMG.AI.Mind.ChatDecisions
             foreach (var memory in memories)
             {
                 var player = Utils.Players.GetPlayerByPlayerId(memory.PlayerId);
-                if (player != null && !player.Data.IsDead)
+                if (player != null && !player.Data.IsDead && player.PlayerId != brain.AgentId)
                 {
                     playersThatWereCaughtKillingAlive.Add(player);
                 }
@@ -40,7 +40,7 @@ namespace AMG.AI.Mind.ChatDecisions
             foreach (var memory in memories)
             {
                 var player = Utils.Players.GetPlayerByPlayerId(memory.PlayerId);
-                if (player != null && !player.Data.IsDead)
+                if (player != null && !player.Data.IsDead && player.PlayerId != brain.AgentId)
                 {
                     playersThatSawVentingAlive.Add(player);
                 }

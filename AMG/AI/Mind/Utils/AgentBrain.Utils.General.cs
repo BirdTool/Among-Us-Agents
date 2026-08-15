@@ -15,7 +15,7 @@ namespace AMG.AI.Mind
 
         // Cache for WaypointPosition — re-computed only when agent moves > 0.3 units
         private Waypoint _cachedWaypointPosition;
-        private Vector2 _lastWaypointCachePosition = new Vector2(float.MinValue, float.MinValue);
+        private Vector2 _lastWaypointCachePosition = new(float.MinValue, float.MinValue);
         private const float WAYPOINT_CACHE_THRESHOLD = 0.3f;
 
         public byte AgentId => myAgent.PlayerId;

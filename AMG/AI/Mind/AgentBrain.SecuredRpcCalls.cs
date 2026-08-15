@@ -68,13 +68,15 @@ namespace AMG.AI.Mind
             if (IsDead) return SafeKillRpcEnums.ERROR_AgentIsDead;
             if (IsCrewmate) return SafeKillRpcEnums.ERROR_AgentIsNotImpostor;
             
-            if (myAgent.killTimer > 0f) return SafeKillRpcEnums.ERROR_CooldownNotReady;
+            if (myAgent.killTimer > 0f || !KillCooldownManager.CanKill(myAgent.PlayerId)) return SafeKillRpcEnums.ERROR_CooldownNotReady;
 
             var target = Utils.Players.GetPlayerByPlayerId(targetId);
             if (target == null) return SafeKillRpcEnums.ERROR_TargetDoesNotExist;
             if (targetId == myAgent.PlayerId) return SafeKillRpcEnums.ERROR_TargetIsItSelf;
             if (target.Data.IsDead) return SafeKillRpcEnums.ERROR_TargetIsDead;
             if (target.Data.Role.IsImpostor) return SafeKillRpcEnums.ERROR_TargetIsImpostor;
+
+            if (Utils.IsMeeting || Utils.IsExiling) return SafeKillRpcEnums.ERROR_IsMeeting;
 
             float[] nativeKillDistances = [1.0f, 1.8f, 2.5f];
             int killDistIndex = 1; 
@@ -99,16 +101,25 @@ namespace AMG.AI.Mind
 
         public SafeKillRpcEnums SafeKill(byte targetId)
         {
+            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tentando matar o jogador {targetId}");
+            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tempo de cooldown: {KillCooldownManager.KillCooldown}s");
             var result = SafeKillNotExecute(targetId);
+            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Resultado: {result}");
             
             if (result != SafeKillRpcEnums.SUCCESS && result != SafeKillRpcEnums.FAILED_AngelProtected) 
             {
+                if (result == SafeKillRpcEnums.FAILED_AngelProtected) KillCooldownManager.StartCooldownAsHalf(AgentControl.PlayerId);
                 return result;
             }
+
+            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tempo dês da ultima kill: {(KillCooldownManager._killCooldowns.ContainsKey(AgentControl.PlayerId) ? Time.time - KillCooldownManager._killCooldowns[AgentControl.PlayerId] : "Nunca matou")}s");
 
             bool didKillSucceed = result == SafeKillRpcEnums.SUCCESS;
             
             AgentControl.RpcMurderPlayer(Utils.Players.GetPlayerByPlayerId(targetId), didKillSucceed);
+
+            if (didKillSucceed) KillCooldownManager.StartCooldown(AgentControl.PlayerId);
+            else if (result == SafeKillRpcEnums.FAILED_AngelProtected) KillCooldownManager.StartCooldownAsHalf(AgentControl.PlayerId);
 
             return result;
         }

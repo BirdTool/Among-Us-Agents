@@ -24,7 +24,6 @@ namespace AMG.AI.Mind
         private readonly CooldownTimer _endMeetingTimer = new();
         private bool _isDecidingToMove = false;
 
-        // Temp
         private bool _reachedVotingTime = false;
 
         private void UpdateMeetingState()
@@ -67,7 +66,6 @@ namespace AMG.AI.Mind
                             if (result == ChatRpcEnums.SUCCESS)
                             {
                                 _chatOutput.MarkAsSent(_pendingChatType.Value);
-                                LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Enviou mensagem de chat com SUCESSO!");
                             }
                         }
                         
@@ -81,15 +79,12 @@ namespace AMG.AI.Mind
                 {
                     if (!_reachedVotingTime)
                     {
-                        LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Chegamos na votação!");
                         _reachedVotingTime = true;
                     }
                     
                     if (!_votingTimer.IsRunning && !_isDecidingToVote) 
                     {
-                        LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Iniciando decisão de voto...");
                         float reactionTime = GetReactionTime() + RandomizerExtensions.GetSecureRandomFloat(0, 4);
-                        LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tempo de decisão de voto: {reactionTime}");
                         _votingTimer.StartDelay(reactionTime);
                         _isDecidingToVote = true;
                     }
@@ -98,7 +93,6 @@ namespace AMG.AI.Mind
                     {
                         if (_votingTimer.Consume())
                         {
-                            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Tomando decisão de voto!");
                             var memories = GetMemories();
                             var playerIDWithHighestSuspiciousPercentage = byte.MaxValue;
                             float highestSuspiciousPercentage = 0;
@@ -112,14 +106,11 @@ namespace AMG.AI.Mind
                                 }
                             }
 
-                            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] {(playerIDWithHighestSuspiciousPercentage == byte.MaxValue ? "Votou skip" : "Votou em " + Utils.Players.GetPlayerByPlayerId(playerIDWithHighestSuspiciousPercentage).Data.PlayerName)}");
-
                             var result = SafeVote(playerIDWithHighestSuspiciousPercentage);
                             if (result == VoteRpcEnums.SUCCESS)
                             {
                                 _hasVoted = true;
                             }
-                            LogManager.LogDebug($"[Agente {AgentControl.PlayerId}] Resultado do voto: {result}");
                             _isDecidingToVote = false; 
                             _votingTimer.Stop();
                         }
@@ -156,7 +147,7 @@ namespace AMG.AI.Mind
                         _endMeetingTimer.Stop();
                     }
                 }
-                
+                KillCooldownManager.StartCooldownOfEveryImpostor();
             }
         }
     }

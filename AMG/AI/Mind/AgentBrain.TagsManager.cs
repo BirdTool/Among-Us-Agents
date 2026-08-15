@@ -1,4 +1,4 @@
-﻿using AMG.Enums;
+using AMG.Enums;
 using AMG.Models;
 using System.Collections.Generic;
 using System.Text;
@@ -8,6 +8,7 @@ namespace AMG.AI.Mind
     public partial class AgentBrain
     {
         public List<AgentTag> tags = [];
+        public bool CanSeeTheRedNameAsCrewmate = true;
 
         public void AddNameTag(string tag, string hexColour, IdentifierEnum identifier, string size = "80%", float? expiresAt = null)
         {
@@ -132,7 +133,13 @@ namespace AMG.AI.Mind
                 foreach (AgentTag tag in emotions) append(tag);
                 foreach (AgentTag tag in states) append(tag);
 
-                nameTextComp.text = $"{builder}{baseName}\n";
+                string displayBaseName = baseName;
+                if (IsImpostor && ((PlayerControl.LocalPlayer != null && PlayerControl.LocalPlayer.Data != null && PlayerControl.LocalPlayer.Data.Role != null && PlayerControl.LocalPlayer.Data.Role.IsImpostor) || CanSeeTheRedNameAsCrewmate))
+                {
+                    displayBaseName = $"<color=red>{baseName}</color>";
+                }
+
+                nameTextComp.text = $"{builder}{displayBaseName}\n";
             }
         }
     }

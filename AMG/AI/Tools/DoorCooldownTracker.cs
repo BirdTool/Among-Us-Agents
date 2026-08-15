@@ -7,8 +7,9 @@ namespace AMG.AI.Tools
     public static class DoorCooldownTracker
     {
         private static readonly Dictionary<int, float> _doorClosedTimestamps = [];
+        private static readonly HashSet<int> _currentlyClosedDoors = [];
         
-        private const float DOOR_CLOSE_DURATION = 10f;
+        private const float DOOR_CLOSE_DURATION = 12f;
 
         public static void UpdateDoorsState()
         {
@@ -20,16 +21,17 @@ namespace AMG.AI.Tools
 
                 if (isClosed)
                 {
-                    if (!_doorClosedTimestamps.ContainsKey(door.Id))
+                    if (!_currentlyClosedDoors.Contains(door.Id))
                     {
+                        _currentlyClosedDoors.Add(door.Id);
                         _doorClosedTimestamps[door.Id] = Time.time;
                     }
                 }
                 else
                 {
-                    if (_doorClosedTimestamps.ContainsKey(door.Id))
+                    if (_currentlyClosedDoors.Contains(door.Id))
                     {
-                        _doorClosedTimestamps.Remove(door.Id);
+                        _currentlyClosedDoors.Remove(door.Id);
                     }
                 }
             }

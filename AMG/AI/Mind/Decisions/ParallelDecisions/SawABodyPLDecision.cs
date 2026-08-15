@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.SafeRpcEnums;
@@ -108,6 +108,20 @@ namespace AMG.AI.Mind.Decisions.ParallelDecisions
             bool isThereSomeoneNearby = brain.GetNearbyPlayers().Count > 0;
 
             if (isThereSomeoneNearby) shouldLookAround += 0.45;
+
+            if (brain.IsImpostor)
+            {
+                if (mostRecentBody.TimeSinceDeath < 30f)
+                {
+                    // Too fresh to self report safely
+                    shouldLookAround = 1.0;
+                }
+                else
+                {
+                    // It's been a while, we can self report to create an alibi
+                    shouldLookAround = 0.0;
+                }
+            }
 
             var start = brain.WaypointPosition;
 
