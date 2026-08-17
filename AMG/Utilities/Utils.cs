@@ -178,41 +178,6 @@ namespace AMG.Utilities
             return AmongUsClient.Instance.ClientId == AmongUsClient.Instance.HostId;
         }
 
-        public static void OpenConfigFile()
-        {
-            var configFilePath = AMGPlugin.Plugin.Config.ConfigFilePath;
-            var configEditor = AMGPlugin.ConfigEditor.Value;
-
-            if (!string.IsNullOrWhiteSpace(configEditor))
-            {
-                if (File.Exists(configFilePath))
-                {
-                    try
-                    {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = configEditor,
-                            Arguments = configFilePath,
-                            UseShellExecute = true
-                            //Verb = "edit"
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        AMGPlugin.Log.LogError(ex.Message);
-                    }
-                }
-                else
-                {
-                    AMGPlugin.Log.LogError("Configuration file does not exist");
-                }
-            }
-            else
-            {
-                AMGPlugin.Log.LogError("Configuration editor not specified");
-            }
-        }
-
         public static RoleBehaviour GetBehaviourByRoleType(RoleTypes roleType)
         {
             return RoleManager.Instance.AllRoles.ToArray().First(r => r.Role == roleType);

@@ -24,6 +24,9 @@ namespace AMG.AI.Mind
         private float lastEvasionSign = 1f;
         private bool _stopForced = false;
 
+        private int stuckCount = 0;
+        private float? lastTimeStucked = null;
+
         // True if the path is completed
         private bool? ProcessPathMovement()
         {
@@ -61,9 +64,31 @@ namespace AMG.AI.Mind
                 if (evadeTimer <= 0f)
                 {
                     isEvading = false;
+                    stuckCount++;
+
+                    lastTimeStucked = Time.time;
                     stuckTimer = 0f;
                 }
                 return false;
+            }
+
+            if (stuckCount > 3)
+            {
+                if (lastTimeStucked == null)
+                {
+                    stuckCount = 0;
+                }
+                else
+                {
+                    float secondsSinceLastStuck = Time.time - lastTimeStucked.Value;
+                    if (secondsSinceLastStuck > 8)
+                    {
+                        stuckCount = 0;
+                        lastTimeStucked = null;
+                        ResetPath(true);
+                        SetState(AgentState.Calculating);
+                    }
+                }
             }
 
             float dist = Vector2.Distance(currentPos, currentStep.Position);

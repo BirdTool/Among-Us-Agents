@@ -1,4 +1,4 @@
-﻿using AMG.Utilities;
+using AMG.Utilities;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -18,23 +18,11 @@ public partial class AMGPlugin : BasePlugin
 
 
     public ConfigEntry<string> ConfigName { get; private set; }
-    public static bool IsPanicked = false;
-    public static bool InStealthMode = false;
 
     public static ConfigEntry<string> MenuKeybind;
     public static ConfigEntry<string> MenuHtmlColor;
     public static ConfigEntry<bool> MenuOpenOnMouse;
     public static ConfigEntry<bool> MenuKeepSubwindowsOpen;
-    public static ConfigEntry<string> SpoofLevel;
-    public static ConfigEntry<string> SpoofPlatform;
-    public static ConfigEntry<bool> SpoofDeviceId;
-    public static ConfigEntry<bool> NoTelemetry;
-    public static ConfigEntry<string> GuestFriendCode;
-    public static ConfigEntry<bool> GuestMode;
-    public static ConfigEntry<bool> AutoLoadProfile;
-    public static ConfigEntry<string> ConfigEditor;
-
-    public static string ReaperVersion { get; private set; } = "1.0.0";
 
     public override void Load()
     {
@@ -45,6 +33,10 @@ public partial class AMGPlugin : BasePlugin
 
         var menuObject = new GameObject("AMGManager");
         Object.DontDestroyOnLoad(menuObject);
+        menuObject.hideFlags = HideFlags.HideAndDontSave;
+
+        Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<AMG.UI.MenuUI>();
+        menuObject.AddComponent<AMG.UI.MenuUI>();
 
         MenuKeybind = Config.Bind("AMG.GUI",
                                "Keybind",
@@ -66,29 +58,8 @@ public partial class AMGPlugin : BasePlugin
                                 false,
                                 "When enabled, closing the AMG GUI will not automatically close its subwindows");
 
-        AutoLoadProfile = Config.Bind("AMG.Profile",
-                                "AutoLoadProfile",
-                                false,
-                                "When enabled, your saved keybind and toggle profile will be automatically loaded at game startup");
-
-        ConfigEditor = Config.Bind("AMG.Config",
-                                "ConfigEditor",
-                                "notepad.exe",
-                                "The program used to open the config file when using the Open Config toggle. Can be any executable, but using a text editor is recommended");
-
         Harmony.PatchAll();
 
         LogManager.TransferLogsToAllLogs();
     }
-
-    /*
-    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate))]
-    public static class ExamplePatch
-    {
-        public static void Postfix(PlayerControl __instance)
-        {
-            __instance.cosmetics.nameText.text = PluginSingleton<ReaperMenuPlugin>.Instance.ConfigName.Value;
-        }
-    }
-    */
 }

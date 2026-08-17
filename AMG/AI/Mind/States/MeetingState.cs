@@ -1,7 +1,6 @@
 ﻿using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 using AMG.AI.Tools;
-using System.Linq;
 using AMG.AI.Mind.ChatDecisions;
 using AMG.Enums.SafeRpcEnums;
 

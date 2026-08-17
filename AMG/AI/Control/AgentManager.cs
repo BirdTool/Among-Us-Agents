@@ -191,7 +191,7 @@ namespace AMG.AI.Control
             return agentInfo?.Data;
         }
 
-        private static string GetRandomHat()
+        public static string GetRandomHat()
         {
             if (HatManager.Instance == null || HatManager.Instance.AllHats == null) return "";
 
@@ -212,7 +212,7 @@ namespace AMG.AI.Control
             return "";
         }
 
-        private static string GetRandomSkin()
+        public static string GetRandomSkin()
         {
             if (HatManager.Instance == null || HatManager.Instance.AllSkins == null) return "";
 
@@ -233,7 +233,7 @@ namespace AMG.AI.Control
             return "";
         }
 
-        private static string GetRandomVisor()
+        public static string GetRandomVisor()
         {
             if (HatManager.Instance == null || HatManager.Instance.AllVisors == null) return "";
 
