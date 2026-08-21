@@ -25,8 +25,8 @@ namespace AMG.Utilities
         internal static bool IsHost => AmongUsClient.Instance && AmongUsClient.Instance.AmHost;
         internal static bool IsInGame => AmongUsClient.Instance && AmongUsClient.Instance.GameState == InnerNetClient.GameStates.Started && IsPlayer;
         internal static bool IsMeeting => MeetingHud.Instance;
-        internal static bool IsMeetingVoting => IsMeeting && MeetingHud.Instance.state is MeetingHud.VoteStates.Voted or MeetingHud.VoteStates.NotVoted;
-        internal static bool IsMeetingProceeding => IsMeeting && MeetingHud.Instance.state is MeetingHud.VoteStates.Proceeding;
+        internal static bool IsMeetingVoting => IsMeeting && MeetingHud.Instance.CurrentState is MeetingHud.MeetingStates.Voted or MeetingHud.MeetingStates.NotVoted;
+        internal static bool IsMeetingProceeding => IsMeeting && MeetingHud.Instance.CurrentState is MeetingHud.MeetingStates.Proceeding;
         internal static bool IsExiling => ExileController.Instance && !(IsAirshipMap && SpawnInMinigame.Instance.isActiveAndEnabled);
         internal static bool IsAnySabotageActive => ShipStatus.Instance && SabotageSystem.AnyActive;
         internal static bool IsNormalGame => GameOptionsManager.Instance.CurrentGameOptions.GameMode == GameModes.Normal;
