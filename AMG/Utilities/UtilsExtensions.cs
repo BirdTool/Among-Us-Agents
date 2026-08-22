@@ -12,6 +12,11 @@ namespace AMG.Utilities
             return Pathfinder.GetClosestNode(position);
         }
 
+        public static Waypoint GetClosestNode(this Vector3 position)
+        {
+            return Pathfinder.GetClosestNode(position);
+        }
+
         public static bool CompleteSabotage(this ISabotage sabotage, ShipStatus shipStatus)
         {
             if (!sabotage.IsAllStepsCompleted()) return false;
@@ -26,5 +31,7 @@ namespace AMG.Utilities
             var steps = sabotage.GetSteps();
             return steps.All(s => s.IsCompleted);
         }
+
+        public static SystemTypes GetRoom(this Vent vent) => vent.transform.position.GetClosestNode().Room;
     }
 }

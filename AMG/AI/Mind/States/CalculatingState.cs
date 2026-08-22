@@ -15,6 +15,7 @@ namespace AMG.AI.Mind
         // Door-lockout wandering
         private bool _isWaitingForDoor = false;
         private float _doorWaitTimeout = 0f;
+        private readonly int _maxTries = 2;
 
         private void OnDoorOpenedWhileWaiting()
         {
@@ -44,7 +45,7 @@ namespace AMG.AI.Mind
                 }
             }
 
-            if (_calculatingTries >= 3)
+            if (_calculatingTries >= _maxTries)
             {
                 // LogManager.LogDebug("[AI Brain] Limite de falhas alcançado! Mudando para SmartWandering.");
                 SetState(Enums.AgentEnums.AgentState.SmartWandering);

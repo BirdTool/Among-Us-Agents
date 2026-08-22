@@ -23,6 +23,16 @@ namespace AMG.AI.Mind.Plans
             {
                 _hasStarted = true;
 
+                // Evaluate if venting is better
+                var nearestVent = VentManager.GetNearestVent(brain.Vector2Position);
+                if (nearestVent != null && Vector2.Distance(brain.Vector2Position, nearestVent.transform.position) < 5f)
+                {
+                    // It's close enough, use the vent to escape
+                    brain.AddPlan(new EscapeVentPlan());
+                    IsDone = true;
+                    return;
+                }
+
                 // Simple escape logic: Find a random node that is far away and pathfind there
                 var allWaypoints = WaypointManager.AllWaypoints;
                 var farCandidates = new List<Waypoint>();

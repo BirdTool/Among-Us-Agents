@@ -62,6 +62,15 @@ namespace AMG.AI.Tools
                 Size = "80%",
                 Identifier = IdentifierEnum.State
             };
+
+            public static AgentTag InVent => new()
+            {
+                Tag = "Inside Vent",
+                ColourHex = "#464646",
+                Size = "80%",
+                Identifier = IdentifierEnum.State
+            };
+
         }
 
         public static class Emotions

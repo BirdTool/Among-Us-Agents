@@ -196,7 +196,10 @@ namespace AMG.AI.Mind
             if (!IsImpostor && !isEngineer) return UseVentRpcEnums.ERROR_AgentIsNotImpostorOrEngineer;
             
             if (vent == null) return UseVentRpcEnums.ERROR_VentDoesNotExist;
-            if (Vector2.Distance(Vector2Position, vent.transform.position) > 3f) return UseVentRpcEnums.ERROR_AgentIsTooFarFromVent;
+            
+            // If already in a vent, distance check is bypassed (they are traveling)
+            if (!AgentControl.inVent && Vector2.Distance(Vector2Position, vent.transform.position) > 3f) 
+                return UseVentRpcEnums.ERROR_AgentIsTooFarFromVent;
 
             if (isEngineer)
             {
@@ -221,8 +224,16 @@ namespace AMG.AI.Mind
             }
             
             AgentControl.MyPhysics.RpcEnterVent(vent.Id);
-
             return result;
+        }
+
+        public UseVentRpcEnums SafeExitVent(Vent vent)
+        {
+            if (IsDead) return UseVentRpcEnums.ERROR_AgentIsDead;
+            if (!AgentControl.inVent) return UseVentRpcEnums.ERROR_VentDoesNotExist; // Not in vent
+
+            AgentControl.MyPhysics.RpcExitVent(vent.Id);
+            return UseVentRpcEnums.SUCCESS_Exit;
         }
 
         public CloseDoorRoomEnums SafeCloseDoorNotExecute(SystemTypes doorRoom)

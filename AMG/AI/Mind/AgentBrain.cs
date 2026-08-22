@@ -40,6 +40,9 @@ namespace AMG.AI.Mind
 
         public SabotageStep currentSabotageStep = null;
 
+        public SystemTypes? TargetRoomForVent = null;
+        public bool AvoidWitnessesWhenVenting = true;
+
         public PlayerControl AgentControl => myAgent;
 
         public static bool AgentControlsRealPlayer = false;
@@ -81,7 +84,8 @@ namespace AMG.AI.Mind
                 [AgentState.SmartWandering] = UpdateSmartWandering,
                 [AgentState.DoingTask] = UpdateDoingTask,
                 [AgentState.Calculating] = UpdateCalculating,
-                [AgentState.FixingSabotage] = UpdateFixingSabotage
+                [AgentState.FixingSabotage] = UpdateFixingSabotage,
+                [AgentState.InVent] = UpdateInVent
             };
 
             _updateTags = new()
@@ -93,7 +97,8 @@ namespace AMG.AI.Mind
                 [AgentState.SmartWandering] = DefaultTags.States.SmartWandering,
                 [AgentState.DoingTask] = DefaultTags.States.DoingTask,
                 [AgentState.Calculating] = DefaultTags.States.Calculating,
-                [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage
+                [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage,
+                [AgentState.InVent] = DefaultTags.States.InVent
             };
 
             Utils.OnSabotageStarted += HandleSabotageStarted;
