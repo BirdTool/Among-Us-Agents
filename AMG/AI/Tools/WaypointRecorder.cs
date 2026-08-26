@@ -1,5 +1,8 @@
 ﻿using AMG.AI.Control;
+using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
+using AMG.AI.Mind.ReactiveAgentBrain;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Utilities;
 using HarmonyLib;
@@ -22,7 +25,9 @@ namespace AMG.AI.Tools
             if (!_isRegistered)
             {
                 ClassInjector.RegisterTypeInIl2Cpp<WaypointRecorder>();
-                ClassInjector.RegisterTypeInIl2Cpp<AgentBrain>();
+                ClassInjector.RegisterTypeInIl2Cpp<AgentController>();
+                ClassInjector.RegisterTypeInIl2Cpp<StructuredAgentBrain>();
+                ClassInjector.RegisterTypeInIl2Cpp<ReactiveAgentBrain>();
                 _isRegistered = true;
                 LogManager.LogDebug("[AI GPS] Classes registradas com sucesso!");
             }
@@ -128,7 +133,7 @@ namespace AMG.AI.Tools
                 var agents = AgentManager.Agents;
                 foreach ( var agent in agents )
                 {
-                    var brain = agent.Control.GetComponent<AgentBrain>();
+                    var brain = agent.Control.GetComponent<StructuredAgentBrain>();
                     if ( brain != null )
                     {
                         Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
@@ -157,7 +162,7 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.K))
             {
-                AgentsControl.SetAllAgentAsCalculating();
+                AgentsCommander.SetAllAgentAsCalculating();
             }
 
             if (Input.GetKeyDown(KeyCode.N))
@@ -167,9 +172,9 @@ namespace AMG.AI.Tools
                 PlayerControl agentComponent = Utils.Players.LocalPlayer;
                 AgentData agentData = new() { Name = agentComponent.Data.PlayerName };
                 AgentManager.AddAgent(agentComponent, agentData);
-                agentComponent.gameObject.AddComponent<AgentBrain>();
-                var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
-                AgentBrain.AgentControlsRealPlayer = true;
+                agentComponent.gameObject.AddComponent<StructuredAgentBrain>();
+                var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
+                AgentController.AgentControlsRealPlayer = true;
                 brain.MapGameTasksToAILogic();
             }
         }

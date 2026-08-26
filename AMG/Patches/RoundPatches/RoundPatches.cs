@@ -1,5 +1,6 @@
 using AMG.AI.Control;
 using AMG.AI.Mind;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Utilities;
@@ -30,9 +31,9 @@ namespace AMG.Patches.RoundPatches
         public static void MeetingHud_Start_Postfix()
         {
             Utils.Round.AddRound();
-            foreach (AgentListData agent in AgentManager.Agents)
+            var allStructuredBrains = Utils.GetAllStructuredAgentBrain();
+            foreach (var brain in allStructuredBrains)
             {
-                var brain = agent.Control.gameObject.GetComponent<AgentBrain>();
                 brain.sawABody = false;
                 brain.ResetPath();
                 brain.SetState(Enums.AgentEnums.AgentState.OnMeeting);

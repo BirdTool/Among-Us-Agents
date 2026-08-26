@@ -1,6 +1,5 @@
-using AMG.AI.Mind.Decisions.Sabotages;
+using AMG.AI.Mind.StructuredAgentBrain.Decisions.Sabotages;
 using HarmonyLib;
-using System;
 
 namespace AMG.Patches.Gameplay
 {

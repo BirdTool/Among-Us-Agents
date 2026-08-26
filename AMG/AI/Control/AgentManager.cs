@@ -1,4 +1,5 @@
 using AMG.AI.Mind;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using AmongUs.GameOptions;
@@ -138,8 +139,8 @@ namespace AMG.AI.Control
 
             AgentData agentData = new() { Name = name };
             AddAgent(agentComponent, agentData);
-            agentComponent.gameObject.AddComponent<AgentBrain>();
-            var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
+            agentComponent.gameObject.AddComponent<StructuredAgentBrain>();
+            var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
 
             TaskAssignment.AssignTasks(agentComponent);
             brain.MapGameTasksToAILogic();

@@ -2,6 +2,7 @@
 using AMG.AI.Control;
 using AMG.AI.Mind;
 using System.Linq;
+using AMG.Utilities;
 
 namespace AMG.Patches
 {
@@ -14,7 +15,8 @@ namespace AMG.Patches
 
             if (isAgent)
             {
-                if (!AgentBrain.IsAuthorizedToVote)
+                var brain = Utils.GetAgentControllerFromPlayerId(playerId);
+                if (!brain.IsAuthorizedToVote)
                 {
                     return false;
                 }

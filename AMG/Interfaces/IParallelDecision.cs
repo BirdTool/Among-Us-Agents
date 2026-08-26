@@ -1,9 +1,9 @@
-﻿using AMG.AI.Mind;
+﻿using AMG.AI.Mind.StructuredAgentBrain;
 
 namespace AMG.Interfaces
 {
     public interface IParallelDecision
     {
-        void Evaluate(AgentBrain brain);
+        void Evaluate(StructuredAgentBrain brain);
     }
 }

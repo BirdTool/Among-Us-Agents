@@ -94,7 +94,7 @@ namespace AMG.Utilities
                     if (player == null || player.Data == null || player.Data.IsDead) continue;
 
                     // Skip our agents, since their state is already managed by the AI logic
-                    if (player.GetComponent<AMG.AI.Mind.AgentBrain>() != null) continue;
+                    if (player.GetComponent<AMG.AI.Control.AgentController.AgentController>() != null) continue;
 
                     if (Vector2.Distance(player.transform.position, location) <= threshold)
                     {

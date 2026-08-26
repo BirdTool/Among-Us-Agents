@@ -1,4 +1,4 @@
-using AMG.AI.Mind;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Enums;
 using AMG.Interfaces;
@@ -16,7 +16,7 @@ namespace AMG.Models.Plans
         public bool IsRunning { get; private set; } = false;
         public float StartedAt { get; private set; } = 0;
         
-        public void Execute(AgentBrain brain)
+        public void Execute(StructuredAgentBrain brain)
         {
             var result = brain.SafeKill(_player.PlayerId);
             if (result == Enums.SafeRpcEnums.SafeKillRpcEnums.SUCCESS) 
@@ -45,7 +45,7 @@ namespace AMG.Models.Plans
                 if (!brain.tempParallelDecisions.Exists(x => x.ID == TempParallelDecisionsIDsEnum.KillPlan))
                 {   
                     brain.tempParallelDecisions.Add(new AgentTempParallelDecision(TempParallelDecisionsIDsEnum.KillPlan, () => {
-                        if (brain.AgentControl.killTimer > 0f)
+                        if (brain.Agent.killTimer > 0f)
                         {
                             IsDone = true;
                             IsRunning = false;

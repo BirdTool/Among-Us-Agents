@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using AMG.AI.Control;
 using AMG.AI.Mind;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Tools;
 using AMG.UI.Elements;
 using AMG.Utilities;
@@ -122,8 +123,8 @@ public static class AgentsController
 
         AgentData agentData = new() { Name = name };
         AgentManager.AddAgent(agentComponent, agentData);
-        agentComponent.gameObject.AddComponent<AgentBrain>();
-        var brain = agentComponent.gameObject.GetComponent<AgentBrain>();
+        agentComponent.gameObject.AddComponent<StructuredAgentBrain>();
+        var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
 
         TaskAssignment.AssignTasks(agentComponent);
         brain.MapGameTasksToAILogic();

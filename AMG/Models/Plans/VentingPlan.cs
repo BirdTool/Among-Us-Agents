@@ -1,4 +1,4 @@
-using AMG.AI.Mind;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Enums;
 using AMG.Interfaces;
@@ -15,7 +15,7 @@ namespace AMG.Models.Plans
         public bool IsRunning { get; private set; } = false;
         public float StartedAt { get; private set; } = 0;
         
-        public void Execute(AgentBrain brain)
+        public void Execute(StructuredAgentBrain brain)
         {
             if (IsRunning) return;
             
@@ -30,7 +30,7 @@ namespace AMG.Models.Plans
             if (!brain.tempParallelDecisions.Exists(d => d.ID == TempParallelDecisionsIDsEnum.VentingPlan))
             {
                 brain.tempParallelDecisions.Add(new AgentTempParallelDecision(TempParallelDecisionsIDsEnum.VentingPlan, () => {
-                    if (brain.AgentControl.inVent)
+                    if (brain.Agent.inVent)
                     {
                         IsDone = true;
                         IsRunning = false;

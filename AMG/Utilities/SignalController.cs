@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AMG.AI.Mind;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Interfaces;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace AMG.Utilities
         // Everyone
         public static void SendSignalEveryone(ISignalClass signal)
         {
-            var brains = Utils.GetAllBrains();
+            var brains = Utils.GetAllStructuredAgentBrain();
             foreach (var brain in brains)
             {
                 brain.SignalReceive(signal);
@@ -21,13 +22,13 @@ namespace AMG.Utilities
         // Specific player
         public static void SendSignalToAgent(ISignalClass signal, PlayerControl player)
         {
-            player.GetComponent<AgentBrain>()?.SignalReceive(signal);
+            player.GetComponent<StructuredAgentBrain>()?.SignalReceive(signal);
         }
 
         // All players nearby
         public static void SendSignalRadiusVector2(ISignalClass signal, Vector2 waypoint, float radius)
         {
-            var brains = Utils.GetAllBrains();
+            var brains = Utils.GetAllStructuredAgentBrain();
             foreach (var brain in brains)
             {
                 var position = brain.Vector2Position;
@@ -44,7 +45,7 @@ namespace AMG.Utilities
         // All players that can see the target position
         public static void SendSignalRadiusCanSee(ISignalClass signal, Vector2 position)
         {
-            var brains = Utils.GetAllBrains();
+            var brains = Utils.GetAllStructuredAgentBrain();
             foreach (var brain in brains)
             {
                 var brainPosition = brain.Vector2Position;

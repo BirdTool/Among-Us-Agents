@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AMG.AI.Mind.StructuredAgentBrain;
 using UnityEngine;
 
 namespace AMG.Utilities.MapUtils
@@ -32,7 +33,7 @@ namespace AMG.Utilities.MapUtils
         public static List<Vector2> CurrentMapSpawnPoints => SpawnPoints.ContainsKey((MapNames)Utils.GetCurrentMapID()) ? SpawnPoints[(MapNames)Utils.GetCurrentMapID()] : [];
     
         public static void MakeAllAgentsSpawnAtTable(bool resetPath = false){
-            var allBrains = Utils.GetAllBrains();
+            var allBrains = Utils.GetAllAgentController();
             if (allBrains.Count == 0) return;
             var vectorList = CurrentMapSpawnPoints;
             
@@ -43,7 +44,7 @@ namespace AMG.Utilities.MapUtils
                 if (resetPath)
                 {
                     currentBrain.ResetPath();
-                    currentBrain.ResetDestinations();
+                    if (currentBrain is StructuredAgentBrain structuredBrain) structuredBrain.ResetDestinations();
                 }
                 
                 var positionsSize = vectorList.Count;
@@ -53,7 +54,7 @@ namespace AMG.Utilities.MapUtils
                 }
                 var currentPosition = vectorList[currentPositionIndex];
                 if (!currentBrain.IsDead) currentPositionIndex++;
-                currentBrain.AgentControl.transform.position = new UnityEngine.Vector3(currentPosition.x, currentPosition.y, 0);
+                currentBrain.Agent.transform.position = new UnityEngine.Vector3(currentPosition.x, currentPosition.y, 0);
             }
         }
     }

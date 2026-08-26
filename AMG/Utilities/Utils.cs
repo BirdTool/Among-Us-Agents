@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
+using AMG.AI.Mind.ReactiveAgentBrain;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Interfaces;
 using AMG.Patches.RoundPatches;
@@ -293,9 +296,24 @@ namespace AMG.Utilities
             return hasDoor;
         }
 
-        public static List<AgentBrain> GetAllBrains()
+        public static List<AgentController> GetAllAgentController()
         {
-            return [.. UnityEngine.Object.FindObjectsOfType<AgentBrain>()];
+            return [.. UnityEngine.Object.FindObjectsOfType<AgentController>()];
+        }
+
+        public static List<StructuredAgentBrain> GetAllStructuredAgentBrain()
+        {
+            return [.. UnityEngine.Object.FindObjectsOfType<StructuredAgentBrain>()];
+        }
+
+        public static List<ReactiveAgentBrain> GetAllReactiveAgentBrain()
+        {
+            return [.. UnityEngine.Object.FindObjectsOfType<ReactiveAgentBrain>()];
+        }
+
+        public static AgentController GetAgentControllerFromPlayerId(byte playerId)
+        {
+            return GetAllAgentController().FirstOrDefault(x => x.AgentId == playerId);
         }
 
         public static float GetDisturbTime(float delayTime, float multiplier)
