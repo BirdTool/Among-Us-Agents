@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind.StructuredAgentBrain.Decisions;
+using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
@@ -62,6 +63,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
             OnStuckedInPath = () => SetState(AgentState.Calculating);
 
+            Utils.OnSabotageStarted += HandleSabotageStarted;
+            Utils.OnSabotageEnded += HandleSabotageEnded;
+
             ChangeRandomDirection();
         }
 
@@ -115,7 +119,6 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             {
                 PlanManager.Execute();
             }
-            
 
             foreach (var tag in tags)
             {
@@ -176,6 +179,13 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             currentLocalTask = null;
             currentSabotageStep = null;
             currentVentToEnter = null;
+        }
+
+        public override void CommandGoToPath(List<Waypoint> path)
+        {
+            base.CommandGoToPath(path);
+
+            SetState(AgentState.Navigating);
         }
     }
 }
