@@ -3,7 +3,7 @@ using AMG.Enums.AgentEnums;
 
 namespace AMG.AI.Control.AgentController
 {
-    public partial class AgentBrain
+    public partial class AgentController
     {
         protected readonly List<AgentFlagsEnum> Flags = [];
 
