@@ -1,5 +1,6 @@
 ﻿using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
+using AMG.AI.Debug;
 using AMG.AI.Mind;
 using AMG.AI.Mind.ReactiveAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
@@ -28,6 +29,8 @@ namespace AMG.AI.Tools
                 ClassInjector.RegisterTypeInIl2Cpp<AgentController>();
                 ClassInjector.RegisterTypeInIl2Cpp<StructuredAgentBrain>();
                 ClassInjector.RegisterTypeInIl2Cpp<ReactiveAgentBrain>();
+                ClassInjector.RegisterTypeInIl2Cpp<AgentVisionESP>();
+                HudManager.Instance.gameObject.AddComponent<AgentVisionESP>();
                 _isRegistered = true;
                 LogManager.LogDebug("[AI GPS] Classes registradas com sucesso!");
             }
@@ -163,6 +166,19 @@ namespace AMG.AI.Tools
             if (Input.GetKeyDown(KeyCode.K))
             {
                 AgentsCommander.SetAllAgentAsCalculating();
+            }
+
+            if (Input.GetKeyDown(KeyCode.J))
+            {
+                var allBrains = Utils.GetAllStructuredAgentBrain();
+                foreach (var brain in allBrains)
+                {
+                    var currentPos = brain.Vector2Position;
+                    var direction = Vector2.down;
+                    var path = Pathfinder.FindStraightPath(currentPos, direction, 10f, out _);
+
+                    brain.CommandGoToPath(path);
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.N))

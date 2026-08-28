@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using UnityEngine;
 using AMG.Utilities;
+using UnityEngine;
 
 
 namespace AMG.AI.Navigation
@@ -158,6 +158,58 @@ namespace AMG.AI.Navigation
         public static float GetStraightDistance(Vector2 pointA, Vector2 pointB) // Calcula a distância em linha reta
         {
             return Vector2.Distance(pointA, pointB);
+        }
+
+        public static List<Waypoint> FindStraightPath(Vector2 origin, Vector2 direction, float maxDistance, out float totalDistance)
+        {
+            direction = direction.normalized;
+
+            Vector2 raisedOrigin = new(origin.x, origin.y + 0.5f);
+            Vector2 raisedTarget = raisedOrigin + direction * maxDistance;
+
+            RaycastHit2D hit = Physics2D.Linecast(raisedOrigin, raisedTarget, AgentPerception.WallMask);
+
+            const float collisionMargin = 0.4f;
+            float actualDistance = hit.collider != null
+                ? Mathf.Max(0f, hit.distance - collisionMargin)
+                : maxDistance;
+
+            totalDistance = actualDistance;
+
+            const float step = 0.5f;
+            var path = new List<Waypoint>();
+            int steps = Mathf.Max(1, Mathf.CeilToInt(actualDistance / step));
+
+            for (int i = 1; i <= steps; i++)
+            {
+                float t = Mathf.Min(i * step, actualDistance);
+                Vector2 pos = origin + direction * t;
+
+                path.Add(new Waypoint { Position = pos, Room = GetRoomAtPosition(pos) });
+
+                if (t >= actualDistance) break;
+            }
+
+            return path;
+        }
+
+        private static SystemTypes GetRoomAtPosition(Vector2 pos)
+        {
+            if (ShipStatus.Instance == null || ShipStatus.Instance.AllRooms == null) return SystemTypes.Hallway;
+
+            foreach (var room in ShipStatus.Instance.AllRooms)
+            {
+                if (room.roomArea != null && room.roomArea.OverlapPoint(pos))
+                    return room.RoomId;
+            }
+
+            return SystemTypes.Hallway;
+        }
+
+        public static List<Waypoint> FindStraightPath(Vector2 origin, Vector2 target, out float totalDistance)
+        {
+            Vector2 delta = target - origin;
+            return FindStraightPath(origin, delta.normalized, delta.magnitude, out totalDistance);
         }
     }
 }

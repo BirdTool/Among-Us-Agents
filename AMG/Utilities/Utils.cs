@@ -194,25 +194,6 @@ namespace AMG.Utilities
             return role;
         }
 
-        public static string PlatformTypeToString(Platforms platform)
-        {
-            return platform switch
-            {
-                Platforms.StandaloneEpicPC => "Epic Games",
-                Platforms.StandaloneSteamPC => "Steam",
-                Platforms.StandaloneMac => "Mac",
-                Platforms.StandaloneWin10 => "Microsoft Store",
-                Platforms.StandaloneItch => "Itch.io",
-                Platforms.IPhone => "iPhone / iPad",
-                Platforms.Android => "Android",
-                Platforms.Switch => "Nintendo Switch",
-                Platforms.Xbox => "Xbox",
-                Platforms.Playstation => "PlayStation",
-                (Platforms)112 => "Starlight",
-                _ => "Unknown"
-            };
-        }
-
         // Gets the name for a specified player's role as a string
         // Strings are automatically translated
         public static string GetRoleName(NetworkedPlayerInfo playerData)
@@ -366,6 +347,29 @@ namespace AMG.Utilities
             }
 
             return false;
+        }
+
+        // Code stolen from MalumMenu
+        public static void DrawTracer(GameObject sourceObject, GameObject targetObject, Color color)
+        {
+            var lineRenderer = sourceObject.GetComponent<LineRenderer>();
+
+            if (!lineRenderer)
+            {
+                lineRenderer = sourceObject.AddComponent<LineRenderer>();
+            }
+
+            lineRenderer.SetVertexCount(2);
+            lineRenderer.SetWidth(0.02F, 0.02F);
+
+            // I just picked an already existing material from the game
+            Material material = DestroyableSingleton<HatManager>.Instance.PlayerMaterial;
+
+            lineRenderer.material = material;
+            lineRenderer.SetColors(color, color);
+
+            lineRenderer.SetPosition(0, sourceObject.transform.position);
+            lineRenderer.SetPosition(1, targetObject.transform.position);
         }
     }
 }

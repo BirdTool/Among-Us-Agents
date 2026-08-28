@@ -7,7 +7,7 @@ namespace AMG.Utilities
 {
     public static class AgentPerception
     {
-        private const int WallMask = 1 << 17;
+        public const int WallMask = 1 << 17;
 
         public static List<PlayerControl> GetNearbyPlayers(
             Vector2 origin,

@@ -23,17 +23,17 @@ namespace AMG.AI.Control.AgentController
         protected bool StopForced = false;
 
         protected int StuckCount = 0;
-        protected float? LastTimeStucked = null;
+        protected float? FirstStuckTime = null;
 
         // True if the path is completed
         protected virtual bool? ProcessPathMovement()
         {
-            if (StopForced) 
-            { 
-                StopForced = false; 
-                return null; 
+            if (StopForced)
+            {
+                StopForced = false;
+                return null;
             }
-            
+
             if (CurrentPath == null || CurrentPathIndex >= CurrentPath.Count) return true;
 
             Waypoint currentStep = CurrentPath[CurrentPathIndex];
@@ -62,31 +62,27 @@ namespace AMG.AI.Control.AgentController
                 if (EvadeTimer <= 0f)
                 {
                     IsEvading = false;
-                    StuckCount++;
-
-                    LastTimeStucked = Time.time;
                     StuckTimer = 0f;
-                }
-                return false;
-            }
 
-            if (StuckCount > 2)
-            {
-                if (LastTimeStucked == null)
-                {
-                    StuckCount = 0;
-                }
-                else
-                {
-                    float secondsSinceLastStuck = Time.time - LastTimeStucked.Value;
-                    if (secondsSinceLastStuck > 8)
+                    if (FirstStuckTime == null || Time.time - FirstStuckTime.Value > 8f)
+                    {
+                        FirstStuckTime = Time.time;
+                        StuckCount = 1;
+                    }
+                    else
+                    {
+                        StuckCount++;
+                    }
+
+                    if (StuckCount >= 3)
                     {
                         StuckCount = 0;
-                        LastTimeStucked = null;
+                        FirstStuckTime = null;
                         ResetPath(true);
                         OnStuckedInPath?.Invoke();
                     }
                 }
+                return false;
             }
 
             float dist = Vector2.Distance(currentPos, currentStep.Position);
@@ -132,8 +128,8 @@ namespace AMG.AI.Control.AgentController
             {
                 if (Utils.IsRoomClosed(currentStep.Room) || Utils.IsRoomClosed(nextStep.Room))
                 {
-                    CurrentPath = null; 
-                    
+                    CurrentPath = null;
+
                     return null; // It's not completed, but there's no path to follow anyway
                 }
             }
