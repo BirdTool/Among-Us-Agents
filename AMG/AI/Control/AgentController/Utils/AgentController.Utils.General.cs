@@ -34,9 +34,8 @@ namespace AMG.AI.Control.AgentController
             }
         }
 
-        public List<RoundDeadBody> NearbyBodies => AgentPerception.GetNearbyDeadBodies(Vector2Position, 6f);
-        public List<RoundDeadBody> NearbyBodiesInVision => AgentPerception.GetNearbyDeadBodiesInVision(Agent);
-        public List<PlayerControl> NearbyPlayers => AgentPerception.GetNearbyPlayers(Vector2Position, 6.5f);
-        public List<PlayerControl> NearbyPlayersInVision => AgentPerception.GetNearbyPlayersInVision(Agent);
+        public List<RoundDeadBody> NearbyBodies => AgentVision.GetNearbyDeadBodies(Vector2Position, 6f);
+        public List<PlayerControl> NearbyPlayers => AgentVision.GetNearbyPlayers(Vector2Position, 6.5f);
+        public List<PlayerControl> NearbyPlayersInVision => AgentVision.GetNearbyPlayersInVision(Agent);
     }
 }

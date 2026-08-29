@@ -56,9 +56,9 @@ namespace AMG.AI.Debug
             if (IsActive && Camera.main != null && PlayerControl.LocalPlayer != null)
             {
                 var localPlayer = PlayerControl.LocalPlayer;
-                float agentRadius = GetAgentRadius(localPlayer);
+                // float agentRadius = GetAgentRadius(localPlayer);
 
-                DrawAllDirectionsDebug(localPlayer.GetTruePosition(), 10f, agentRadius);
+                // DrawAllDirectionsDebug(localPlayer.GetTruePosition(), 10f, agentRadius);
                 DrawVisionESP(localPlayer);
             }
 

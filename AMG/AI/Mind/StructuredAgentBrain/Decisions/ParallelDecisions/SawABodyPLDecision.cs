@@ -48,7 +48,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
             var cognitiveTimer = GetAgentCognitiveTimer(id);
             var pendingBodiesToReact = GetAgentPendingBodies(id);
 
-            var nearbyBodies = brain.NearbyBodiesInVision;
+            var nearbyBodies = brain.NearbyBodies;
 
             if (nearbyBodies.Count > 0)
             {

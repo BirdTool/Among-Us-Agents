@@ -240,11 +240,10 @@ namespace AMG.Utilities
             float actualDistance = Vector2.Distance(raisedOrigin, raisedDest);
             if (actualDistance > maxDistance) return false;
 
-            Vector2 direction = (raisedDest - raisedOrigin).normalized;
+            if (!AgentVision.IsWithinScreenBounds(raisedOrigin, raisedDest)) return false;
+            if (AgentVision.IsBlockedByClosedDoor(raisedOrigin, raisedDest)) return false;
 
-            RaycastHit2D hit = Physics2D.Raycast(raisedOrigin, direction, actualDistance, Constants.ShadowMask);
-
-            return hit.collider == null;
+            return !AgentVision.IsObstructed(raisedOrigin, raisedDest);
         }
 
         /// <summary>

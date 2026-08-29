@@ -174,8 +174,8 @@ namespace AMG.AI.Tools
                 foreach (var brain in allBrains)
                 {
                     var currentPos = brain.Vector2Position;
-                    var direction = Vector2.down;
-                    var path = Pathfinder.FindStraightPath(currentPos, direction, 10f, out _);
+                    var target = currentPos + (Vector2.down * 10f);
+                    var path = Pathfinder.FindStraightPath(currentPos, target, out float _);
 
                     brain.CommandGoToPath(path);
                 }
