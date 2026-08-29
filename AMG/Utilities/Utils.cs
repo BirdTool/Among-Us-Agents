@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
+using AMG.AI.Mind.ReactiveAgentBrain;
+using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Interfaces;
 using AMG.Patches.RoundPatches;
@@ -191,25 +194,6 @@ namespace AMG.Utilities
             return role;
         }
 
-        public static string PlatformTypeToString(Platforms platform)
-        {
-            return platform switch
-            {
-                Platforms.StandaloneEpicPC => "Epic Games",
-                Platforms.StandaloneSteamPC => "Steam",
-                Platforms.StandaloneMac => "Mac",
-                Platforms.StandaloneWin10 => "Microsoft Store",
-                Platforms.StandaloneItch => "Itch.io",
-                Platforms.IPhone => "iPhone / iPad",
-                Platforms.Android => "Android",
-                Platforms.Switch => "Nintendo Switch",
-                Platforms.Xbox => "Xbox",
-                Platforms.Playstation => "PlayStation",
-                (Platforms)112 => "Starlight",
-                _ => "Unknown"
-            };
-        }
-
         // Gets the name for a specified player's role as a string
         // Strings are automatically translated
         public static string GetRoleName(NetworkedPlayerInfo playerData)
@@ -256,11 +240,10 @@ namespace AMG.Utilities
             float actualDistance = Vector2.Distance(raisedOrigin, raisedDest);
             if (actualDistance > maxDistance) return false;
 
-            Vector2 direction = (raisedDest - raisedOrigin).normalized;
+            if (!AgentVision.IsWithinScreenBounds(raisedOrigin, raisedDest)) return false;
+            if (AgentVision.IsBlockedByClosedDoor(raisedOrigin, raisedDest)) return false;
 
-            RaycastHit2D hit = Physics2D.Raycast(raisedOrigin, direction, actualDistance, Constants.ShadowMask);
-
-            return hit.collider == null;
+            return !AgentVision.IsObstructed(raisedOrigin, raisedDest);
         }
 
         /// <summary>
@@ -293,9 +276,24 @@ namespace AMG.Utilities
             return hasDoor;
         }
 
-        public static List<AgentBrain> GetAllBrains()
+        public static List<AgentController> GetAllAgentController()
         {
-            return [.. UnityEngine.Object.FindObjectsOfType<AgentBrain>()];
+            return [.. UnityEngine.Object.FindObjectsOfType<AgentController>()];
+        }
+
+        public static List<StructuredAgentBrain> GetAllStructuredAgentBrain()
+        {
+            return [.. UnityEngine.Object.FindObjectsOfType<StructuredAgentBrain>()];
+        }
+
+        public static List<ReactiveAgentBrain> GetAllReactiveAgentBrain()
+        {
+            return [.. UnityEngine.Object.FindObjectsOfType<ReactiveAgentBrain>()];
+        }
+
+        public static AgentController GetAgentControllerFromPlayerId(byte playerId)
+        {
+            return GetAllAgentController().FirstOrDefault(x => x.AgentId == playerId);
         }
 
         public static float GetDisturbTime(float delayTime, float multiplier)
@@ -348,6 +346,29 @@ namespace AMG.Utilities
             }
 
             return false;
+        }
+
+        // Code stolen from MalumMenu
+        public static void DrawTracer(GameObject sourceObject, GameObject targetObject, Color color)
+        {
+            var lineRenderer = sourceObject.GetComponent<LineRenderer>();
+
+            if (!lineRenderer)
+            {
+                lineRenderer = sourceObject.AddComponent<LineRenderer>();
+            }
+
+            lineRenderer.SetVertexCount(2);
+            lineRenderer.SetWidth(0.02F, 0.02F);
+
+            // I just picked an already existing material from the game
+            Material material = DestroyableSingleton<HatManager>.Instance.PlayerMaterial;
+
+            lineRenderer.material = material;
+            lineRenderer.SetColors(color, color);
+
+            lineRenderer.SetPosition(0, sourceObject.transform.position);
+            lineRenderer.SetPosition(1, targetObject.transform.position);
         }
     }
 }

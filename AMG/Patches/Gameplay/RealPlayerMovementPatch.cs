@@ -1,5 +1,5 @@
+using AMG.AI.Control.AgentController;
 using HarmonyLib;
-using AMG.AI.Mind;
 
 namespace AMG.Patches.Gameplay
 {
@@ -8,11 +8,11 @@ namespace AMG.Patches.Gameplay
     {
         public static void Postfix(PlayerPhysics __instance)
         {
-            if (!AgentBrain.AgentControlsRealPlayer) return;
+            if (!AgentController.AgentControlsRealPlayer) return;
             if (PlayerControl.LocalPlayer == null) return;
             if (__instance != PlayerControl.LocalPlayer.MyPhysics) return;
 
-            var brain = PlayerControl.LocalPlayer.GetComponent<AgentBrain>();
+            var brain = PlayerControl.LocalPlayer.GetComponent<AgentController>();
             if (brain == null) return;
 
             __instance.body.velocity = brain.DesiredVelocity;

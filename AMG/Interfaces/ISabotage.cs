@@ -1,3 +1,4 @@
+using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
 using AMG.AI.Navigation;
 using AMG.Utilities;
@@ -17,7 +18,7 @@ namespace AMG.Interfaces
         public virtual bool IsCompleted { get; set; } = false;
         public abstract List<Waypoint> Locations { get; }
         
-        public virtual void CompleteStep(AgentBrain brain) 
+        public virtual void CompleteStep(AgentController brain) 
         {
             if (IsCompleted) return;
             IsCompleted = true;

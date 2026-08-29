@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 using System;
+using AMG.Utilities;
 
 namespace AMG.AI.UI
 {
@@ -30,7 +31,7 @@ namespace AMG.AI.UI
 
                 passiveButton.OnClick.AddListener((Action)(() =>
                 {
-                    Debug.Log("[AI Agents] Botão visual clicado. Instanciando Agente...");
+                    LogManager.Log("[AI Agents] Botão visual clicado. Instanciando Agente...");
                     // Control.AgentManager.AddAgent(Control.AgentManager.GenerateUniqueRandomName());
                     Control.AgentManager.GenerateRandomAgent();
                 }));
