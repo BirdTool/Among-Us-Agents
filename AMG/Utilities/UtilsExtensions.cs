@@ -12,6 +12,12 @@ namespace AMG.Utilities
             return Pathfinder.GetClosestNode(position);
         }
 
+        public static Waypoint GetClosestNode(this Vector3 position)
+        {
+            return Pathfinder.GetClosestNode(position);
+        }
+
+
         public static bool CompleteSabotage(this ISabotage sabotage, ShipStatus shipStatus)
         {
             if (!sabotage.IsAllStepsCompleted()) return false;

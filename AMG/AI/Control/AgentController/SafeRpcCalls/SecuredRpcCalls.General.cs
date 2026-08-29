@@ -1,5 +1,6 @@
 using System.Linq;
 using AMG.Enums.SafeRpcEnums;
+using AMG.UI.UIActions;
 using AMG.Utilities;
 using AmongUs.GameOptions;
 using UnityEngine;
@@ -55,44 +56,6 @@ namespace AMG.AI.Control.AgentController
             if (result != ReportDeadBodyRpcEnums.SUCCESS) return result;
 
             Agent.CmdReportDeadBody(GameData.Instance.GetPlayerById(body.PlayerId));
-
-            return result;
-        }
-
-        public UseVentRpcEnums SafeUseVentNotExecute(Vent vent)
-        {
-            if (IsDead) return UseVentRpcEnums.ERROR_AgentIsDead;
-            
-            var isEngineer = Agent.Data.Role.Role == RoleTypes.Engineer;
-            
-            if (!IsImpostor && !isEngineer) return UseVentRpcEnums.ERROR_AgentIsNotImpostorOrEngineer;
-            
-            if (vent == null) return UseVentRpcEnums.ERROR_VentDoesNotExist;
-            if (Vector2.Distance(Vector2Position, vent.transform.position) > 3f) return UseVentRpcEnums.ERROR_AgentIsTooFarFromVent;
-
-            if (isEngineer)
-            {
-                var engineerRole = Agent.Data.Role.Cast<EngineerRole>();
-
-                if (engineerRole.cooldownSecondsRemaining > 0f)
-                {
-                    return UseVentRpcEnums.ERROR_AgentIsInCooldown; 
-                }
-            }
-
-            return UseVentRpcEnums.SUCCESS;
-        }
-
-        public UseVentRpcEnums SafeUseVent(Vent vent)
-        {
-            var result = SafeUseVentNotExecute(vent);
-            
-            if (result != UseVentRpcEnums.SUCCESS) 
-            {
-                return result;
-            }
-            
-            Agent.MyPhysics.RpcEnterVent(vent.Id);
 
             return result;
         }

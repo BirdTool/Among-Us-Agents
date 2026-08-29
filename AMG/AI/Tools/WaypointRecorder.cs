@@ -1,4 +1,7 @@
-﻿using AMG.AI.Control;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Debug;
 using AMG.AI.Mind;
@@ -6,11 +9,9 @@ using AMG.AI.Mind.ReactiveAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Utilities;
+using AmongUs.GameOptions;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
 
@@ -134,10 +135,10 @@ namespace AMG.AI.Tools
                 Waypoint target = Pathfinder.GetClosestNode(myPosition);
 
                 var agents = AgentManager.Agents;
-                foreach ( var agent in agents )
+                foreach (var agent in agents)
                 {
                     var brain = agent.Control.GetComponent<StructuredAgentBrain>();
-                    if ( brain != null )
+                    if (brain != null)
                     {
                         Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
                         List<Waypoint> path = Pathfinder.FindPath(start, target, out _);
@@ -171,13 +172,29 @@ namespace AMG.AI.Tools
             if (Input.GetKeyDown(KeyCode.J))
             {
                 var allBrains = Utils.GetAllStructuredAgentBrain();
+
                 foreach (var brain in allBrains)
                 {
-                    var currentPos = brain.Vector2Position;
-                    var target = currentPos + (Vector2.down * 10f);
-                    var path = Pathfinder.FindStraightPath(currentPos, target, out float _);
+                    Vent closestVent = null;
+                    float minDistance = float.MaxValue;
 
-                    brain.CommandGoToPath(path);
+                    foreach (var vent in ShipStatus.Instance.AllVents)
+                    {
+                        float distance = Vector2.Distance(brain.Vector2Position, vent.transform.position);
+
+                        if (distance < minDistance)
+                        {
+                            minDistance = distance;
+                            closestVent = vent;
+                        }
+                    }
+
+                    if (closestVent != null)
+                    {
+                        brain.ResetDestinations();
+                        brain.currentVentToEnter = closestVent;
+                        brain.CommandGoToPath(Pathfinder.FindPath(brain.WaypointPosition, closestVent.transform.position.GetClosestNode(), out float _));
+                    }
                 }
             }
 

@@ -8,8 +8,6 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 {
     public partial class StructuredAgentBrain
     {
-        public Vent currentVentToEnter = null;
-        
         private void UpdateNavigating()
         {
             ReplaceNameTag(DefaultTags.States.Navigating);
@@ -44,10 +42,21 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
                 else if (currentVentToEnter != null)
                 {
-                    if (Utils.IsCloseToLocation(Vector2Position, currentVentToEnter.transform.position, 1.8f))
+                    if (Utils.IsCloseToLocation(Vector2Position, currentVentToEnter.transform.position, 3f))
                     {
-                        SafeUseVent(currentVentToEnter);
-                        currentVentToEnter = null;
+                        var result = SafeUseVent(currentVentToEnter);
+                        LogManager.LogDebug($"[VENT] Resultado de usar a vent: {result}");
+                        if (result == Enums.SafeRpcEnums.UseVentRpcEnums.SUCCESS)
+                        {
+                            currentVent = currentVentToEnter;
+                            currentVentToEnter = null;
+                            SetState(AgentState.InVent);
+                        }
+                        else
+                        {
+                            currentVentToEnter = null;
+                            SetState(AgentState.Calculating);
+                        }
                     }
                     else
                     {

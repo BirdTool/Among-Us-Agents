@@ -123,7 +123,7 @@ namespace AMG.AI.Control
             if (WillBeImpostor)
                 agentComponent.RpcSetRole(RoleTypes.Impostor);
             else
-                agentComponent.RpcSetRole(RoleTypes.Crewmate);
+                agentComponent.RpcSetRole(RoleTypes.Engineer);
 
             var pInfo = GameData.Instance?.GetPlayerById(agentComponent.PlayerId);
             LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsRecycled={isRecycled}, IsImpostor={pInfo?.Role?.IsImpostor}");

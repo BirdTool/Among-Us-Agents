@@ -3,6 +3,6 @@
     public enum AgentState 
         { Wandering, Stopped, Navigating, OnMeeting,
             SmartWandering, DoingTask, Calculating,
-            FixingSabotage
+            FixingSabotage, InVent
     }
 }
