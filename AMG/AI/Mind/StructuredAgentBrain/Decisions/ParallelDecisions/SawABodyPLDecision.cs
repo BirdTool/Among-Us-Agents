@@ -11,8 +11,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
 {
     internal class SawABodyPLDecision : IParallelDecision
     {
-        private Dictionary<byte, CooldownTimer> _agentCognitiveTimes = [];
-        private Dictionary<byte, List<RoundDeadBody>> _agentsPendingBodiesToReact = [];
+        private readonly Dictionary<byte, CooldownTimer> _agentCognitiveTimes = [];
+        private readonly Dictionary<byte, List<RoundDeadBody>> _agentsPendingBodiesToReact = [];
 
         private CooldownTimer GetAgentCognitiveTimer(byte agentId)
         {
@@ -48,7 +48,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
             var cognitiveTimer = GetAgentCognitiveTimer(id);
             var pendingBodiesToReact = GetAgentPendingBodies(id);
 
-            var nearbyBodies = brain.NearbyBodies;
+            var nearbyBodies = brain.NearbyBodiesInVision;
 
             if (nearbyBodies.Count > 0)
             {

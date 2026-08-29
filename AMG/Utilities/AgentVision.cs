@@ -63,8 +63,6 @@ namespace AMG.Utilities
             return result;
         }
 
-        // ── Visão (raio de luz + porta fechada + tela + trigger de sala) ──
-
         public static List<PlayerControl> GetNearbyPlayersInVision(
             Vector2 pointOfVision,
             bool considerLightsOff = true,
