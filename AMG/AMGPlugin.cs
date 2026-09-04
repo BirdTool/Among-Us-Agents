@@ -1,3 +1,4 @@
+using AMG.InternalRpc;
 using AMG.Utilities;
 using BepInEx;
 using BepInEx.Configuration;
@@ -5,6 +6,7 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace AMG;
 
@@ -16,6 +18,7 @@ public partial class AMGPlugin : BasePlugin
     public static AMGPlugin Plugin;
     public new static ManualLogSource Log;
 
+    public static readonly string version = "0.0.3";
 
     public ConfigEntry<string> ConfigName { get; private set; }
 
