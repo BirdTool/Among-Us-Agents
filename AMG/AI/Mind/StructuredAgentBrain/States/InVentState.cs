@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using AMG.Enums.AgentEnums;
+using AMG.Enums.SafeRpcEnums;
 using AMG.Utilities;
 using Il2CppSystem.Runtime.CompilerServices;
 using UnityEngine;
@@ -16,7 +17,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         private const float TIME_TO_CHANGE_POSITION = 5f; // seconds
         private float _nextVentChangeTime = 0.0f;
         private float _lastTimeCheckedItsOutsideVent = 0.0f;
-        private const float TIME_TO_CHECK_ITS_OUTSIDE_VENT = 0.5f; // seconds
+        private const float TIME_TO_CHECK_ITS_OUTSIDE_VENT = 0.5f;
+        private const float GRACE_PERIOD_AFTER_VENT_CHANGE = 1.0f;
 
         private void UpdateInVent()
         {
@@ -53,7 +55,15 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
             if (hasToCheckItsOutsideVent && CheckIfItsOutsideVent())
             {
-                LogManager.LogDebug($"[VENT] Agent {Agent.Data.PlayerName} is outside vent. Set state to Calculating.");
+                LogManager.LogDebug(
+                    String.Concat(
+                        "[VENT] Agent " + Agent.Data.PlayerName + " está fora da vent. Set state to Calculating.\n",
+                        "\nPosição do jogador: " + Vector2Position,
+                        "\nPosição da vent: " + currentVent.transform.position,
+                        "\nDistância calculada: " + Vector2.Distance(Vector2Position, currentVent.transform.position),
+                        "\nDistância que era pra estar: 3.0"
+                    )
+                );
                 SafeLeaveVent(currentVent);
                 currentVent = null;
                 SetState(AgentState.Calculating);
@@ -101,10 +111,10 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                     .Where(vent => vent != null && vent.Id != currentVent.Id)
                     .ToList()
                     .GetRandomItemSecureOrDefault();
+
                 if (randomVent == null || randomVent == currentVent)
                 {
                     LogManager.LogDebug("[VENT] Não achou outra vent para ir. Saindo da vent.");
-                    // try to exit vent
                     SafeLeaveVent(currentVent);
                     currentVent = null;
                     SetState(AgentState.Calculating);
@@ -112,13 +122,49 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
 
                 LogManager.LogDebug($"[VENT] Indo da vent {currentVent.Id} para a vent {randomVent.Id}");
-                Agent.MyPhysics.RpcExitVent(currentVent.Id);
-                Agent.MyPhysics.RpcEnterVent(randomVent.Id);
-                LogManager.LogDebug($"[VENT] Sucesso!");
+
+                if (IsItTheRealPlayer)
+                {
+                    VentingResultEnum moveResult;
+                    if (currentVent.Left == randomVent)
+                    {
+                        moveResult = SafeVentGoLeft(currentVent, true);
+                        currentVent = randomVent;
+                    }
+                    else if (currentVent.Right == randomVent)
+                    {
+                        moveResult = SafeVentGoRight(currentVent, true);
+                        currentVent = randomVent;
+                    }
+                    else if (currentVent.Center == randomVent)
+                    {
+                        moveResult = SafeVentGoCenter(currentVent, true);
+                        currentVent = randomVent;
+                    }
+                    else
+                    {
+                        LogManager.LogDebug("[VENT] randomVent não é Left/Right/Center de currentVent — inconsistência.");
+                        SafeLeaveVent(currentVent);
+                        currentVent = null;
+                        SetState(AgentState.Calculating);
+                        return;
+                    }
+
+                    if (moveResult != VentingResultEnum.SUCCESS)
+                    {
+                        LogManager.LogDebug($"[VENT] Falha ao mover: {moveResult}");
+                        return;
+                    }
+                }
+                else
+                {
+                    Agent.transform.position = randomVent.transform.position;
+                }
 
                 currentVent = randomVent;
                 _lastTimeChangedPosition = Time.time;
                 _nextVentChangeTime = 0.0f;
+                _lastTimeCheckedItsOutsideVent = Time.time;
             }
         }
 
@@ -130,7 +176,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         private bool CheckIfItsOutsideVent()
         {
             if (currentVent == null) return true;
-            return !Utils.IsCloseToLocation(Vector2Position, currentVent.transform.position, 1.2f);
+            return !Utils.IsCloseToLocation(Vector2Position, currentVent.transform.position, 3f);
         }
     }
 }

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using AMG.AI.Control.AgentController;
+using AMG.Utilities;
 using HarmonyLib;
 
 namespace AMG.Patches.Gameplay

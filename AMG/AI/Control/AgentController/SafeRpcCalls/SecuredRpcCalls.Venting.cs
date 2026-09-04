@@ -32,13 +32,18 @@ namespace AMG.AI.Control.AgentController
         public UseVentRpcEnums SafeUseVent(Vent vent)
         {
             var result = SafeUseVentNotExecute(vent);
+            if (result != UseVentRpcEnums.SUCCESS) return result;
 
-            if (result != UseVentRpcEnums.SUCCESS)
+            if (IsItTheRealPlayer)
             {
-                return result;
+                vent.EnterVent(Agent);
+                // Agent.MyPhysics.RpcEnterVent(vent.Id);
+            }
+            else
+            {
+                Agent.MyPhysics.RpcEnterVent(vent.Id);
             }
 
-            Agent.MyPhysics.RpcEnterVent(vent.Id);
             Agent.inVent = true;
 
             if (Agent.Data.Role.Role == RoleTypes.Engineer)
@@ -74,9 +79,21 @@ namespace AMG.AI.Control.AgentController
             return result;
         }
 
-        public VentingResultEnum SafeVentGoRight(Vent vent)
+        public VentingResultEnum SafeVentGoRight(Vent vent, bool teleport = false)
         {
             if (vent.Right == null) return VentingResultEnum.ERROR_NoVentInThatDirection;
+
+            if (IsItTheRealPlayer && !teleport)
+            {
+                vent.ClickRight();
+                return VentingResultEnum.SUCCESS;
+            }
+
+            if (teleport)
+            {
+                Agent.NetTransform.RpcSnapTo(vent.Right.transform.position);
+                return VentingResultEnum.SUCCESS;
+            }
 
             var exitResult = SafeLeaveVent(vent);
             if (exitResult != VentingResultEnum.SUCCESS) return exitResult;
@@ -86,9 +103,21 @@ namespace AMG.AI.Control.AgentController
             return VentingResultEnum.SUCCESS;
         }
 
-        public VentingResultEnum SafeVentGoLeft(Vent vent)
+        public VentingResultEnum SafeVentGoLeft(Vent vent, bool teleport = false)
         {
             if (vent.Left == null) return VentingResultEnum.ERROR_NoVentInThatDirection;
+
+            if (IsItTheRealPlayer && !teleport)
+            {
+                vent.ClickLeft();
+                return VentingResultEnum.SUCCESS;
+            }
+
+            if (teleport)
+            {
+                Agent.NetTransform.RpcSnapTo(vent.Left.transform.position);
+                return VentingResultEnum.SUCCESS;
+            }
 
             var exitResult = SafeLeaveVent(vent);
             if (exitResult != VentingResultEnum.SUCCESS) return exitResult;
@@ -98,9 +127,21 @@ namespace AMG.AI.Control.AgentController
             return VentingResultEnum.SUCCESS;
         }
 
-        public VentingResultEnum SafeVentGoCenter(Vent vent)
+        public VentingResultEnum SafeVentGoCenter(Vent vent, bool teleport = false)
         {
             if (vent.Center == null) return VentingResultEnum.ERROR_NoVentInThatDirection;
+
+            if (IsItTheRealPlayer && !teleport)
+            {
+                vent.ClickCenter();
+                return VentingResultEnum.SUCCESS;
+            }
+
+            if (teleport)
+            {
+                Agent.NetTransform.RpcSnapTo(vent.Center.transform.position);
+                return VentingResultEnum.SUCCESS;
+            }
 
             var exitResult = SafeLeaveVent(vent);
             if (exitResult != VentingResultEnum.SUCCESS) return exitResult;
