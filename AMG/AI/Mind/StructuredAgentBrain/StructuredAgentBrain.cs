@@ -46,7 +46,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 [AgentState.SmartWandering] = UpdateSmartWandering,
                 [AgentState.DoingTask] = UpdateDoingTask,
                 [AgentState.Calculating] = UpdateCalculating,
-                [AgentState.FixingSabotage] = UpdateFixingSabotage
+                [AgentState.FixingSabotage] = UpdateFixingSabotage,
+                [AgentState.InVent] = UpdateInVent
             };
 
             _updateTags = new()
@@ -58,7 +59,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 [AgentState.SmartWandering] = DefaultTags.States.SmartWandering,
                 [AgentState.DoingTask] = DefaultTags.States.DoingTask,
                 [AgentState.Calculating] = DefaultTags.States.Calculating,
-                [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage
+                [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage,
+                [AgentState.InVent] = DefaultTags.States.InVent
             };
 
             OnStuckedInPath = () => SetState(AgentState.Calculating);
@@ -72,6 +74,33 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         void Update()
         {
             if (Agent == null || Agent.MyPhysics?.body == null) return;
+
+            if (_timeSinceStartedVenting != null)
+            {
+                SetState(AgentState.InVent);
+                if (Time.time - _timeSinceStartedVenting > VENTING_ANIMATION_DURATION)
+                {
+                    _timeSinceStartedVenting = null;
+                    currentVent = currentVentToEnter;
+                    currentVentToEnter = null;
+                    Agent.inVent = true;
+                }
+                return;
+            }
+
+            if (currentVent != null && currentState != AgentState.InVent)
+            {
+                SafeLeaveVent(currentVent);
+                currentVent = null;
+                Agent.Collider?.enabled = true;
+                SetState(AgentState.Calculating);
+            }
+
+            if (currentVent == null && Agent.inVent == true)
+            {
+                Agent.inVent = false;
+                SetState(AgentState.Calculating);
+            }
 
             if (updateAction != null)
             {

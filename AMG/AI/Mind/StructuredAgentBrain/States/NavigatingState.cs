@@ -1,15 +1,15 @@
 ﻿using System.Linq;
+using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
+using Discord;
 using Steamworks;
 
 namespace AMG.AI.Mind.StructuredAgentBrain
 {
     public partial class StructuredAgentBrain
     {
-        public Vent currentVentToEnter = null;
-        
         private void UpdateNavigating()
         {
             ReplaceNameTag(DefaultTags.States.Navigating);
@@ -44,10 +44,19 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
                 else if (currentVentToEnter != null)
                 {
-                    if (Utils.IsCloseToLocation(Vector2Position, currentVentToEnter.transform.position, 1.8f))
+                    if (Utils.IsCloseToLocation(Vector2Position, currentVentToEnter.transform.position, 4.5f))
                     {
-                        SafeUseVent(currentVentToEnter);
-                        currentVentToEnter = null;
+                        var result = SafeUseVent(currentVentToEnter);
+                        LogManager.LogDebug($"[VENT] Resultado de usar a vent: {result}");
+                        if (result == Enums.SafeRpcEnums.UseVentRpcEnums.SUCCESS)
+                        {
+                            SetState(AgentState.InVent);
+                        }
+                        else
+                        {
+                            currentVentToEnter = null;
+                            SetState(AgentState.Calculating);
+                        }
                     }
                     else
                     {

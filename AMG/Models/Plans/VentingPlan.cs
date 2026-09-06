@@ -1,3 +1,4 @@
+using System;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Enums;
@@ -7,9 +8,10 @@ using UnityEngine;
 
 namespace AMG.Models.Plans
 {
-    public class VentingPlan(Vent ventToEnter) : IPlan
+    public class VentingPlan(Vent ventToEnter, Func<bool> InVentAction) : IPlan
     {
         private readonly Vent _ventToEnter = ventToEnter;
+        private readonly Func<bool> _InVentAction = InVentAction;
 
         public bool IsDone { get; set; } = false;
         public bool IsRunning { get; private set; } = false;
@@ -49,6 +51,8 @@ namespace AMG.Models.Plans
                     SecondsTimeLimit = 16
                 });
             }
+
+            brain.InVentLogic = _InVentAction;
         }
     }
 }

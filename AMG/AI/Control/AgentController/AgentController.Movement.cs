@@ -10,7 +10,7 @@ namespace AMG.AI.Control.AgentController
     {
         public List<Waypoint> CurrentPath { get; protected set; } = null;
         public int CurrentPathIndex { get; protected set; } = 0;
-        protected const float ComfortFactor = 0.93f;
+        protected const float ComfortFactor = 0.95f;
         protected float Speed => Agent.MyPhysics.Speed * 1.75f * ComfortFactor;
 
         protected Vector2 LastPosition = Vector2.zero;

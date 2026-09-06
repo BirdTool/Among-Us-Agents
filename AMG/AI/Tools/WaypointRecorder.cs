@@ -1,4 +1,7 @@
-﻿using AMG.AI.Control;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Debug;
 using AMG.AI.Mind;
@@ -6,11 +9,9 @@ using AMG.AI.Mind.ReactiveAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Utilities;
+using AmongUs.GameOptions;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
 
@@ -134,10 +135,10 @@ namespace AMG.AI.Tools
                 Waypoint target = Pathfinder.GetClosestNode(myPosition);
 
                 var agents = AgentManager.Agents;
-                foreach ( var agent in agents )
+                foreach (var agent in agents)
                 {
                     var brain = agent.Control.GetComponent<StructuredAgentBrain>();
-                    if ( brain != null )
+                    if (brain != null)
                     {
                         Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
                         List<Waypoint> path = Pathfinder.FindPath(start, target, out _);
@@ -168,16 +169,96 @@ namespace AMG.AI.Tools
                 AgentsCommander.SetAllAgentAsCalculating();
             }
 
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                var allVentObjects = UnityEngine.Object.FindObjectsOfType<Vent>();
+                var groupedById = new Dictionary<int, List<Vent>>();
+
+                foreach (var v in allVentObjects)
+                {
+                    if (!groupedById.ContainsKey(v.Id))
+                        groupedById[v.Id] = [];
+                    groupedById[v.Id].Add(v);
+                }
+
+                LogManager.LogDebug($"[VENT-DUP] Total objetos Vent na cena: {allVentObjects.Length} | AllVents.Length: {ShipStatus.Instance.AllVents.Length}");
+
+                foreach (var kvp in groupedById)
+                {
+                    if (kvp.Value.Count > 1)
+                    {
+                        LogManager.LogDebug($"[VENT-DUP] Id={kvp.Key} tem {kvp.Value.Count} objetos disputando:");
+                        foreach (var v in kvp.Value)
+                        {
+                            bool isRegistered = ShipStatus.Instance.AllVents[kvp.Key] == v;
+                            LogManager.LogDebug($"    -> name={v.name} pos={v.transform.position} parent={v.transform.parent?.name} registradoEmAllVents={isRegistered}");
+                        }
+                    }
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                static void DumpAllFields(Vent v, string label)
+                {
+                    LogManager.LogDebug($"--- Dump completo: {label} (id={v.Id}, name={v.name}) ---");
+                    var type = v.GetType();
+
+                    foreach (var field in type.GetFields())
+                    {
+                        try
+                        {
+                            LogManager.LogDebug($"    {field.Name} = {field.GetValue(v)}");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogManager.LogDebug($"    {field.Name} = <erro: {ex.Message}>");
+                        }
+                    }
+
+                    foreach (var prop in type.GetProperties())
+                    {
+                        try
+                        {
+                            LogManager.LogDebug($"    {prop.Name} (prop) = {prop.GetValue(v)}");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogManager.LogDebug($"    {prop.Name} (prop) = <erro: {ex.Message}>");
+                        }
+                    }
+                }
+
+                DumpAllFields(ShipStatus.Instance.AllVents[4], "LEngineVent (quebrado)");
+                DumpAllFields(ShipStatus.Instance.AllVents[9], "REngineVent (funciona)");
+            }
+
             if (Input.GetKeyDown(KeyCode.J))
             {
                 var allBrains = Utils.GetAllStructuredAgentBrain();
+
                 foreach (var brain in allBrains)
                 {
-                    var currentPos = brain.Vector2Position;
-                    var target = currentPos + (Vector2.down * 10f);
-                    var path = Pathfinder.FindStraightPath(currentPos, target, out float _);
+                    Vent closestVent = null;
+                    float minDistance = float.MaxValue;
 
-                    brain.CommandGoToPath(path);
+                    foreach (var vent in ShipStatus.Instance.AllVents)
+                    {
+                        float distance = Vector2.Distance(brain.Vector2Position, vent.transform.position);
+
+                        if (distance < minDistance)
+                        {
+                            minDistance = distance;
+                            closestVent = vent;
+                        }
+                    }
+
+                    if (closestVent != null)
+                    {
+                        brain.ResetDestinations();
+                        brain.currentVentToEnter = closestVent;
+                        brain.CommandGoToPath(Pathfinder.FindPath(brain.WaypointPosition, closestVent.transform.position.GetClosestNode(), out float _));
+                    }
                 }
             }
 
