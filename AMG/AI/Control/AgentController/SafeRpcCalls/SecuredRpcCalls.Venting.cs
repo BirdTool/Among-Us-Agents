@@ -1,12 +1,18 @@
 using AMG.Enums.SafeRpcEnums;
+using AMG.Utilities;
 using AmongUs.GameOptions;
+using UnityEngine;
 
 namespace AMG.AI.Control.AgentController
 {
     public partial class AgentController
     {
+        protected float? _timeSinceStartedVenting = null;
+        protected const float VENTING_ANIMATION_DURATION = 0.6f;
+
         public UseVentRpcEnums SafeUseVentNotExecute(Vent vent)
         {
+            LogManager.LogDebug($"[VENT-DEBUG] name={vent.name} id={vent.Id} pos={vent.transform.position}");
             if (IsDead) return UseVentRpcEnums.ERROR_AgentIsDead;
 
             var isEngineer = Agent.Data.Role.Role == RoleTypes.Engineer;
@@ -14,7 +20,7 @@ namespace AMG.AI.Control.AgentController
             if (!IsImpostor && !isEngineer) return UseVentRpcEnums.ERROR_AgentIsNotImpostorOrEngineer;
 
             if (vent == null) return UseVentRpcEnums.ERROR_VentDoesNotExist;
-            if (UnityEngine.Vector2.Distance(Vector2Position, vent.transform.position) > 3f) return UseVentRpcEnums.ERROR_AgentIsTooFarFromVent;
+            if (UnityEngine.Vector2.Distance(Vector2Position, vent.transform.position) > 4.5f) return UseVentRpcEnums.ERROR_AgentIsTooFarFromVent;
 
             if (isEngineer)
             {
@@ -34,17 +40,22 @@ namespace AMG.AI.Control.AgentController
             var result = SafeUseVentNotExecute(vent);
             if (result != UseVentRpcEnums.SUCCESS) return result;
 
-            if (IsItTheRealPlayer)
+            Agent.transform.position = vent.transform.position;
+            
+            if (Agent.MyPhysics.body != null)
             {
-                vent.EnterVent(Agent);
-                // Agent.MyPhysics.RpcEnterVent(vent.Id);
+                Agent.MyPhysics.body.position = vent.transform.position;
+                Agent.MyPhysics.body.velocity = Vector2.zero; 
+                DesiredVelocity = Vector2.zero;
             }
-            else
-            {
-                Agent.MyPhysics.RpcEnterVent(vent.Id);
-            }
+            Physics2D.SyncTransforms();
+            
+            Agent.NetTransform.Halt();
+
+            Agent.MyPhysics.RpcEnterVent(vent.Id);
 
             Agent.inVent = true;
+            _timeSinceStartedVenting = UnityEngine.Time.time;
 
             if (Agent.Data.Role.Role == RoleTypes.Engineer)
             {
@@ -79,74 +90,38 @@ namespace AMG.AI.Control.AgentController
             return result;
         }
 
-        public VentingResultEnum SafeVentGoRight(Vent vent, bool teleport = false)
+        public VentingResultEnum SafeVentGoRight(Vent vent)
         {
             if (vent.Right == null) return VentingResultEnum.ERROR_NoVentInThatDirection;
 
-            if (IsItTheRealPlayer && !teleport)
-            {
-                vent.ClickRight();
-                return VentingResultEnum.SUCCESS;
-            }
+            Agent.transform.position = vent.Right.transform.position;
+            Agent.MyPhysics.body?.position = vent.Right.transform.position;
 
-            if (teleport)
-            {
-                Agent.NetTransform.RpcSnapTo(vent.Right.transform.position);
-                return VentingResultEnum.SUCCESS;
-            }
-
-            var exitResult = SafeLeaveVent(vent);
-            if (exitResult != VentingResultEnum.SUCCESS) return exitResult;
-
-            Agent.MyPhysics.RpcEnterVent(vent.Right.Id);
+            Agent.NetTransform.RpcSnapTo(vent.Right.transform.position);
 
             return VentingResultEnum.SUCCESS;
         }
 
-        public VentingResultEnum SafeVentGoLeft(Vent vent, bool teleport = false)
+        public VentingResultEnum SafeVentGoLeft(Vent vent)
         {
             if (vent.Left == null) return VentingResultEnum.ERROR_NoVentInThatDirection;
 
-            if (IsItTheRealPlayer && !teleport)
-            {
-                vent.ClickLeft();
-                return VentingResultEnum.SUCCESS;
-            }
+            Agent.transform.position = vent.Left.transform.position;
+            Agent.MyPhysics.body?.position = vent.Left.transform.position;
 
-            if (teleport)
-            {
-                Agent.NetTransform.RpcSnapTo(vent.Left.transform.position);
-                return VentingResultEnum.SUCCESS;
-            }
-
-            var exitResult = SafeLeaveVent(vent);
-            if (exitResult != VentingResultEnum.SUCCESS) return exitResult;
-
-            Agent.MyPhysics.RpcEnterVent(vent.Left.Id);
+            Agent.NetTransform.RpcSnapTo(vent.Left.transform.position);
 
             return VentingResultEnum.SUCCESS;
         }
 
-        public VentingResultEnum SafeVentGoCenter(Vent vent, bool teleport = false)
+        public VentingResultEnum SafeVentGoCenter(Vent vent)
         {
             if (vent.Center == null) return VentingResultEnum.ERROR_NoVentInThatDirection;
 
-            if (IsItTheRealPlayer && !teleport)
-            {
-                vent.ClickCenter();
-                return VentingResultEnum.SUCCESS;
-            }
+            Agent.transform.position = vent.Center.transform.position;
+            Agent.MyPhysics.body?.position = vent.Center.transform.position;
 
-            if (teleport)
-            {
-                Agent.NetTransform.RpcSnapTo(vent.Center.transform.position);
-                return VentingResultEnum.SUCCESS;
-            }
-
-            var exitResult = SafeLeaveVent(vent);
-            if (exitResult != VentingResultEnum.SUCCESS) return exitResult;
-
-            Agent.MyPhysics.RpcEnterVent(vent.Center.Id);
+            Agent.NetTransform.RpcSnapTo(vent.Center.transform.position);
 
             return VentingResultEnum.SUCCESS;
         }

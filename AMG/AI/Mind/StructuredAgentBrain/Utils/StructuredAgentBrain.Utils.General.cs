@@ -9,9 +9,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
         public void SetState(AgentState newState)
         {
-            LogManager.LogDebug($"[STATE] Mudando estado de {currentState} para {newState}");
             if (currentState != newState)
             {
+                LogManager.LogDebug($"[STATE] Mudando estado de {currentState} para {newState}");
                 currentState = newState;
                 _updateTags.TryGetValue(newState, out var tag);
                 if (tag != null)

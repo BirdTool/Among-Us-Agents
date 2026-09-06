@@ -128,17 +128,17 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                     VentingResultEnum moveResult;
                     if (currentVent.Left == randomVent)
                     {
-                        moveResult = SafeVentGoLeft(currentVent, true);
+                        moveResult = SafeVentGoLeft(currentVent);
                         currentVent = randomVent;
                     }
                     else if (currentVent.Right == randomVent)
                     {
-                        moveResult = SafeVentGoRight(currentVent, true);
+                        moveResult = SafeVentGoRight(currentVent);
                         currentVent = randomVent;
                     }
                     else if (currentVent.Center == randomVent)
                     {
-                        moveResult = SafeVentGoCenter(currentVent, true);
+                        moveResult = SafeVentGoCenter(currentVent);
                         currentVent = randomVent;
                     }
                     else
@@ -164,7 +164,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 currentVent = randomVent;
                 _lastTimeChangedPosition = Time.time;
                 _nextVentChangeTime = 0.0f;
-                _lastTimeCheckedItsOutsideVent = Time.time;
+                _lastTimeCheckedItsOutsideVent = Time.time + GRACE_PERIOD_AFTER_VENT_CHANGE;
             }
         }
 

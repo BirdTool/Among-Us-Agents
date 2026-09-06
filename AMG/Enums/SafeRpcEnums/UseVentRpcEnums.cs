@@ -7,6 +7,7 @@ namespace AMG.Enums.SafeRpcEnums
         ERROR_VentDoesNotExist,
         ERROR_AgentIsTooFarFromVent,
         ERROR_AgentIsInCooldown, // only engineer
+        ERROR_AmongUsInternalCanUseResultFalse,
         SUCCESS
     }
 }

@@ -1,7 +1,9 @@
 ﻿using System.Linq;
+using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
+using Discord;
 using Steamworks;
 
 namespace AMG.AI.Mind.StructuredAgentBrain
@@ -42,14 +44,12 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
                 else if (currentVentToEnter != null)
                 {
-                    if (Utils.IsCloseToLocation(Vector2Position, currentVentToEnter.transform.position, 3f))
+                    if (Utils.IsCloseToLocation(Vector2Position, currentVentToEnter.transform.position, 4.5f))
                     {
                         var result = SafeUseVent(currentVentToEnter);
                         LogManager.LogDebug($"[VENT] Resultado de usar a vent: {result}");
                         if (result == Enums.SafeRpcEnums.UseVentRpcEnums.SUCCESS)
                         {
-                            currentVent = currentVentToEnter;
-                            currentVentToEnter = null;
                             SetState(AgentState.InVent);
                         }
                         else
