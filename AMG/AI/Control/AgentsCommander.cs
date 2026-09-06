@@ -3,6 +3,7 @@ using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
+using AMG.Utilities;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -45,22 +46,17 @@ namespace AMG.AI.Control
 
                 try
                 {
-                    foreach (var taskPosition in task.Locations)
+                    var target = task.Locations.ToArray().ToList().GetRandomItemSecureOrDefault().GetClosestNode();
+
+                    List<Waypoint> currentCalculatedPath = Pathfinder.FindPath(start, target, out float pathDistance);
+
+                    if (currentCalculatedPath != null)
                     {
-                        Waypoint target = Pathfinder.GetClosestNode(taskPosition);
-                        if (target == null) continue;
-
-                        float pathDistance;
-                        List<Waypoint> currentCalculatedPath = Pathfinder.FindPath(start, target, out pathDistance);
-
-                        if (currentCalculatedPath != null)
+                        if (!taskDistance.HasValue || pathDistance < taskDistance.Value)
                         {
-                            if (!taskDistance.HasValue || pathDistance < taskDistance.Value)
-                            {
-                                taskDistance = pathDistance;
-                                nearbyTask = task;
-                                bestPath = currentCalculatedPath;
-                            }
+                            taskDistance = pathDistance;
+                            nearbyTask = task;
+                            bestPath = currentCalculatedPath;
                         }
                     }
                 }

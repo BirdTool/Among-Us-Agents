@@ -7,6 +7,7 @@ using AMG.AI.Mind;
 using AMG.AI.Mind.ReactiveAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
+using AMG.Enums.GameEnums;
 using AMG.Interfaces;
 using AMG.Patches.RoundPatches;
 using AmongUs.GameOptions;
@@ -95,6 +96,11 @@ namespace AMG.Utilities
         }
 
         public static float? SecondsSinceShipStart => IsShip ? Time.time - RoundPatches.ShipStartedAt : null;
+
+        private static readonly int MovementMask =
+            (1 << (int)LayersEnum.Ship) | (1 << (int)LayersEnum.Objects) | (1 << (int)LayersEnum.ShortObjects);
+
+        private const float DefaultAgentRadius = 0.35f;
 
         public static byte GetCurrentMapID()
         {
@@ -348,27 +354,45 @@ namespace AMG.Utilities
             return false;
         }
 
-        // Code stolen from MalumMenu
-        public static void DrawTracer(GameObject sourceObject, GameObject targetObject, Color color)
+        public static bool CanWalkToTarget(Vector2 origin, Vector2 destination, float maxDistance, float agentRadius = DefaultAgentRadius)
         {
-            var lineRenderer = sourceObject.GetComponent<LineRenderer>();
+            Vector2 delta = destination - origin;
+            float distance = delta.magnitude;
+            if (distance > maxDistance) return false;
 
-            if (!lineRenderer)
+            Vector2 direction = distance > 0f ? delta / distance : Vector2.zero;
+            Vector2 raisedOrigin = new(origin.x, origin.y + 0.1f);
+
+            var hit = CircleCastIgnoringTriggers(raisedOrigin, agentRadius, direction, distance, MovementMask);
+
+            return !hit.HasValue || hit.Value.distance >= distance - 0.05f;
+        }
+
+        public static bool CanWalkToTarget(Vector2 origin, Vector2 destination, float maxDistance, PlayerControl player)
+        {
+            return CanWalkToTarget(origin, destination, maxDistance, GetAgentRadius(player));
+        }
+
+        private static float GetAgentRadius(PlayerControl player)
+        {
+            var col = player.GetComponent<CircleCollider2D>();
+            if (col == null) return DefaultAgentRadius;
+
+            return col.radius * player.transform.lossyScale.x;
+        }
+
+        private static RaycastHit2D? CircleCastIgnoringTriggers(Vector2 origin, float radius, Vector2 direction, float maxDistance, int mask)
+        {
+            var hits = Physics2D.CircleCastAll(origin, radius, direction, maxDistance, mask);
+
+            RaycastHit2D? closest = null;
+            foreach (var h in hits)
             {
-                lineRenderer = sourceObject.AddComponent<LineRenderer>();
+                if (h.collider == null || h.collider.isTrigger) continue;
+                if (closest == null || h.distance < closest.Value.distance)
+                    closest = h;
             }
-
-            lineRenderer.SetVertexCount(2);
-            lineRenderer.SetWidth(0.02F, 0.02F);
-
-            // I just picked an already existing material from the game
-            Material material = DestroyableSingleton<HatManager>.Instance.PlayerMaterial;
-
-            lineRenderer.material = material;
-            lineRenderer.SetColors(color, color);
-
-            lineRenderer.SetPosition(0, sourceObject.transform.position);
-            lineRenderer.SetPosition(1, targetObject.transform.position);
+            return closest;
         }
     }
 }
