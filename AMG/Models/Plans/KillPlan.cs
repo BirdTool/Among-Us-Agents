@@ -18,6 +18,8 @@ namespace AMG.Models.Plans
         
         public void Execute(StructuredAgentBrain brain)
         {
+            if (IsRunning) return;
+
             var result = brain.SafeKill(_player.PlayerId);
             if (result == Enums.SafeRpcEnums.SafeKillRpcEnums.SUCCESS) 
             {

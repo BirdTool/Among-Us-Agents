@@ -36,9 +36,12 @@ namespace AMG.AI.Control.AgentController
 
         public List<RoundDeadBody> NearbyBodies => AgentVision.GetNearbyDeadBodies(Vector2Position, 6f);
         public List<RoundDeadBody> NearbyBodiesInVision => AgentVision.GetNearbyBodiesInVision(Vector2Position);
-        public List<PlayerControl> NearbyPlayers => AgentVision.GetNearbyPlayers(Vector2Position, 6.5f);
+        public List<PlayerControl> NearbyPlayers => AgentVision.GetNearbyPlayers(Vector2Position, 6.5f, exclude: Agent);
         public List<PlayerControl> NearbyPlayersInVision => AgentVision.GetNearbyPlayersInVision(Agent);
+        public List<PlayerControl> NearbyPlayersOutsideVision => AgentVision.GetNearbyPlayersOutsideVision(Vector2Position, 6.5f, extraDistanceInPath: 1.75f, exclude: Agent);
 
         public bool IsItTheRealPlayer => AgentControlsRealPlayer && AgentId == PlayerControl.LocalPlayer.PlayerId;
+
+        public List<PlayerControl> GetNearbyPlayersOutsideVision(float visionRadius, float extraDistance) => AgentVision.GetNearbyPlayersOutsideVision(Vector2Position, visionRadius, extraDistanceInPath: extraDistance, exclude: Agent);
     }
 }

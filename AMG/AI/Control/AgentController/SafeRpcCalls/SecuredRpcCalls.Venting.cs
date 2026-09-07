@@ -86,6 +86,7 @@ namespace AMG.AI.Control.AgentController
 
             Agent.MyPhysics.RpcExitVent(vent.Id);
             Agent.inVent = false;
+            Agent.Collider?.enabled = true;
 
             return result;
         }

@@ -7,6 +7,7 @@ using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
 using AMG.Models;
+using AMG.Models.Scenarios;
 using AMG.Utilities;
 using UnityEngine;
 
@@ -30,6 +31,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
         private Dictionary<AgentState, Action> _updateActions;
         private Dictionary<AgentState, AgentTag> _updateTags;
+
+        private List<IScenario> _scenarios;
 
         public SabotageStep currentSabotageStep = null;
 
@@ -63,6 +66,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 [AgentState.InVent] = DefaultTags.States.InVent
             };
 
+            _scenarios = ScenariosGroup.All;
+
             OnStuckedInPath = () => SetState(AgentState.Calculating);
 
             Utils.OnSabotageStarted += HandleSabotageStarted;
@@ -75,6 +80,32 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         {
             if (Agent == null || Agent.MyPhysics?.body == null) return;
 
+            if (UpVentCheck()) return;
+            if (UpUpdateAction()) return;
+            UpTempParallelDecision();
+            UpUpdatePlans();
+
+            foreach (var tag in tags)
+            {
+                if (tag.ExpiresAt != null && Time.time > tag.ExpiresAt)
+                {
+                    RemoveNameTag(tag);
+                }
+            }
+
+            var parallelActions = DecisionsGroup.AllParallelDecisions;
+            foreach (var parallelAction in parallelActions)
+            {
+                parallelAction.Evaluate(this);
+            }
+
+            if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { SetState(AgentState.OnMeeting); }
+
+            _updateActions[currentState]?.Invoke();
+        }
+
+        private bool UpVentCheck()
+        {
             if (_timeSinceStartedVenting != null)
             {
                 SetState(AgentState.InVent);
@@ -85,14 +116,13 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                     currentVentToEnter = null;
                     Agent.inVent = true;
                 }
-                return;
+                return true;
             }
 
             if (currentVent != null && currentState != AgentState.InVent)
             {
                 SafeLeaveVent(currentVent);
                 currentVent = null;
-                Agent.Collider?.enabled = true;
                 SetState(AgentState.Calculating);
             }
 
@@ -102,6 +132,11 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 SetState(AgentState.Calculating);
             }
 
+            return false;
+        }
+
+        private bool UpUpdateAction()
+        {
             if (updateAction != null)
             {
                 bool isActionFinished = updateAction.Execute();
@@ -113,10 +148,15 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
                 else if (updateAction.IsOnlyPredefinedAction)
                 {
-                    return;
+                    return true;
                 }
             }
 
+            return false;
+        }
+
+        private void UpTempParallelDecision()
+        {
             if (tempParallelDecisions.Count > 0)
             {
                 
@@ -143,32 +183,46 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                     }
                 }
             }
-
+        }
+        
+        private void UpUpdatePlans()
+        {
             if (PlanManager != null && PlanManager.QueuePlans.Count > 0)
             {
                 PlanManager.Execute();
             }
 
-            foreach (var tag in tags)
+            if (PlanManager == null)
             {
-                if (tag.ExpiresAt != null && Time.time > tag.ExpiresAt)
+                var bestScore = float.MinValue;
+                var bestScenario = (IScenario)null;
+
+                foreach (var scenario in _scenarios)
                 {
-                    RemoveNameTag(tag);
+                    if (scenario.LastCheckTime + scenario.CheckTime < Time.time)
+                    {
+                        var score = scenario.CalculateScore(this);
+                        
+                        if (score > bestScore && score > 0)
+                        {
+                            bestScore = score;
+                            bestScenario = scenario;
+                            scenario.LastCheckTime = Time.time;
+                        }
+                    }
+                }
+
+                if (bestScenario != null)
+                {
+                    if (Utils.ExecuteProbabilityAs100(bestScore))
+                    {
+                        PlanManager = bestScenario.GeneratePlan(this);
+                    }
+                    // PlanManager = bestScenario.GeneratePlan(this);
                 }
             }
-
-            var parallelActions = DecisionsGroup.AllParallelDecisions;
-            foreach (var parallelAction in parallelActions)
-            {
-                parallelAction.Evaluate(this);
-            }
-
-            if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { SetState(AgentState.OnMeeting); }
-
-            _updateActions[currentState]?.Invoke();
         }
-
-
+        
         private void OnDestroy()
         {
             Utils.OnSabotageStarted -= HandleSabotageStarted;

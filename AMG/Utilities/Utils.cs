@@ -226,6 +226,12 @@ namespace AMG.Utilities
             return RandomizerExtensions.GetSecureRandomInt(0, 100) < chance * 100;
         }
 
+        public static bool ExecuteProbabilityAs100(float chance)
+        {
+            chance = Math.Clamp(chance, 0, 100);
+            return RandomizerExtensions.GetSecureRandomInt(0, 100) < chance;
+        }
+
         public static bool ExecuteProbability(int chance)
         {
             chance = Math.Clamp(chance, 0, 100);

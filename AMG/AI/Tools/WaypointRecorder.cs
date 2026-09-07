@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Debug;
@@ -196,6 +198,33 @@ namespace AMG.AI.Tools
                         brain.CommandGoToPath(Pathfinder.FindPath(brain.WaypointPosition, closestVent.transform.position.GetClosestNode(), out float _));
                     }
                 }
+            }
+
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                var allVents = ShipStatus.Instance.AllVents;
+                var log = new StringBuilder();
+
+                foreach (var vent in allVents)
+                {
+                    log.AppendLine($"Name: {vent.name}");
+                    log.AppendLine($"Position: {vent.transform.position}");
+                    log.AppendLine($"Id: {vent.Id}");
+
+                    var ventsNearby = vent.NearbyVents;
+
+                    var ventsNearbyNames = ventsNearby.ToList().Where(v => v != null && v.Id != vent.Id).Select(v => v.name);
+
+                    log.AppendLine($"Vents nearby: {string.Join(", ", ventsNearbyNames)}");
+
+                    log.AppendLine($"Left vent: {(vent.Left == null ? "null" : $"{vent.Left.name}")}");
+                    log.AppendLine($"Right vent: {(vent.Right == null ? "null" : $"{vent.Right.name}")}");
+                    log.AppendLine($"Center vent: {(vent.Center == null ? "null" : $"{vent.Center.name}")}");
+
+                    log.AppendLine("");
+                }
+
+                LogManager.LogDebug($"[Vent-Debug] {log}");
             }
 
             if (Input.GetKeyDown(KeyCode.N))
