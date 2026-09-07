@@ -168,71 +168,7 @@ namespace AMG.AI.Tools
             {
                 AgentsCommander.SetAllAgentAsCalculating();
             }
-
-            if (Input.GetKeyDown(KeyCode.L))
-            {
-                var allVentObjects = UnityEngine.Object.FindObjectsOfType<Vent>();
-                var groupedById = new Dictionary<int, List<Vent>>();
-
-                foreach (var v in allVentObjects)
-                {
-                    if (!groupedById.ContainsKey(v.Id))
-                        groupedById[v.Id] = [];
-                    groupedById[v.Id].Add(v);
-                }
-
-                LogManager.LogDebug($"[VENT-DUP] Total objetos Vent na cena: {allVentObjects.Length} | AllVents.Length: {ShipStatus.Instance.AllVents.Length}");
-
-                foreach (var kvp in groupedById)
-                {
-                    if (kvp.Value.Count > 1)
-                    {
-                        LogManager.LogDebug($"[VENT-DUP] Id={kvp.Key} tem {kvp.Value.Count} objetos disputando:");
-                        foreach (var v in kvp.Value)
-                        {
-                            bool isRegistered = ShipStatus.Instance.AllVents[kvp.Key] == v;
-                            LogManager.LogDebug($"    -> name={v.name} pos={v.transform.position} parent={v.transform.parent?.name} registradoEmAllVents={isRegistered}");
-                        }
-                    }
-                }
-            }
-
-            if (Input.GetKeyDown(KeyCode.L))
-            {
-                static void DumpAllFields(Vent v, string label)
-                {
-                    LogManager.LogDebug($"--- Dump completo: {label} (id={v.Id}, name={v.name}) ---");
-                    var type = v.GetType();
-
-                    foreach (var field in type.GetFields())
-                    {
-                        try
-                        {
-                            LogManager.LogDebug($"    {field.Name} = {field.GetValue(v)}");
-                        }
-                        catch (Exception ex)
-                        {
-                            LogManager.LogDebug($"    {field.Name} = <erro: {ex.Message}>");
-                        }
-                    }
-
-                    foreach (var prop in type.GetProperties())
-                    {
-                        try
-                        {
-                            LogManager.LogDebug($"    {prop.Name} (prop) = {prop.GetValue(v)}");
-                        }
-                        catch (Exception ex)
-                        {
-                            LogManager.LogDebug($"    {prop.Name} (prop) = <erro: {ex.Message}>");
-                        }
-                    }
-                }
-
-                DumpAllFields(ShipStatus.Instance.AllVents[4], "LEngineVent (quebrado)");
-                DumpAllFields(ShipStatus.Instance.AllVents[9], "REngineVent (funciona)");
-            }
-
+            
             if (Input.GetKeyDown(KeyCode.J))
             {
                 var allBrains = Utils.GetAllStructuredAgentBrain();

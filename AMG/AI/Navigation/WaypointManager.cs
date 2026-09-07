@@ -19,6 +19,9 @@ namespace AMG.AI.Navigation
 
         public SystemTypes Room = SystemTypes.Hallway;
 
+        public HashSet<SystemTypes> NeighborRooms = [];
+        public SystemTypes? ClosestNeighborRoom = null;
+
         public void IncreaseStuckHot()
         {
             if (stuckHot < 0) return;
@@ -104,8 +107,95 @@ namespace AMG.AI.Navigation
             }
 
             MapWaypointsToRooms();
+            ComputeHallwayRoomAdjacency();
 
             LogManager.LogDebug($"[AI Nav] Malha gerada! {AllWaypoints.Count} Pontos e {totalConnections} Conexões criadas.");
+        }
+
+        public static void ComputeHallwayRoomAdjacency()
+        {
+            var visited = new HashSet<Waypoint>();
+
+            foreach (var waypoint in AllWaypoints)
+            {
+                if (waypoint.Room != SystemTypes.Hallway || visited.Contains(waypoint)) continue;
+
+                var segment = new List<Waypoint>();
+                var queue = new Queue<Waypoint>();
+                queue.Enqueue(waypoint);
+                visited.Add(waypoint);
+
+                while (queue.Count > 0)
+                {
+                    var current = queue.Dequeue();
+                    segment.Add(current);
+
+                    foreach (var neighbor in current.Neighbors)
+                    {
+                        if (neighbor.Room == SystemTypes.Hallway && visited.Add(neighbor))
+                        {
+                            queue.Enqueue(neighbor);
+                        }
+                    }
+                }
+
+                var neighborRooms = new HashSet<SystemTypes>();
+                foreach (var point in segment)
+                {
+                    foreach (var neighbor in point.Neighbors)
+                    {
+                        if (neighbor.Room != SystemTypes.Hallway)
+                        {
+                            neighborRooms.Add(neighbor.Room);
+                        }
+                    }
+                }
+
+                foreach (var point in segment)
+                {
+                    point.NeighborRooms = neighborRooms;
+                }
+                
+                foreach (var point in segment)
+                {
+                    point.ClosestNeighborRoom = FindClosestNonHallwayRoom(point);
+                }
+
+                LogManager.LogDebug($"[AI Nav] Corredor com {segment.Count} pontos faz fronteira com: {string.Join(", ", neighborRooms)}");
+            }
+        }
+
+        private static SystemTypes? FindClosestNonHallwayRoom(Waypoint start)
+        {
+            var bestDist = new Dictionary<Waypoint, float> { [start] = 0f };
+            var queue = new PriorityQueue<Waypoint, float>();
+            queue.Enqueue(start, 0f);
+
+            var closed = new HashSet<Waypoint>();
+
+            while (queue.Count > 0)
+            {
+                queue.TryDequeue(out var current, out float currentDist);
+                if (!closed.Add(current)) continue;
+
+                if (current.Room != SystemTypes.Hallway)
+                {
+                    return current.Room;
+                }
+
+                foreach (var neighbor in current.Neighbors)
+                {
+                    float newDist = currentDist + Vector2.Distance(current.Position, neighbor.Position);
+
+                    if (!bestDist.TryGetValue(neighbor, out float existing) || newDist < existing)
+                    {
+                        bestDist[neighbor] = newDist;
+                        queue.Enqueue(neighbor, newDist);
+                    }
+                }
+            }
+
+            return null;
         }
 
         public static void MapWaypointsToRooms()
