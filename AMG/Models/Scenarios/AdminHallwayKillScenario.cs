@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using AMG.AI.Mind.StructuredAgentBrain;
@@ -7,7 +6,6 @@ using AMG.Interfaces;
 using AMG.Models.Plans;
 using AMG.Utilities;
 using AMG.Utilities.MapUtils;
-using Il2CppSystem.Reflection;
 
 namespace AMG.Models.Scenarios
 {
