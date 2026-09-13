@@ -83,7 +83,11 @@ namespace AMG.AI.Navigation
             var straight = FindStraightPath(startNode, targetNode, out totalDistance, returnNullIfCantProgress: true);
             if (straight != null) return straight;
 
+            return FindGoldPath(startNode, targetNode, out totalDistance);
+
+            /*
             return FindAlgorithPath(startNode, targetNode, out totalDistance);
+            */
         }
     }
 }
