@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain.Plans;
