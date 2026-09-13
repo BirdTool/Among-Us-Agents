@@ -9,11 +9,13 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Plans
 {
     public class EscapeAfterKillPlan(SystemTypes killRoom) : IPlan
     {
+        public string Name { get; set; } = "EscapeAfterKillPlan";
         private readonly SystemTypes _killRoom = killRoom;
         private bool _doorsClosed = false;
 
         public bool IsDone { get; set; } = false;
         private bool _hasStarted = false;
+        private Vector2? _lastPositionLeftFromRoom = null;
 
         public void Execute(StructuredAgentBrain brain)
         {
@@ -52,10 +54,19 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Plans
             {
                 if (brain.WaypointPosition.Room != _killRoom)
                 {
-                    // We left the room, close the doors!
-                    brain.SafeCloseDoor(_killRoom);
-                    _doorsClosed = true;
-                    IsDone = true; // We can consider the plan done after we close the doors
+                    if (_lastPositionLeftFromRoom != null)
+                    {
+                        var distance = Pathfinder.GetStraightDistance(brain.Vector2Position, _lastPositionLeftFromRoom.Value);
+                        if (distance < 2f) return;
+                        // We left the room, close the doors!
+                        brain.SafeCloseDoor(_killRoom);
+                        _doorsClosed = true;
+                        IsDone = true; // We can consider the plan done after we close the doors
+                    }
+                    else
+                    {
+                        _lastPositionLeftFromRoom = brain.Vector2Position;
+                    }
                 }
                 else if (brain.currentState != AMG.Enums.AgentEnums.AgentState.Navigating)
                 {

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Debug;
@@ -168,7 +170,7 @@ namespace AMG.AI.Tools
             {
                 AgentsCommander.SetAllAgentAsCalculating();
             }
-
+            
             if (Input.GetKeyDown(KeyCode.J))
             {
                 var allBrains = Utils.GetAllStructuredAgentBrain();
@@ -200,18 +202,29 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.L))
             {
-                if (PlayerControl.LocalPlayer == null) return;
+                var allVents = ShipStatus.Instance.AllVents;
+                var log = new StringBuilder();
 
-                Vector2 pos = PlayerControl.LocalPlayer.transform.position;
-
-                WaypointManager.AppendWaypoint(new WaypointData
+                foreach (var vent in allVents)
                 {
-                    X = pos.x,
-                    Y = pos.y,
-                    IsGold = true
-                });
+                    log.AppendLine($"Name: {vent.name}");
+                    log.AppendLine($"Position: {vent.transform.position}");
+                    log.AppendLine($"Id: {vent.Id}");
 
-                LogManager.LogDebug($"[AI Nav] Waypoint GOLD criado em ({pos.x:F2}, {pos.y:F2}). Só entra em vigor no próximo reload de waypoints (reiniciar o jogo).");
+                    var ventsNearby = vent.NearbyVents;
+
+                    var ventsNearbyNames = ventsNearby.ToList().Where(v => v != null && v.Id != vent.Id).Select(v => v.name);
+
+                    log.AppendLine($"Vents nearby: {string.Join(", ", ventsNearbyNames)}");
+
+                    log.AppendLine($"Left vent: {(vent.Left == null ? "null" : $"{vent.Left.name}")}");
+                    log.AppendLine($"Right vent: {(vent.Right == null ? "null" : $"{vent.Right.name}")}");
+                    log.AppendLine($"Center vent: {(vent.Center == null ? "null" : $"{vent.Center.name}")}");
+
+                    log.AppendLine("");
+                }
+
+                LogManager.LogDebug($"[Vent-Debug] {log}");
             }
 
             if (Input.GetKeyDown(KeyCode.N))

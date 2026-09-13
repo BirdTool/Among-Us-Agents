@@ -6,6 +6,7 @@ namespace AMG.Interfaces
 {
     public interface IPlan
     {
+        string Name { get; set; }
         bool IsDone { get; set; }
         void Execute(StructuredAgentBrain brain);
     }

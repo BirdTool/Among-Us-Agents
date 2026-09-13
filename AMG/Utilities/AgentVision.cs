@@ -39,6 +39,33 @@ namespace AMG.Utilities
             return result;
         }
 
+        public static List<PlayerControl> GetNearbyPlayersOutsideVision(
+            Vector2 origin,
+            float radius,
+            PlayerControl exclude = null,
+            float extraDistanceInPath = 0f,
+            bool aliveOnly = true)
+        {
+            var result = new List<PlayerControl>();
+
+            foreach (var p in PlayerControl.AllPlayerControls)
+            {
+                if (p == null || p == exclude) continue;
+                if (aliveOnly && (p.Data == null || p.Data.IsDead || p.Data.Disconnected)) continue;
+
+                Vector2 pos = p.GetTruePosition();
+                if (Vector2.Distance(origin, pos) > radius) continue;
+
+                Pathfinder.FindAlgorithPath(origin.GetClosestNode(), pos.GetClosestNode(), out float dist);
+                if (dist > radius + extraDistanceInPath) continue;
+
+                result.Add(p);
+            }
+
+            SortByDistance(result, origin);
+            return result;
+        }
+
         public static List<RoundDeadBody> GetNearbyDeadBodies(
             Vector2 origin,
             float radius,

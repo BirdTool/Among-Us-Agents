@@ -11,7 +11,13 @@ namespace AMG.AI.Mind.StructuredAgentBrain
     public partial class StructuredAgentBrain
     {
         public Vent currentVentToEnter = null;
-        private Vent currentVent = null;
+        public Vent currentVent { get; private set; } = null;
+
+        public void ClearCurrentVent()
+        {
+            currentVent = null;
+        }
+
         public Func<bool> InVentLogic = null;
         private float _lastTimeChangedPosition = 0.0f; // unity time.time
         private const float TIME_TO_CHANGE_POSITION = 5f; // seconds

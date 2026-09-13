@@ -27,6 +27,11 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
         private void UpdateCalculating()
         {
+            if (PlanManager != null && PlanManager.QueuePlans.Count > 0)
+            {
+                return;
+            }
+
             ResetPath();
 
             // If we were waiting for a door, check timeout

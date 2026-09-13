@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AMG.AI.Tools;
 using AMG.Enums.SafeRpcEnums;
@@ -91,7 +92,15 @@ namespace AMG.AI.Control.AgentController
                 return result;
             }
 
-            try { ShipStatus.Instance.RpcCloseDoorsOfType(doorRoom); } catch { }
+            try 
+            {
+                LogManager.LogDebug($"[SecuredRpcCalls]: Trying to close {doorRoom}!");
+                ShipStatus.Instance.RpcCloseDoorsOfType(doorRoom);
+                LogManager.LogDebug($"[SecuredRpcCalls]: Door {doorRoom} closed successfully!");
+            } catch (Exception e)
+            {
+                LogManager.LogError($"[SecuredRpcCalls]: Failed to close door {doorRoom}. Error: {e.Message}");
+            }
 
             return CloseDoorRoomEnums.SUCCESS;
         }
