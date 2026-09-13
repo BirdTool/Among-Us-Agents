@@ -21,8 +21,8 @@ namespace AMG.Utilities.MapUtils
         public static Vent SecurityVent => GetByName("SecurityVent");
         public static Vent LowerReactorVent => GetByName("ReactorVent");
         public static Vent UpperReactorVent => GetByName("UpperReactorVent");
-        public static Vent LowerEngineVent => GetByName("LEngineVent");
-        public static Vent UpperEngineVent => GetByName("REngineVent");
+        public static Vent LowerEngineVent => GetByName("REngineVent");
+        public static Vent UpperEngineVent => GetByName("LEngineVent");
         public static Vent WeaponsVent => GetByName("WeaponsVent");
         public static Vent NavVentNorth => GetByName("NavVentNorth");
         public static Vent NavVentSouth => GetByName("NavVentSouth");

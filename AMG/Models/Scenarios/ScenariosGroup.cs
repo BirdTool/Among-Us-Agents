@@ -6,7 +6,8 @@ namespace AMG.Models.Scenarios
     public static class ScenariosGroup
     {
         public static List<IScenario> All => [
-            new InHallwayAdminKillScenario()
+            new AdminHallwayKillScenario(),
+            new ReactorSecurityKillScenario()
         ];
     }
 }

@@ -9,6 +9,7 @@ namespace AMG.Models.Plans
 {
     public class KillPlan(PlayerControl player) : IPlan
     {
+        public string Name { get; set; } = "KillPlan";
         private readonly PlayerControl _player = player;
 
         public bool IsDone { get; set; } = false;

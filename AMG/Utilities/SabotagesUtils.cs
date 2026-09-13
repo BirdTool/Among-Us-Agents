@@ -111,17 +111,17 @@ namespace AMG.Utilities
                 try
                 {
                     var lifeSupp = shipStatus.Systems[SystemTypes.LifeSupp].Cast<LifeSuppSystemType>();
-                    
+
                     var prop = typeof(LifeSuppSystemType).GetProperty("CompletedConsoles", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                     var field = typeof(LifeSuppSystemType).GetField("CompletedConsoles", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                    
+
                     object completedConsoles = null;
                     if (prop != null) completedConsoles = prop.GetValue(lifeSupp);
                     else if (field != null) completedConsoles = field.GetValue(lifeSupp);
 
                     if (completedConsoles != null)
                     {
-                        var containsMethod = completedConsoles.GetType().GetMethod("Contains", new[] { typeof(int) }) ?? 
+                        var containsMethod = completedConsoles.GetType().GetMethod("Contains", new[] { typeof(int) }) ??
                                              completedConsoles.GetType().GetMethod("Contains");
 
                         if (containsMethod != null)
@@ -130,12 +130,28 @@ namespace AMG.Utilities
                         }
                     }
                 }
-                catch 
+                catch
                 {
                     // Ignore reflection errors and fallback to false
                 }
 
                 return false;
+            }
+
+            public static bool IsDoorClosed(SystemTypes room)
+            {
+                if (!Utils.IsSkeldMap) throw new System.Exception("Error: This method should only be called on The Skeld map.");
+
+                var doors = GetDoorsInRoom(room);
+
+                return doors.All(d => !d.IsOpen);
+            }
+
+            public static List<OpenableDoor> GetDoorsInRoom(SystemTypes room)
+            {
+                if (!Utils.IsShip || ShipStatus.Instance.AllDoors.Count <= 0) return [];
+
+                return [.. ShipStatus.Instance.AllDoors.Where(d => d.Room == room)];
             }
         }
     }

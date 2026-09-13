@@ -11,7 +11,7 @@ using Il2CppSystem.Reflection;
 
 namespace AMG.Models.Scenarios
 {
-    public class InHallwayAdminKillScenario : IScenario
+    public class AdminHallwayKillScenario : IScenario
     {
         public float CheckTime { get; set; } = 2f;
         public float LastCheckTime { get; set; } = 0;
@@ -79,7 +79,7 @@ namespace AMG.Models.Scenarios
         {
             if (!Utils.IsSkeldMap) return true;
             if (!brain.IsImpostor) return true;
-            if (brain.Agent.Data.IsDead) return true;
+            if (brain.IsDead) return true;
             
             if (brain.Agent.killTimer > 0f || !KillCooldownManager.CanKill(brain.Agent.PlayerId)) return true;
             
@@ -117,8 +117,7 @@ namespace AMG.Models.Scenarios
 
             AgentPlanManager plan = new(brain);
 
-            plan.AddPlan(new CloseDoorPlan(SystemTypes.Cafeteria));
-            plan.AddPlan(new CloseDoorPlan(SystemTypes.Storage));
+            plan.AddPlan(new CloseDoorPlan(SystemTypes.Cafeteria, SystemTypes.Storage));
 
             var bigYVent = SkeldVents.BigYVent;
             var adminVent = SkeldVents.AdminVent;
