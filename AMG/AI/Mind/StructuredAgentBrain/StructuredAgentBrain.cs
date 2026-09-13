@@ -187,9 +187,16 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         
         private void UpUpdatePlans()
         {
-            if (PlanManager != null && PlanManager.QueuePlans.Count > 0)
+            if (PlanManager != null)
             {
-                PlanManager.Execute();
+                if (PlanManager.QueuePlans.Count > 0)
+                {
+                    PlanManager.Execute();
+                }
+                else
+                {
+                    PlanManager = null;
+                }
             }
 
             if (PlanManager == null)
