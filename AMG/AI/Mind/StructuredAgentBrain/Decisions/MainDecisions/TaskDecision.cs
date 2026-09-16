@@ -1,4 +1,5 @@
 ﻿using AMG.AI.Navigation;
+using AMG.AI.Tools;
 using AMG.Interfaces;
 using AMG.Utilities;
 using System.Collections.Generic;
@@ -12,74 +13,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
         private readonly Dictionary<int, float> _nextUpdateTime = [];
         public readonly Dictionary<int, float> _timeWithoutDoingTasks = [];
 
-        private List<Vector2> GetSafeTaskLocations(PlayerTask task)
-        {
-            var locs = new List<Vector2>();
-
-            var normalTask = task.TryCast<NormalPlayerTask>();
-            if (normalTask != null)
-            {
-                try
-                {
-                    var validPositions = normalTask.FindValidConsolesPositions();
-                    if (validPositions != null)
-                    {
-                        foreach (var pos in validPositions) locs.Add(pos);
-                        if (locs.Count > 0)
-                        {
-                            return locs;
-                        }
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    LogManager.LogDebug($"[TaskDecision] FindValidConsolesPositions falhou: {ex.Message}");
-                }
-
-                /*
-                try
-                {
-                    var specialConsole = normalTask.FindSpecialConsole();
-                    if (specialConsole != null)
-                    {
-                        locs.Add(specialConsole.transform.position);
-                        LogManager.LogDebug($"[TaskDecision] FindSpecialConsole encontrado para {task.TaskType}");
-                        return locs;
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    LogManager.LogDebug($"[TaskDecision] FindSpecialConsole falhou: {ex.Message}");
-                }
-                */
-            }
-
-            try
-            {
-                foreach (var loc in task.Locations) locs.Add(loc);
-                if (locs.Count > 0) return locs;
-            }
-            catch (System.Exception) { }
-
-            try
-            {
-                if (ShipStatus.Instance != null && ShipStatus.Instance.AllConsoles != null)
-                {
-                    foreach (var console in ShipStatus.Instance.AllConsoles)
-                    {
-                        bool hasTaskType = false;
-                        foreach (var t in console.TaskTypes)
-                        {
-                            if (t == task.TaskType) { hasTaskType = true; break; }
-                        }
-                        if (hasTaskType) locs.Add(console.transform.position);
-                    }
-                }
-            }
-            catch (System.Exception) { }
-
-            return locs;
-        }
+        private List<Vector2> GetSafeTaskLocations(PlayerTask task) => TaskLocationUtils.GetSafeTaskLocations(task);
 
         public float CalculateUtility(StructuredAgentBrain brain)
         {
@@ -117,7 +51,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
             foreach (var task in tasks)
             {
-                if (task.IsComplete) continue;
+                if (task.IsComplete || brain.LocallyCompletedTaskIds.Contains(task.Id)) continue;
 
                 var safeLocations = GetSafeTaskLocations(task);
                 if (safeLocations.Count == 0) continue;
@@ -181,7 +115,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
             int validTasksCount = 0;
             foreach (var task in tasks)
             {
-                if (task.IsComplete) continue;
+                if (task.IsComplete || brain.LocallyCompletedTaskIds.Contains(task.Id)) continue;
 
                 var safeLocations = GetSafeTaskLocations(task);
                 if (safeLocations.Count > 0) validTasksCount++;
@@ -221,7 +155,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
             foreach (var task in tasks)
             {
-                if (task.IsComplete) continue;
+                if (task.IsComplete || brain.LocallyCompletedTaskIds.Contains(task.Id)) continue;
 
                 var safeLocations = GetSafeTaskLocations(task);
                 if (safeLocations.Count == 0) continue;
@@ -287,6 +221,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
             // LogManager.LogDebug($"[TaskDecision-Execute] SUCESSO! Agente comandado para task: {bestTaskData.Task.TaskType}");
             brain.currentLocalTask = bestTaskData.Task;
+            brain.currentTaskTargetLocations = GetSafeTaskLocations(bestTaskData.Task);
             brain.CommandGoToPath(bestTaskData.Path);
 
             return true;

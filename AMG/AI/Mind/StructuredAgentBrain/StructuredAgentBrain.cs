@@ -16,6 +16,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
     public partial class StructuredAgentBrain(IntPtr ptr) : AgentController(ptr)
     {
         public PlayerTask currentLocalTask = null;
+       
+        public List<Vector2> currentTaskTargetLocations = null;
         public bool isGoingToFixASabotage = false;
         public bool _noticedASabotage = false;
 
@@ -267,6 +269,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         {
             isGoingToFixASabotage = false;
             currentLocalTask = null;
+            currentTaskTargetLocations = null;
             currentSabotageStep = null;
             currentVentToEnter = null;
         }

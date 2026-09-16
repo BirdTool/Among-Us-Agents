@@ -9,6 +9,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         {
             if (currentLocalTask == null ||
                 currentLocalTask.IsComplete ||
+                LocallyCompletedTaskIds.Contains(currentLocalTask.Id) ||
                 !Agent.myTasks.ToArray().Any(p => p.Id == currentLocalTask.Id))
             {
                 AITasks.Remove(currentLocalTask?.Id ?? 0);

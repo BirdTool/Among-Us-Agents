@@ -13,9 +13,12 @@ namespace AMG.AI.Control.AgentController
         public Dictionary<uint, ITaskWork> AITasks = [];
         protected CooldownTimer taskTimer = new();
 
+        public HashSet<uint> LocallyCompletedTaskIds = [];
+
         public void MapGameTasksToAILogic()
         {
             AITasks.Clear();
+            LocallyCompletedTaskIds.Clear();
 
             foreach (var gameTask in Agent.myTasks)
             {
@@ -25,6 +28,8 @@ namespace AMG.AI.Control.AgentController
 
         public bool TryExecuteTask(uint taskId)
         {
+            if (LocallyCompletedTaskIds.Contains(taskId)) return true;
+
             if (!taskTimer.IsOver()) return false;
 
             bool stepFinished = false;
@@ -46,6 +51,9 @@ namespace AMG.AI.Control.AgentController
                         if (normalTask.taskStep >= normalTask.MaxStep)
                         {
                             normalTask.taskStep = normalTask.MaxStep;
+
+                            LocallyCompletedTaskIds.Add(taskId);
+                            AITasks.Remove(taskId);
 
                             if (GameData.Instance != null)
                             {
@@ -76,10 +84,12 @@ namespace AMG.AI.Control.AgentController
         {
             if (Utils.IsMeeting || Utils.IsExiling) return false;
             PlayerTask task = Agent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
-            if (task.Locations.Count > 0)
+
+            var safeLocations = TaskLocationUtils.GetSafeTaskLocations(task);
+            if (safeLocations.Count > 0)
             {
                 List<Waypoint> tasksLocations = [];
-                foreach (var location in task.Locations)
+                foreach (var location in safeLocations)
                 {
                     tasksLocations.Add(Pathfinder.GetClosestNode(location));
                 }
