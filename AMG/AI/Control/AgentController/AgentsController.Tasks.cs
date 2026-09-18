@@ -5,6 +5,7 @@ using AMG.AI.TasksWork;
 using AMG.AI.Tools;
 using AMG.Interfaces;
 using AMG.Utilities;
+using UnityEngine.UIElements;
 
 namespace AMG.AI.Control.AgentController
 {
@@ -35,33 +36,10 @@ namespace AMG.AI.Control.AgentController
 
                 if (stepFinished)
                 {
-                    PlayerTask gameTask = Agent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
-                    var normalTask = gameTask?.TryCast<NormalPlayerTask>();
-
-                    if (normalTask != null)
-                    {
-                        // normalTask.taskStep++;
-                        normalTask.NextStep();
-
-                        if (normalTask.taskStep >= normalTask.MaxStep)
-                        {
-                            normalTask.taskStep = normalTask.MaxStep;
-
-                            if (GameData.Instance != null)
-                            {
-                                GameData.Instance.CompletedTasks++;
-
-                                if (HudManager.Instance != null)
-                                    HudManager.Instance.taskDirtyTimer = 0f;
-
-                                // LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída. {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}");
-                            }
-                        }
-                        else
-                        {
-                            AITasks[taskId] = TasksGroup.GetTaskOrGeneric(gameTask.TaskType);
-                        }
-                    }
+                    if (IsImpostor && IsItTheRealPlayer)
+                        FinishTaskAsImpostor(taskId);
+                    else
+                        FinishTaskAsCrewmate(taskId);
                 }
                 else if (CanExecuteTask(taskId))
                 {
@@ -72,10 +50,66 @@ namespace AMG.AI.Control.AgentController
             return stepFinished;
         }
 
+        private void FinishTaskAsCrewmate(uint taskId)
+        {
+            PlayerTask gameTask = Agent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
+            var normalTask = gameTask?.TryCast<NormalPlayerTask>();
+
+            if (normalTask != null)
+            {
+                // normalTask.taskStep++;
+                normalTask.NextStep();
+
+                if (normalTask.taskStep >= normalTask.MaxStep)
+                {
+                    normalTask.taskStep = normalTask.MaxStep;
+
+                    if (GameData.Instance != null)
+                    {
+                        GameData.Instance.CompletedTasks++;
+
+                        if (HudManager.Instance != null)
+                            HudManager.Instance.taskDirtyTimer = 0f;
+
+                        // LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída. {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}");
+                    }
+                }
+                else
+                {
+                    AITasks[taskId] = TasksGroup.GetTaskOrGeneric(gameTask.TaskType);
+                }
+            }
+        }
+
+        private void FinishTaskAsImpostor(uint taskId)
+        {
+            PlayerTask gameTask = Agent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
+            var normalTask = gameTask?.TryCast<NormalPlayerTask>();
+
+            if (normalTask != null)
+            {
+                normalTask.taskStep++;
+
+                if (normalTask.taskStep >= normalTask.MaxStep)
+                {
+                    normalTask.taskStep = normalTask.MaxStep;
+                    
+                    AITasks.Remove(taskId);
+                }
+                else
+                {
+                    AITasks[taskId] = TasksGroup.GetTaskOrGeneric(gameTask.TaskType);
+                }
+            }
+        }
+
         private bool CanExecuteTask(uint taskId)
         {
             if (Utils.IsMeeting || Utils.IsExiling) return false;
             PlayerTask task = Agent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
+
+            if (task == null) return false;
+
             if (task.Locations.Count > 0)
             {
                 List<Waypoint> tasksLocations = [];
