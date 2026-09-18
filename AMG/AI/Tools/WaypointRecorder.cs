@@ -170,7 +170,7 @@ namespace AMG.AI.Tools
             {
                 AgentsCommander.SetAllAgentAsCalculating();
             }
-            
+
             if (Input.GetKeyDown(KeyCode.J))
             {
                 var allBrains = Utils.GetAllStructuredAgentBrain();
@@ -202,29 +202,50 @@ namespace AMG.AI.Tools
 
             if (Input.GetKeyDown(KeyCode.L))
             {
-                var allVents = ShipStatus.Instance.AllVents;
-                var log = new StringBuilder();
-
-                foreach (var vent in allVents)
+                try
                 {
-                    log.AppendLine($"Name: {vent.name}");
-                    log.AppendLine($"Position: {vent.transform.position}");
-                    log.AppendLine($"Id: {vent.Id}");
+                    var logMap = new StringBuilder();
+                    logMap.AppendLine("================ MAPA INTEGRAL ================");
 
-                    var ventsNearby = vent.NearbyVents;
+                    var allConsoles = UnityEngine.Object.FindObjectsOfType<Console>();
+                    var taskMap = new Dictionary<TaskTypes, List<(int ConsoleId, SystemTypes Room, Vector3 Position)>>();
 
-                    var ventsNearbyNames = ventsNearby.ToList().Where(v => v != null && v.Id != vent.Id).Select(v => v.name);
+                    foreach (var console in allConsoles)
+                    {
+                        if (console == null) continue;
 
-                    log.AppendLine($"Vents nearby: {string.Join(", ", ventsNearbyNames)}");
+                        var types = console.TaskTypes;
 
-                    log.AppendLine($"Left vent: {(vent.Left == null ? "null" : $"{vent.Left.name}")}");
-                    log.AppendLine($"Right vent: {(vent.Right == null ? "null" : $"{vent.Right.name}")}");
-                    log.AppendLine($"Center vent: {(vent.Center == null ? "null" : $"{vent.Center.name}")}");
+                        if (types != null)
+                        {
+                            foreach (var type in types)
+                            {
+                                if (!taskMap.ContainsKey(type))
+                                    taskMap[type] = [];
 
-                    log.AppendLine("");
+                                taskMap[type].Add((console.ConsoleId, console.Room, console.transform.position));
+                            }
+                        }
+                    }
+
+                    foreach (var kvp in taskMap)
+                    {
+                        logMap.AppendLine($"\n>>> TAREFA: {kvp.Key} (Total de locais: {kvp.Value.Count})");
+
+                        var sortedLocations = kvp.Value.OrderBy(x => x.ConsoleId).ToList();
+
+                        foreach (var (ConsoleId, Room, Position) in sortedLocations)
+                        {
+                            logMap.AppendLine($"  - Console ID: {ConsoleId} | Sala: {Room} | Pos: ({Position.x:F2}, {Position.y:F2})");
+                        }
+                    }
+
+                    LogManager.Log(logMap.ToString());
                 }
-
-                LogManager.LogDebug($"[Vent-Debug] {log}");
+                catch (Exception ex)
+                {
+                    LogManager.LogError($"[AI GPS] Erro ao logar tarefas: {ex}");
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.N))
