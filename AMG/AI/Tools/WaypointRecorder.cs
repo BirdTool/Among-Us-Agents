@@ -1,21 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Debug;
-using AMG.AI.Mind;
 using AMG.AI.Mind.ReactiveAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Utilities;
-using AmongUs.GameOptions;
+using AMG.Utilities.KeyDown;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 namespace AMG.AI.Tools
 {
@@ -28,6 +24,7 @@ namespace AMG.AI.Tools
         {
             if (!_isRegistered)
             {
+                ClassInjector.RegisterTypeInIl2Cpp<KeyDownManager>();
                 ClassInjector.RegisterTypeInIl2Cpp<WaypointRecorder>();
                 ClassInjector.RegisterTypeInIl2Cpp<AgentController>();
                 ClassInjector.RegisterTypeInIl2Cpp<StructuredAgentBrain>();
@@ -38,6 +35,11 @@ namespace AMG.AI.Tools
                 LogManager.LogDebug("[AI GPS] Classes registradas com sucesso!");
             }
 
+            if (__instance.gameObject.GetComponent<KeyDownManager>() == null)
+            {
+                __instance.gameObject.AddComponent<KeyDownManager>();
+            }
+
             if (__instance.gameObject.GetComponent<WaypointRecorder>() == null)
             {
                 __instance.gameObject.AddComponent<WaypointRecorder>();
@@ -45,17 +47,54 @@ namespace AMG.AI.Tools
         }
     }
 
-    public class WaypointRecorder : MonoBehaviour
+    public class WaypointRecorder(IntPtr ptr) : MonoBehaviour(ptr)
     {
-        public WaypointRecorder(IntPtr ptr) : base(ptr) { }
-
         private string filePath;
 
         private bool isRecording = false;
-        private float distanceBetweenNodes = 0.5f;
+        private readonly float distanceBetweenNodes = 0.5f;
 
-        private List<Vector2> existingNodes = new List<Vector2>();
-        private List<string> newLinesBuffer = new List<string>();
+        private readonly List<Vector2> existingNodes = [];
+        private readonly List<string> newLinesBuffer = [];
+
+        void Awake()
+        {
+            filePath = Path.Combine(Application.dataPath, "AI_Skeld_Waypoints.txt");
+            LoadExistingNodes();
+        }
+
+        void Start()
+        {
+            var keyManager = gameObject.GetComponent<KeyDownManager>();
+            if (keyManager == null)
+            {
+                LogManager.LogWarning("[AI GPS] KeyDownManager não encontrado — R/P não serão registrados.");
+                return;
+            }
+
+            keyManager.RegisterKeyDown(KeyCode.R, ToggleRecording);
+            keyManager.RegisterKeyDown(KeyCode.P, SaveBufferToFile);
+        }
+
+        private void ToggleRecording()
+        {
+            isRecording = !isRecording;
+            LogManager.LogDebug(isRecording ? "[AI GPS] Gravação Contínua: LIGADA!" : "[AI GPS] Gravação Contínua: DESLIGADA.");
+        }
+
+        void Update()
+        {
+            if (PlayerControl.LocalPlayer == null) return;
+
+            if (isRecording)
+            {
+                TrySaveNode(PlayerControl.LocalPlayer.transform.position);
+                foreach (var agent in AgentManager.Agents)
+                {
+                    TrySaveNode(agent.Control.transform.position);
+                }
+            }
+        }
 
         public void RemoveNode(Waypoint node)
         {
@@ -76,11 +115,6 @@ namespace AMG.AI.Tools
             ResetAndSaveNodes();
 
             LogManager.LogWarning($"[AI GPS] AUTO-LIMPEZA: Nó ruim em {node.Position} foi erradicado pela IA!");
-        }
-        void Awake()
-        {
-            filePath = Path.Combine(Application.dataPath, "AI_Skeld_Waypoints.txt");
-            LoadExistingNodes();
         }
 
         private void LoadExistingNodes()
@@ -106,160 +140,6 @@ namespace AMG.AI.Tools
                 }
             }
             LogManager.LogDebug($"[AI GPS] {existingNodes.Count} NODEs carregados na memória para prevenção de duplicatas.");
-        }
-
-        void Update()
-        {
-            if (PlayerControl.LocalPlayer == null) return;
-
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                isRecording = !isRecording;
-                LogManager.LogDebug(isRecording ? "[AI GPS] Gravação Contínua: LIGADA!" : "[AI GPS] Gravação Contínua: DESLIGADA.");
-            }
-
-            if (Input.GetKeyDown(KeyCode.P))
-            {
-                SaveBufferToFile();
-            }
-
-            if (Input.GetKeyDown(KeyCode.M))
-            {
-                var currentPos = PlayerControl.LocalPlayer.transform.position;
-                LogManager.Log($"[Vector2] Current Position: x: {currentPos.x}, y: {currentPos.y}");
-            }
-
-            if (Input.GetKeyDown(KeyCode.G))
-            {
-                LogManager.LogDebug("[AI Command] Chamando todos os agentes!");
-
-                Vector2 myPosition = PlayerControl.LocalPlayer.transform.position;
-                Waypoint target = Pathfinder.GetClosestNode(myPosition);
-
-                var agents = AgentManager.Agents;
-                foreach (var agent in agents)
-                {
-                    var brain = agent.Control.GetComponent<StructuredAgentBrain>();
-                    if (brain != null)
-                    {
-                        Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
-                        List<Waypoint> path = Pathfinder.FindPath(start, target, out _);
-                        brain.CommandGoToPath(path);
-                    }
-                }
-
-                // AgentsControl.MakeAllAgentsDoTask();
-            }
-
-            if (isRecording)
-            {
-                TrySaveNode(PlayerControl.LocalPlayer.transform.position);
-                foreach (var agent in AgentManager.Agents)
-                {
-                    TrySaveNode(agent.Control.transform.position);
-                }
-            }
-
-            if (Input.GetKeyDown(KeyCode.T))
-            {
-                AgentManager.WillBeImpostor = !AgentManager.WillBeImpostor;
-                LogManager.LogDebug($"[AI Manager] Will be impostor: {AgentManager.WillBeImpostor}");
-            }
-
-            if (Input.GetKeyDown(KeyCode.K))
-            {
-                AgentsCommander.SetAllAgentAsCalculating();
-            }
-
-            if (Input.GetKeyDown(KeyCode.J))
-            {
-                var allBrains = Utils.GetAllStructuredAgentBrain();
-
-                foreach (var brain in allBrains)
-                {
-                    Vent closestVent = null;
-                    float minDistance = float.MaxValue;
-
-                    foreach (var vent in ShipStatus.Instance.AllVents)
-                    {
-                        float distance = Vector2.Distance(brain.Vector2Position, vent.transform.position);
-
-                        if (distance < minDistance)
-                        {
-                            minDistance = distance;
-                            closestVent = vent;
-                        }
-                    }
-
-                    if (closestVent != null)
-                    {
-                        brain.ResetDestinations();
-                        brain.currentVentToEnter = closestVent;
-                        brain.CommandGoToPath(Pathfinder.FindPath(brain.WaypointPosition, closestVent.transform.position.GetClosestNode(), out float _));
-                    }
-                }
-            }
-
-            if (Input.GetKeyDown(KeyCode.L))
-            {
-                try
-                {
-                    var logMap = new StringBuilder();
-                    logMap.AppendLine("================ MAPA INTEGRAL ================");
-
-                    var allConsoles = UnityEngine.Object.FindObjectsOfType<Console>();
-                    var taskMap = new Dictionary<TaskTypes, List<(int ConsoleId, SystemTypes Room, Vector3 Position)>>();
-
-                    foreach (var console in allConsoles)
-                    {
-                        if (console == null) continue;
-
-                        var types = console.TaskTypes;
-
-                        if (types != null)
-                        {
-                            foreach (var type in types)
-                            {
-                                if (!taskMap.ContainsKey(type))
-                                    taskMap[type] = [];
-
-                                taskMap[type].Add((console.ConsoleId, console.Room, console.transform.position));
-                            }
-                        }
-                    }
-
-                    foreach (var kvp in taskMap)
-                    {
-                        logMap.AppendLine($"\n>>> TAREFA: {kvp.Key} (Total de locais: {kvp.Value.Count})");
-
-                        var sortedLocations = kvp.Value.OrderBy(x => x.ConsoleId).ToList();
-
-                        foreach (var (ConsoleId, Room, Position) in sortedLocations)
-                        {
-                            logMap.AppendLine($"  - Console ID: {ConsoleId} | Sala: {Room} | Pos: ({Position.x:F2}, {Position.y:F2})");
-                        }
-                    }
-
-                    LogManager.Log(logMap.ToString());
-                }
-                catch (Exception ex)
-                {
-                    LogManager.LogError($"[AI GPS] Erro ao logar tarefas: {ex}");
-                }
-            }
-
-            if (Input.GetKeyDown(KeyCode.N))
-            {
-                if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
-
-                PlayerControl agentComponent = Utils.Players.LocalPlayer;
-                AgentData agentData = new() { Name = agentComponent.Data.PlayerName };
-                AgentManager.AddAgent(agentComponent, agentData);
-                agentComponent.gameObject.AddComponent<StructuredAgentBrain>();
-                var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
-                AgentController.AgentControlsRealPlayer = true;
-                brain.MapGameTasksToAILogic();
-            }
         }
 
         public void ResetAndSaveNodes()
@@ -296,8 +176,6 @@ namespace AMG.AI.Tools
         {
             string line = $"{type}|{pos.x:F2}|{pos.y:F2}";
             newLinesBuffer.Add(line);
-
-            // LogManager.LogDebug($"[AI GPS] Em Memória: {line}");
         }
 
         private void SaveBufferToFile()
