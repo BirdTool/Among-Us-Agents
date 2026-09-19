@@ -30,32 +30,38 @@ namespace AMG.AI.Tools
                 ClassInjector.RegisterTypeInIl2Cpp<StructuredAgentBrain>();
                 ClassInjector.RegisterTypeInIl2Cpp<ReactiveAgentBrain>();
                 ClassInjector.RegisterTypeInIl2Cpp<AgentVisionESP>();
-                HudManager.Instance.gameObject.AddComponent<AgentVisionESP>();
                 _isRegistered = true;
                 LogManager.LogDebug("[AI GPS] Classes registradas com sucesso!");
             }
 
             if (__instance.gameObject.GetComponent<KeyDownManager>() == null)
             {
-                __instance.gameObject.AddComponent<KeyDownManager>();
+                AMGPlugin.KeyDownManager = __instance.gameObject.AddComponent<KeyDownManager>();
             }
 
             if (__instance.gameObject.GetComponent<WaypointRecorder>() == null)
             {
                 __instance.gameObject.AddComponent<WaypointRecorder>();
             }
+
+            if (__instance.gameObject.GetComponent<AgentVisionESP>() == null)
+            {
+                __instance.gameObject.AddComponent<AgentVisionESP>();
+            }
         }
     }
 
-    public class WaypointRecorder(IntPtr ptr) : MonoBehaviour(ptr)
+    public class WaypointRecorder : MonoBehaviour
     {
+        public WaypointRecorder(IntPtr ptr) : base(ptr) { }
+
         private string filePath;
 
         private bool isRecording = false;
-        private readonly float distanceBetweenNodes = 0.5f;
+        private float distanceBetweenNodes = 0.5f;
 
-        private readonly List<Vector2> existingNodes = [];
-        private readonly List<string> newLinesBuffer = [];
+        private List<Vector2> existingNodes = new List<Vector2>();
+        private List<string> newLinesBuffer = new List<string>();
 
         void Awake()
         {
@@ -65,15 +71,14 @@ namespace AMG.AI.Tools
 
         void Start()
         {
-            var keyManager = gameObject.GetComponent<KeyDownManager>();
-            if (keyManager == null)
+            if (AMGPlugin.KeyDownManager == null)
             {
                 LogManager.LogWarning("[AI GPS] KeyDownManager não encontrado — R/P não serão registrados.");
                 return;
             }
 
-            keyManager.RegisterKeyDown(KeyCode.R, ToggleRecording);
-            keyManager.RegisterKeyDown(KeyCode.P, SaveBufferToFile);
+            AMGPlugin.KeyDownManager.RegisterKeyDown(KeyCode.R, ToggleRecording);
+            AMGPlugin.KeyDownManager.RegisterKeyDown(KeyCode.P, SaveBufferToFile);
         }
 
         private void ToggleRecording()

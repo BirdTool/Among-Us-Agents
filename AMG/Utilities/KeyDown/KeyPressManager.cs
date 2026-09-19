@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using AMG.Utilities;
 using UnityEngine;
 
 namespace AMG.Utilities.KeyDown
@@ -10,6 +11,8 @@ namespace AMG.Utilities.KeyDown
         public class RegisterAttribute(KeyCode key) : Attribute
         {
             public KeyCode Key { get; } = key;
+
+            public bool OnlyExecuteInGame { get; set; } = true;
         }
 
         public static void DiscoverAndRegister(KeyDownManager manager)
@@ -29,9 +32,9 @@ namespace AMG.Utilities.KeyDown
                 }
 
                 var action = (Action)Delegate.CreateDelegate(typeof(Action), method);
-                manager.RegisterKeyDown(attr.Key, action);
+                manager.RegisterKeyDown(attr.Key, action, attr.OnlyExecuteInGame);
 
-                LogManager.LogDebug($"[KeyPressManager] {type.Name} registrado na tecla {attr.Key}.");
+                LogManager.LogDebug($"[KeyPressManager] {type.Name} registrado na tecla {attr.Key} (OnlyExecuteInGame={attr.OnlyExecuteInGame}).");
             }
         }
     }
