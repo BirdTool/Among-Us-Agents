@@ -144,6 +144,7 @@ namespace AMG.AI.Control
 
             TaskAssignment.AssignTasks(agentComponent);
             brain.MapGameTasksToAILogic();
+            brain.MapArtificialTasks();
 
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
         }

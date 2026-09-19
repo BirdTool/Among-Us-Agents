@@ -33,14 +33,10 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
                 else if (currentLocalTask != null)
                 {
-                    if (Utils.IsCloseToAnyLocation([.. currentLocalTask.Locations], Vector2Position, 1.5f))
-                    {
+                    if (currentLocalTask.IsNearCurrentStep(Vector2Position, 1.5f))
                         SetState(AgentState.DoingTask);
-                    }
                     else
-                    {
                         SetState(AgentState.Calculating);
-                    }
                 }
                 else if (currentVentToEnter != null)
                 {

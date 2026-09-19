@@ -1,6 +1,7 @@
 using System.Linq;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain.Plans;
+using AMG.AI.Navigation;
 using AMG.Interfaces;
 using AMG.Models.Plans;
 using AMG.Utilities;
@@ -10,7 +11,7 @@ namespace AMG.Models.Scenarios
 {
     public class MedbayElectricalKillScenario : IScenario
     {
-        public float CheckTime { get; set; } = 3.2f;
+        public float CheckTime { get; set; } = 4.3f;
         public float LastCheckTime { get; set; } = 0f;
 
         public float CalculateScore(StructuredAgentBrain brain)
@@ -22,7 +23,25 @@ namespace AMG.Models.Scenarios
 
             if (playersInMedbay.Count() != 1 && playersInElectrical.Any()) return 0;
 
-            float score = 20f;
+            float score = 15f;
+
+            var playersInStorage = Utils.Players.GetAllAlivePlayersInARoom(SystemTypes.Storage).Where(p => !p.Data.Role.IsImpostor);
+            var playersInLowerEngine = Utils.Players.GetAllAlivePlayersInARoom(SystemTypes.LowerEngine).Where(p => !p.Data.Role.IsImpostor);
+            var playersInHallways = Utils.Players.GetAllAlivePlayersInARoom(SystemTypes.Hallway).Where(p => !p.Data.Role.IsImpostor);
+            
+            var playersBetweenStorageAndLower = playersInHallways.Where(p => {
+                var node = Pathfinder.GetClosestNode(p.transform.position);
+                return node.NeighborRooms.Contains(SystemTypes.Storage) && node.NeighborRooms.Contains(SystemTypes.LowerEngine);
+            });
+
+            if (playersInStorage.Count() > 1) score -= 5f;
+            else score += 2.5f;
+
+            if (playersInLowerEngine.Count() > 1) score -= 5f;
+            else score += 2.5f;
+
+            if (playersBetweenStorageAndLower.Count() > 1) score -= 10f;
+            else score += 3f;
 
             return score;
         }

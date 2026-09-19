@@ -1,9 +1,8 @@
-using AMG.AI.Mind;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
-using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
+using AMG.Utilities.MapUtils.TasksUtils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -33,21 +32,21 @@ namespace AMG.AI.Control
                 return;
             }
 
-            PlayerTask nearbyTask = null;
+            ArtificialTask nearbyTask = null;
             float? taskDistance = null;
             List<Waypoint> bestPath = null;
 
             Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
             if (start == null) return;
 
-            foreach (var task in agent.Control.myTasks)
+            foreach (var task in brain.ArtificialTasks)
             {
-                if (task.IsComplete) continue;
+                if (task.IsCompleted) continue;
 
                 try
                 {
-                    var target = task.Locations.ToArray().ToList().GetRandomItemSecureOrDefault().GetClosestNode();
-
+                    var target = task.GetCurrentStepTaskPosition().Position.GetClosestNode();
+                    
                     List<Waypoint> currentCalculatedPath = Pathfinder.FindPath(start, target, out float pathDistance);
 
                     if (currentCalculatedPath != null)

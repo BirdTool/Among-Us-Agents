@@ -9,13 +9,14 @@ using AMG.Interfaces;
 using AMG.Models;
 using AMG.Models.Scenarios;
 using AMG.Utilities;
+using AMG.Utilities.MapUtils.TasksUtils;
 using UnityEngine;
 
 namespace AMG.AI.Mind.StructuredAgentBrain
 {
     public partial class StructuredAgentBrain(IntPtr ptr) : AgentController(ptr)
     {
-        public PlayerTask currentLocalTask = null;
+        public ArtificialTask currentLocalTask = null;
         public bool isGoingToFixASabotage = false;
         public bool _noticedASabotage = false;
 

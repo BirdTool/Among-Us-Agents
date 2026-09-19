@@ -5,88 +5,74 @@ using AMG.AI.TasksWork;
 using AMG.AI.Tools;
 using AMG.Interfaces;
 using AMG.Utilities;
+using AMG.Utilities.MapUtils.SkeldTasks;
+using AMG.Utilities.MapUtils.TasksUtils;
 
 namespace AMG.AI.Control.AgentController
 {
     public partial class AgentController
     {
-        public Dictionary<uint, ITaskWork> AITasks = [];
+        public List<ArtificialTask> ArtificialTasks = [];
         protected CooldownTimer taskTimer = new();
+        public Dictionary<ArtificialTask, ITaskWork> AITasks = [];
 
         public void MapGameTasksToAILogic()
         {
             AITasks.Clear();
-
-            foreach (var gameTask in Agent.myTasks)
-            {
-                AITasks.Add(gameTask.Id, TasksGroup.GetTaskOrGeneric(gameTask.TaskType));
-            }
+            foreach (var at in ArtificialTasks)
+                AITasks[at] = TasksGroup.GetTaskOrGeneric(at.Task.TaskType);
         }
 
-        public bool TryExecuteTask(uint taskId)
+        public bool TryExecuteTask(ArtificialTask artificialTask)
         {
             if (!taskTimer.IsOver()) return false;
+            if (!AITasks.TryGetValue(artificialTask, out var aiTask)) return false;
 
-            bool stepFinished = false;
-
-            if (AITasks.TryGetValue(taskId, out ITaskWork aiTask))
+            bool stepFinished = aiTask.Execute();
+            if (stepFinished)
             {
-                stepFinished = aiTask.Execute();
-
-                if (stepFinished)
-                {
-                    PlayerTask gameTask = Agent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
-                    var normalTask = gameTask?.TryCast<NormalPlayerTask>();
-
-                    if (normalTask != null)
-                    {
-                        // normalTask.taskStep++;
-                        normalTask.NextStep();
-
-                        if (normalTask.taskStep >= normalTask.MaxStep)
-                        {
-                            normalTask.taskStep = normalTask.MaxStep;
-
-                            if (GameData.Instance != null)
-                            {
-                                GameData.Instance.CompletedTasks++;
-
-                                if (HudManager.Instance != null)
-                                    HudManager.Instance.taskDirtyTimer = 0f;
-
-                                // LogManager.LogDebug($"[TaskRunner] Task {taskId} ({gameTask.TaskType}) concluída. {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}");
-                            }
-                        }
-                        else
-                        {
-                            AITasks[taskId] = TasksGroup.GetTaskOrGeneric(gameTask.TaskType);
-                        }
-                    }
-                }
-                else if (CanExecuteTask(taskId))
-                {
-                    taskTimer.StartDelay(RandomizerExtensions.GetSecureRandomFloat(0.02f, 0.10f));
-                }
+                artificialTask.NextStep();
+                if (artificialTask.IsCompleted) AITasks.Remove(artificialTask);
+                else AITasks[artificialTask] = TasksGroup.GetTaskOrGeneric(artificialTask.Task.TaskType);
             }
-
+            else if (CanExecuteTask(artificialTask))
+            {
+                taskTimer.StartDelay(RandomizerExtensions.GetSecureRandomFloat(0.02f, 0.10f));
+            }
             return stepFinished;
         }
 
-        private bool CanExecuteTask(uint taskId)
+        protected bool CanExecuteTask(ArtificialTask artificialTask)
         {
             if (Utils.IsMeeting || Utils.IsExiling) return false;
-            PlayerTask task = Agent.myTasks.ToArray().FirstOrDefault(p => p.Id == taskId);
-            if (task.Locations.Count > 0)
+
+            if (artificialTask == null) return false;
+
+            var taskPositions = artificialTask.GetTaskPositions();
+            if (taskPositions.Count > 0)
             {
-                List<Waypoint> tasksLocations = [];
-                foreach (var location in task.Locations)
+                if (artificialTask.IsImpostorTask)
                 {
-                    tasksLocations.Add(Pathfinder.GetClosestNode(location));
+                    var location = artificialTask.GetCurrentStepTaskPosition();
+                    if (location == null) return true;
+                    return Utils.IsCloseToLocation(location.Position.GetClosestNode(), WaypointPosition, 2f);
+                }
+                List<Waypoint> tasksLocations = [];
+                foreach (var location in taskPositions)
+                {
+                    tasksLocations.Add(Pathfinder.GetClosestNode(location.Position));
                 }
                 return Utils.IsCloseToAnyLocation(tasksLocations, WaypointPosition, 2f);
             }
 
             return true;
+        }
+
+        public void MapArtificialTasks()
+        {
+            ArtificialTasks.Clear();
+            var all = SkeldTasksUtilities.GetArtificialTasks(Agent);
+            ArtificialTasks.AddRange(SkeldTasksUtilities.ResolveDuplicateIds(all));
         }
     }
 }
