@@ -77,6 +77,13 @@ namespace AMG.KeyDownActions
         {
             if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
 
+            if (Utils.Players.LocalPlayer.GetComponent<AgentController>() != null)
+            {
+                UnityEngine.Object.Destroy(Utils.Players.LocalPlayer.GetComponent<AgentController>());
+                UnityEngine.Object.Destroy(Utils.Players.LocalPlayer.gameObject.GetComponent<StructuredAgentBrain>());
+                return;
+            }
+
             PlayerControl agentComponent = Utils.Players.LocalPlayer;
             AgentData agentData = new() { Name = agentComponent.Data.PlayerName };
             AgentManager.AddAgent(agentComponent, agentData);

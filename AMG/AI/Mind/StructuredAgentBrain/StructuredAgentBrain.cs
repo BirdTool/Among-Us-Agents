@@ -231,8 +231,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             }
         }
         
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             Utils.OnSabotageStarted -= HandleSabotageStarted;
             Utils.OnSabotageEnded -= HandleSabotageEnded;
         }

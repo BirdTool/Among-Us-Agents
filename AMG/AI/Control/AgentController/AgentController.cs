@@ -35,5 +35,12 @@ namespace AMG.AI.Control.AgentController
             var playerInfo = GameData.Instance?.GetPlayerById(Agent.PlayerId);
             BaseName = playerInfo?.PlayerName ?? "AI";
         }
+
+        protected virtual void OnDestroy()
+        {
+            Flags.Clear();
+            tags.Clear();
+            RefreshNameTag();
+        }
     }
 }

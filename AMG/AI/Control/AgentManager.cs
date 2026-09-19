@@ -143,8 +143,8 @@ namespace AMG.AI.Control
             var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
 
             TaskAssignment.AssignTasks(agentComponent);
-            brain.MapGameTasksToAILogic();
             brain.MapArtificialTasks();
+            brain.MapGameTasksToAILogic();
 
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
         }

@@ -127,6 +127,7 @@ public static class AgentsController
         var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
 
         TaskAssignment.AssignTasks(agentComponent);
+        brain.MapArtificialTasks();
         brain.MapGameTasksToAILogic();
     }
 }

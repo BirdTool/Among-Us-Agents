@@ -31,6 +31,8 @@ namespace AMG.Utilities.KeyDown
 
         void Update()
         {
+            if (InputFocusUtils.IsTypingInInputField()) return;
+
             bool inGame = PlayerControl.LocalPlayer != null;
 
             foreach (var (key, binding) in _keyHandlers)

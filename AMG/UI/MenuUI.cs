@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AMG.UI.Tabs;
+using AMG.Utilities.KeyDown;
 using UnityEngine;
 
 namespace AMG.UI;
@@ -17,7 +18,6 @@ public class MenuUI(IntPtr ptr) : MonoBehaviour(ptr)
 
     private void Start()
     {
-        // Add tabs
         _tabs.Add(new AgentsTab());
 
         // Center window on screen initially (will be re-centered later if 0)
@@ -33,9 +33,8 @@ public class MenuUI(IntPtr ptr) : MonoBehaviour(ptr)
 
     private void Update()
     {
-        // Esta tecla fica de fora do KeyDownManager de propósito: o menu precisa
-        // abrir também no menu inicial/lobby, onde o KeyDownManager não existe
-        // (ele só é criado dentro de uma partida — ver InjectRecorderPatch).
+        if (InputFocusUtils.IsTypingInInputField()) return;
+
         KeyCode toggleKey = KeyCode.Delete;
 
         if (AMGPlugin.MenuKeybind != null && !string.IsNullOrEmpty(AMGPlugin.MenuKeybind.Value))
