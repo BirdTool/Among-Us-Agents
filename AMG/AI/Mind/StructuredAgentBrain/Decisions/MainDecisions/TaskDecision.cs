@@ -1,6 +1,7 @@
 ﻿using AMG.AI.Navigation;
 using AMG.Interfaces;
 using AMG.Utilities;
+using AMG.Utilities.MapUtils.TasksUtils;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,75 +12,6 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
         private readonly Dictionary<int, float> _utilityCache = [];
         private readonly Dictionary<int, float> _nextUpdateTime = [];
         public readonly Dictionary<int, float> _timeWithoutDoingTasks = [];
-
-        private List<Vector2> GetSafeTaskLocations(PlayerTask task)
-        {
-            var locs = new List<Vector2>();
-
-            var normalTask = task.TryCast<NormalPlayerTask>();
-            if (normalTask != null)
-            {
-                try
-                {
-                    var validPositions = normalTask.FindValidConsolesPositions();
-                    if (validPositions != null)
-                    {
-                        foreach (var pos in validPositions) locs.Add(pos);
-                        if (locs.Count > 0)
-                        {
-                            return locs;
-                        }
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    LogManager.LogDebug($"[TaskDecision] FindValidConsolesPositions falhou: {ex.Message}");
-                }
-
-                /*
-                try
-                {
-                    var specialConsole = normalTask.FindSpecialConsole();
-                    if (specialConsole != null)
-                    {
-                        locs.Add(specialConsole.transform.position);
-                        LogManager.LogDebug($"[TaskDecision] FindSpecialConsole encontrado para {task.TaskType}");
-                        return locs;
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    LogManager.LogDebug($"[TaskDecision] FindSpecialConsole falhou: {ex.Message}");
-                }
-                */
-            }
-
-            try
-            {
-                foreach (var loc in task.Locations) locs.Add(loc);
-                if (locs.Count > 0) return locs;
-            }
-            catch (System.Exception) { }
-
-            try
-            {
-                if (ShipStatus.Instance != null && ShipStatus.Instance.AllConsoles != null)
-                {
-                    foreach (var console in ShipStatus.Instance.AllConsoles)
-                    {
-                        bool hasTaskType = false;
-                        foreach (var t in console.TaskTypes)
-                        {
-                            if (t == task.TaskType) { hasTaskType = true; break; }
-                        }
-                        if (hasTaskType) locs.Add(console.transform.position);
-                    }
-                }
-            }
-            catch (System.Exception) { }
-
-            return locs;
-        }
 
         public float CalculateUtility(StructuredAgentBrain brain)
         {
@@ -102,7 +34,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
         private float CrewmateUtility(StructuredAgentBrain brain)
         {
-            var tasks = brain.Agent.myTasks;
+            var tasks = brain.ArtificialTasks;
             if (tasks == null || tasks.Count == 0) return 0f;
 
             bool isDead = brain.Agent.Data.IsDead;
@@ -117,9 +49,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
             foreach (var task in tasks)
             {
-                if (task.IsComplete) continue;
+                if (task.IsCompleted || Time.time < task.BlockedUntil) continue;
 
-                var safeLocations = GetSafeTaskLocations(task);
+                var safeLocations = task.GetTaskPositions();
                 if (safeLocations.Count == 0) continue;
 
                 bool hasAtLeastOneValidLocation = false;
@@ -128,7 +60,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
                 {
                     hasAtLeastOneValidLocation = true;
 
-                    float straightDist = Vector2.Distance(agentPos, location);
+                    float straightDist = Vector2.Distance(agentPos, location.Position);
                     if (straightDist > 8f) continue;
 
                     if (isDead)
@@ -137,7 +69,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
                     }
                     else
                     {
-                        var endNode = Pathfinder.GetClosestNode(location);
+                        var endNode = Pathfinder.GetClosestNode(location.Position);
                         if (endNode == null) continue;
 
                         Pathfinder.FindPath(startNode, endNode, out float realWalkDistance);
@@ -170,7 +102,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
         private float ImpostorUtility(StructuredAgentBrain brain)
         {
-            var tasks = brain.Agent.myTasks;
+            var tasks = brain.ArtificialTasks;
             if (tasks == null || tasks.Count == 0) return 0f;
 
             bool isDead = brain.Agent.Data.IsDead;
@@ -181,9 +113,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
             int validTasksCount = 0;
             foreach (var task in tasks)
             {
-                if (task.IsComplete) continue;
+                if (task.IsCompleted || Time.time < task.BlockedUntil) continue;
 
-                var safeLocations = GetSafeTaskLocations(task);
+                var safeLocations = task.GetTaskPositions();
                 if (safeLocations.Count > 0) validTasksCount++;
             }
 
@@ -209,7 +141,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
         public bool Execute(StructuredAgentBrain brain)
         {
-            var tasks = brain.Agent.myTasks;
+            var tasks = brain.ArtificialTasks;
             if (tasks == null || tasks.Count == 0) return false;
 
             var startNode = Pathfinder.GetClosestNode(brain.Agent.transform.position);
@@ -217,30 +149,29 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
             if (!isDead && startNode == null) return false;
 
-            var validTasks = new List<(PlayerTask Task, float Dist, List<Waypoint> Path)>();
+            var validTasks = new List<(ArtificialTask Task, float Dist, List<Waypoint> Path)>();
 
             foreach (var task in tasks)
             {
-                if (task.IsComplete) continue;
+                if (task.IsCompleted || Time.time < task.BlockedUntil) continue;
 
-                var safeLocations = GetSafeTaskLocations(task);
+                var safeLocations = task.GetTaskPositions();
                 if (safeLocations.Count == 0) continue;
 
                 float minWalkDist = float.MaxValue;
                 List<Waypoint> bestPath = null;
 
-                foreach (var location in safeLocations)
+                var location = task.GetCurrentStepTaskPosition();
+
+                var endNode = Pathfinder.GetClosestNode(location.Position);
+                if (endNode == null) continue;
+
+                var path = Pathfinder.FindPath(startNode, endNode, out float realWalkDist);
+
+                if (path != null && realWalkDist < minWalkDist)
                 {
-                    var endNode = Pathfinder.GetClosestNode(location);
-                    if (endNode == null) continue;
-
-                    var path = Pathfinder.FindPath(startNode, endNode, out float realWalkDist);
-
-                    if (path != null && realWalkDist < minWalkDist)
-                    {
-                        minWalkDist = realWalkDist;
-                        bestPath = path;
-                    }
+                    minWalkDist = realWalkDist;
+                    bestPath = path;
                 }
 
                 if (bestPath != null)
@@ -251,7 +182,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
             if (validTasks.Count == 0) return false;
 
-            var shortsTaskNearby = new List<(PlayerTask Task, float Dist, List<Waypoint> Path)>();
+            var shortsTaskNearby = new List<(ArtificialTask Task, float Dist, List<Waypoint> Path)>();
             var longTasks = ShipStatus.Instance?.LongTasks;
 
             foreach (var taskData in validTasks)
@@ -263,7 +194,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
                 {
                     for (int i = 0; i < longTasks.Count; i++)
                     {
-                        if (longTasks[i]?.TaskType == taskData.Task.TaskType)
+                        if (longTasks[i]?.TaskType == taskData.Task.Task.TaskType)
                         {
                             isShort = false;
                             break;

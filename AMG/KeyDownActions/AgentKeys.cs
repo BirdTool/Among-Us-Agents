@@ -66,27 +66,7 @@ namespace AMG.KeyDownActions
     {
         public static void Execute()
         {
-            foreach (var brain in Utils.GetAllStructuredAgentBrain())
-            {
-                Vent closestVent = null;
-                float minDistance = float.MaxValue;
-
-                foreach (var vent in ShipStatus.Instance.AllVents)
-                {
-                    float distance = Vector2.Distance(brain.Vector2Position, vent.transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closestVent = vent;
-                    }
-                }
-
-                if (closestVent == null) continue;
-
-                brain.ResetDestinations();
-                brain.currentVentToEnter = closestVent;
-                brain.CommandGoToPath(Pathfinder.FindPath(brain.WaypointPosition, closestVent.transform.position.GetClosestNode(), out float _));
-            }
+            AgentsCommander.MakeAllAgentsDoTask();
         }
     }
 
@@ -105,6 +85,7 @@ namespace AMG.KeyDownActions
             var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
 
             AgentController.AgentControlsRealPlayer = true;
+            brain.MapArtificialTasks();
             brain.MapGameTasksToAILogic();
         }
     }
