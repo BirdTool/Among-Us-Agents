@@ -1,4 +1,5 @@
 using AMG.Utilities;
+using AMG.Utilities.KeyDown;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -15,7 +16,8 @@ public partial class AMGPlugin : BasePlugin
     public Harmony Harmony { get; } = new(Id);
     public static AMGPlugin Plugin;
     public new static ManualLogSource Log;
-
+    
+    public static KeyDownManager KeyDownManager;
 
     public ConfigEntry<string> ConfigName { get; private set; }
 

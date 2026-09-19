@@ -36,19 +36,6 @@ namespace AMG.AI.Debug
             }
         }
 
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F3))
-            {
-                IsActive = !IsActive;
-            }
-
-            if (Input.GetKeyDown(KeyCode.F4))
-            {
-                DumpUnityLayersToFile();
-            }
-        }
-
         private void LateUpdate()
         {
             _lineIndex = 0;
@@ -66,6 +53,17 @@ namespace AMG.AI.Debug
             {
                 if (_linePool[i].gameObject.activeSelf)
                     _linePool[i].gameObject.SetActive(false);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var line in _linePool)
+            {
+                if (line != null && line.gameObject.activeSelf)
+                {
+                    line.gameObject.SetActive(false);
+                }
             }
         }
 
@@ -255,7 +253,7 @@ namespace AMG.AI.Debug
             return currentLine;
         }
 
-        private static void DumpUnityLayersToFile()
+        public static void DumpUnityLayersToFile()
         {
             try
             {

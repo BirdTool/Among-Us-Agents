@@ -5,16 +5,14 @@ using UnityEngine;
 
 namespace AMG.UI;
 
-public class MenuUI : MonoBehaviour
+public class MenuUI(IntPtr ptr) : MonoBehaviour(ptr)
 {
-    public MenuUI(IntPtr ptr) : base(ptr) { }
-
-    private static int windowWidth = 700;
-    private static int windowHeight = 550;
+    private static readonly int windowWidth = 700;
+    private static readonly int windowHeight = 550;
     private Rect _windowRect;
 
     public static bool IsGUIActive = false;
-    private List<TabBase> _tabs = new();
+    private readonly List<TabBase> _tabs = [];
     private int _selectedTab = 0;
 
     private void Start()
@@ -29,23 +27,17 @@ public class MenuUI : MonoBehaviour
             windowWidth,
             windowHeight
         );
-        
+
         AMGPlugin.Log.LogInfo("MenuUI Start() executed and tabs initialized.");
     }
 
-    private bool _hasLoggedUpdate = false;
-
     private void Update()
     {
-        if (!_hasLoggedUpdate)
-        {
-            AMGPlugin.Log.LogInfo("MenuUI Update() is running!");
-            _hasLoggedUpdate = true;
-        }
-
-        // Check for the menu keybind toggle
+        // Esta tecla fica de fora do KeyDownManager de propósito: o menu precisa
+        // abrir também no menu inicial/lobby, onde o KeyDownManager não existe
+        // (ele só é criado dentro de uma partida — ver InjectRecorderPatch).
         KeyCode toggleKey = KeyCode.Delete;
-        
+
         if (AMGPlugin.MenuKeybind != null && !string.IsNullOrEmpty(AMGPlugin.MenuKeybind.Value))
         {
             if (Enum.TryParse<KeyCode>(AMGPlugin.MenuKeybind.Value, true, out var parsedKey))
@@ -58,7 +50,7 @@ public class MenuUI : MonoBehaviour
         {
             IsGUIActive = !IsGUIActive;
             AMGPlugin.Log.LogInfo($"Menu toggled. IsGUIActive: {IsGUIActive}");
-            
+
             if (IsGUIActive)
             {
                 if (AMGPlugin.MenuOpenOnMouse != null && AMGPlugin.MenuOpenOnMouse.Value)
@@ -91,8 +83,8 @@ public class MenuUI : MonoBehaviour
 
         _windowRect = GUI.Window(
             1337, // arbitrary ID
-            _windowRect, 
-            (GUI.WindowFunction)WindowFunction, 
+            _windowRect,
+            (GUI.WindowFunction)WindowFunction,
             "AmongUsAIAgent - Mod Menu"
         );
     }
