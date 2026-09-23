@@ -37,6 +37,21 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
         public SabotageStep currentSabotageStep = null;
 
+        private uint _level = 0;
+        public uint Level
+        {
+            get => _level;
+            set
+            {
+                if (value > 5) _level = 5;
+                else if (value < 0) _level = 0;
+                else _level = value;
+            }
+        }
+
+        private float _forgetMemoryInterval = 4.2f;
+        private float _lastForgetMemoryTime = 0;
+
         protected override void Awake()
         {
             base.Awake();
@@ -102,6 +117,15 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
             if (Utils.IsMeeting && currentState != AgentState.OnMeeting) { SetState(AgentState.OnMeeting); }
 
+            if (_lastForgetMemoryTime + _forgetMemoryInterval > Time.time)
+            {
+                _lastForgetMemoryTime = Time.time;
+                foreach (var memory in PeopleMemories.Values)
+                {
+                    memory.RealisticForgetInformation(Level);
+                }
+            }
+            
             _updateActions[currentState]?.Invoke();
         }
 

@@ -10,18 +10,6 @@ namespace AMG.AI.Mind
         public string Name { get; set; }
         public AgentEmotion Emotion { get; set; } = AgentEmotion.Neutral;
         public AgentPersonality Personality { get; set; }
-        public Dictionary<byte, AgentPlayerReminders> PlayersReminders { get; set; }
-    }
-
-    public class AgentPlayerReminders
-    {
-        public double Affinity { get; set; } = 0;
-        public double Trust { get; set; } = 0;
-        public double Suspicions { get; set;  } = 0;
-        public Vector2? LastSeenPosition { get; set; } = null;
-        public Time LastSeenTime { get; set; } = null;
-        public RoleTypes? PossibleRole { get; set; } = null;
-        public double RoleConfidence { get; set; } = 0;
     }
 
     public class AgentPersonality
