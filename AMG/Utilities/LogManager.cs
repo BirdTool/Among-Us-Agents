@@ -11,8 +11,8 @@ namespace AMG.Utilities
         private static readonly bool debugLogEnabled = true;
 
         private static readonly List<string> LogQueue = [];
-        private static Timer flushTimer;
-        private static readonly object queueLock = new object();
+        private static readonly Timer flushTimer;
+        private static readonly object queueLock = new();
         private static readonly int flushDelayMs = 2000;
         private static readonly int maxQueueSize = 5;
 
