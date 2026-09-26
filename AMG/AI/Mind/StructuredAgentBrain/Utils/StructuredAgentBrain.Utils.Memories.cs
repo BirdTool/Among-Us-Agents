@@ -1,6 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
-using AMG.AI.Mind.Memories;
+using AMG.AI.Mind.StructuredAgentBrain.Memories;
 using AMG.Utilities;
 
 namespace AMG.AI.Mind.StructuredAgentBrain
