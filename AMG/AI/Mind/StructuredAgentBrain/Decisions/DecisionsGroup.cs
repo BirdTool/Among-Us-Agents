@@ -1,5 +1,6 @@
 ﻿using AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions;
 using AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions;
+using AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions.IntentionsDecisions;
 using AMG.Interfaces;
 using System.Collections.Generic;
 
@@ -15,7 +16,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions
                 new SawABodyPLDecision(),
                 new SabotageStepPLDecision(),
                 new DoorClosedPLDecision(),
-                new KillPLDecision()
+                new KillPLDecision(),
+                new AvoidPlayersIntention()
             ];
     }
 }
