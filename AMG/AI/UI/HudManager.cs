@@ -2,6 +2,8 @@
 using UnityEngine;
 using System;
 using AMG.Utilities;
+using AMG.AI.Mind.StructuredAgentBrain;
+using System.Linq;
 
 namespace AMG.AI.UI
 {

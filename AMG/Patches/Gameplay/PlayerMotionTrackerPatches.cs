@@ -57,5 +57,12 @@ namespace AMG.Patches.Gameplay
                 _players.Remove(key);
             }
         }
+
+        public static PlayerMotionTracker GetTracker(PlayerControl player)
+        {
+            if (_players.TryGetValue(player.GetClientId(), out var tracker))
+                return tracker;
+            return null;
+        }
     }
 }
