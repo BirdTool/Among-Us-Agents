@@ -71,6 +71,14 @@ namespace AMG.AI.Tools
                 Size = "80%",
                 Identifier = IdentifierEnum.State
             };
+
+            public static AgentTag Observing => new()
+            {
+                Tag = "Observing",
+                ColourHex = "#3006a3ff",
+                Size = "80%",
+                Identifier = IdentifierEnum.State
+            };
         }
 
         public static class Emotions
@@ -148,6 +156,15 @@ namespace AMG.AI.Tools
                 ColourHex = "#DC143C",
                 Size = "65%",
                 Identifier = IdentifierEnum.Think
+            };
+
+            public static AgentTag AmBeingChased => new()
+            {
+                Tag = "I'm being chased!",
+                ColourHex = "#ff2f00ff",
+                Size = "65%",
+                Identifier = IdentifierEnum.Think,
+                ExpiresAt = 20
             };
         }
     }

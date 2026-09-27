@@ -9,6 +9,7 @@ namespace AMG.Interfaces
         public float RegularTimeToFinishTheStep;
         public float TimeDisturb;
         public bool IsReady => Time.time >= Timer;
+        public float? MaxSuspiciousDwellSeconds { get; set; } = null;
 
         public int Points => 0;
 

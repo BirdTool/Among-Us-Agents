@@ -66,7 +66,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 [AgentState.DoingTask] = UpdateDoingTask,
                 [AgentState.Calculating] = UpdateCalculating,
                 [AgentState.FixingSabotage] = UpdateFixingSabotage,
-                [AgentState.InVent] = UpdateInVent
+                [AgentState.InVent] = UpdateInVent,
+                [AgentState.Observing] = UpdateObserving
             };
 
             _updateTags = new()
@@ -79,9 +80,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 [AgentState.DoingTask] = DefaultTags.States.DoingTask,
                 [AgentState.Calculating] = DefaultTags.States.Calculating,
                 [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage,
-                [AgentState.InVent] = DefaultTags.States.InVent
+                [AgentState.InVent] = DefaultTags.States.InVent,
+                [AgentState.Observing] = DefaultTags.States.Observing 
             };
-
             _scenarios = ScenariosGroup.All;
 
             OnStuckedInPath = () => SetState(AgentState.Calculating);
@@ -125,7 +126,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                     memory.RealisticForgetInformation(Level);
                 }
             }
-            
+
             _updateActions[currentState]?.Invoke();
         }
 
@@ -184,7 +185,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         {
             if (tempParallelDecisions.Count > 0)
             {
-                
+
                 for (int i = tempParallelDecisions.Count - 1; i >= 0; i--)
                 {
                     var decision = tempParallelDecisions[i];
@@ -209,7 +210,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
             }
         }
-        
+
         private void UpUpdatePlans()
         {
             if (PlanManager != null)
@@ -234,7 +235,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                     if (scenario.LastCheckTime + scenario.CheckTime < Time.time)
                     {
                         var score = scenario.CalculateScore(this);
-                        
+
                         if (score > bestScore && score > 0)
                         {
                             bestScore = score;
@@ -254,7 +255,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 }
             }
         }
-        
+
         protected override void OnDestroy()
         {
             base.OnDestroy();
@@ -265,7 +266,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         private void HandleSabotageStarted(ISabotage newSabotage)
         {
             if (Agent.Data.IsDead) return;
-            
+
             _noticedASabotage = true;
             SetState(AgentState.Calculating);
         }

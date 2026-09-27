@@ -9,6 +9,7 @@ using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Utilities;
 using AMG.Utilities.KeyDown;
+using AMG.Utilities.MapUtils.TasksUtils;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
@@ -22,6 +23,8 @@ namespace AMG.AI.Tools
 
         public static void Postfix(HudManager __instance)
         {
+            TaskConsoleRegistry.Initialize();
+
             if (!_isRegistered)
             {
                 ClassInjector.RegisterTypeInIl2Cpp<KeyDownManager>();

@@ -11,6 +11,7 @@ namespace AMG.Models.TasksModel
         {
             RegularTimeToFinishTheStep = 10.0f;
             TimeDisturb = 0f;
+            MaxSuspiciousDwellSeconds = 16.0f;
         }
     }
 
@@ -20,6 +21,7 @@ namespace AMG.Models.TasksModel
         {
             RegularTimeToFinishTheStep = 1f;
             TimeDisturb = 2.4f;
+            MaxSuspiciousDwellSeconds = 27.0f;
         }
     }
 
@@ -29,6 +31,7 @@ namespace AMG.Models.TasksModel
         {
             RegularTimeToFinishTheStep = 3f;
             TimeDisturb = 4f;
+            MaxSuspiciousDwellSeconds = 35.0f;
         }
     }
 
@@ -38,6 +41,7 @@ namespace AMG.Models.TasksModel
         {
             RegularTimeToFinishTheStep = 3.4f;
             TimeDisturb = 3.0f;
+            MaxSuspiciousDwellSeconds = 6.0f;
         }
     }
 
@@ -47,6 +51,17 @@ namespace AMG.Models.TasksModel
         {
             RegularTimeToFinishTheStep = 1.3f;
             TimeDisturb = 2.7f;
+            MaxSuspiciousDwellSeconds = 15.0f;
+        }
+    }
+
+    public class FixWiringTask : TaskTimer
+    {
+        public FixWiringTask()
+        {
+            RegularTimeToFinishTheStep = 6.7f;
+            TimeDisturb = 3.5f;
+            MaxSuspiciousDwellSeconds = 18f;
         }
     }
 }

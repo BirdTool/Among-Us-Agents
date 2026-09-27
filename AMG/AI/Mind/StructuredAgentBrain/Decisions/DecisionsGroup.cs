@@ -17,7 +17,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions
                 new SabotageStepPLDecision(),
                 new DoorClosedPLDecision(),
                 new KillPLDecision(),
-                new AvoidPlayersIntention()
+                new AvoidPlayersIntention(),
+                new ChasingDetectPL(),
+                new FakeTaskDetectPL()
             ];
     }
 }
