@@ -17,7 +17,45 @@ namespace AMG.AI.TasksWork
             [TaskTypes.EmptyGarbage] = () => new AMG.Models.TasksModel.EmptyGarbageTask(),
             [TaskTypes.EmptyChute] = () => new AMG.Models.TasksModel.EmptyGarbageTask(),
             [TaskTypes.CleanO2Filter] = () => new AMG.Models.TasksModel.CleanO2Filter(),
+            [TaskTypes.FixWiring] = () => new AMG.Models.TasksModel.FixWiringTask(),
         };
+
+        private static readonly Dictionary<TaskTypes, TaskTimer> TaskTimer = new()
+        {
+            [TaskTypes.SwipeCard] = new MediumTimeTask(),
+            [TaskTypes.UploadData] = new AMG.Models.TasksModel.UploadDataTask(),
+            [TaskTypes.ClearAsteroids] = new AMG.Models.TasksModel.AsteroidsTask(),
+            [TaskTypes.ResetReactor] = new AMG.Models.TasksModel.ResetReactorTask(),
+            [TaskTypes.EmptyGarbage] = new AMG.Models.TasksModel.EmptyGarbageTask(),
+            [TaskTypes.EmptyChute] = new AMG.Models.TasksModel.EmptyGarbageTask(),
+            [TaskTypes.CleanO2Filter] = new AMG.Models.TasksModel.CleanO2Filter(),
+            [TaskTypes.FixWiring] = new AMG.Models.TasksModel.FixWiringTask(),
+        };
+
+        public static TaskTimer GetTaskTimer(TaskTypes task)
+        {
+            if (TaskTimer.TryGetValue(task, out var timer))
+            {
+                return timer;
+            }
+
+            bool isShort = true;
+            var longTasks = ShipStatus.Instance?.LongTasks;
+
+            if (longTasks != null)
+            {
+                for (int i = 0; i < longTasks.Count; i++)
+                {
+                    if (longTasks[i]?.TaskType == task)
+                    {
+                        isShort = false;
+                        break;
+                    }
+                }
+            }
+
+            return isShort ? new ShortTimeTask() : new LongTimeTask();
+        }
 
         public static ITaskWork GetTaskOrGeneric(TaskTypes task)
         {

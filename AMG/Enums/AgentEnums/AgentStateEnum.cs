@@ -1,8 +1,9 @@
 ﻿namespace AMG.Enums.AgentEnums
 {
-    public enum AgentState 
-        { Wandering, Stopped, Navigating, OnMeeting,
-            SmartWandering, DoingTask, Calculating,
-            FixingSabotage, InVent
+    public enum AgentState
+    {
+        Wandering, Stopped, Navigating, OnMeeting,
+        SmartWandering, DoingTask, Calculating,
+        FixingSabotage, InVent, Observing
     }
 }

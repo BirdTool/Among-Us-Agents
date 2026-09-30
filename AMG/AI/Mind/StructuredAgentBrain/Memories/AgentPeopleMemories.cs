@@ -34,7 +34,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
         public float LastVerifiedTaskTime = -1f;
         public bool SeenFakeTask = false;
 
-        public SystemTypes? ClaimedTaskLocation = null; 
+        public SystemTypes? ClaimedTaskLocation = null;
         public float ClaimedTaskTime = -1f;
 
         public bool SelfReportedBody = false;
@@ -45,6 +45,29 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
         private readonly List<(byte playerId, float time)> _seenTogetherWith = [];
         public IReadOnlyList<(byte playerId, float time)> SeenTogetherWith => _seenTogetherWith;
         private const int MaxGroupMemory = 10;
+
+        private readonly Dictionary<TaskTypes, List<(uint consoleId, float time)>> _observedTaskSteps = [];
+
+        public bool SuspectedOfLongTaskDwell { get; private set; } = false;
+        public TaskTypes? LongDwellTaskType { get; private set; } = null;
+        public float LongDwellDuration { get; private set; } = 0f;
+
+        public void RegisterLongTaskDwell(TaskTypes taskType, float duration)
+        {
+            SuspectedOfLongTaskDwell = true;
+            LongDwellTaskType = taskType;
+            LongDwellDuration = duration;
+        }
+
+        public bool RegisterObservedTaskStep(TaskTypes taskType, uint consoleId, float time)
+        {
+            if (!_observedTaskSteps.TryGetValue(taskType, out var history))
+                _observedTaskSteps[taskType] = history = [];
+
+            bool isViolation = history.Count > 0 && history[^1].consoleId > consoleId;
+            history.Add((consoleId, time));
+            return isViolation;
+        }
 
         public void RealisticForgetInformation(uint level) // Executado a cada ~4.2f segundos
         {
