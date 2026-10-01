@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AMG.AI.Navigation;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
@@ -20,6 +21,10 @@ namespace AMG.AI.Control.AgentController
         protected const float WAYPOINT_CACHE_THRESHOLD = 0.3f;
 
         public byte AgentId => Agent.PlayerId;
+
+        public int TotalTasks => ArtificialTasks.Count;
+        public int CompletedTasks => ArtificialTasks.Count(t => t.IsCompleted);
+        public int RemainingTasks => TotalTasks - CompletedTasks;
 
         public Waypoint WaypointPosition
         {

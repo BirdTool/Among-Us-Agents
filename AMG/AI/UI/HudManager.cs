@@ -35,7 +35,7 @@ namespace AMG.AI.UI
                 {
                     LogManager.Log("[AI Agents] Botão visual clicado. Instanciando Agente...");
                     // Control.AgentManager.AddAgent(Control.AgentManager.GenerateUniqueRandomName());
-                    Control.AgentManager.GenerateRandomAgent();
+                    var result = Control.AgentManager.GenerateRandomAgent();
                 }));
             }
 

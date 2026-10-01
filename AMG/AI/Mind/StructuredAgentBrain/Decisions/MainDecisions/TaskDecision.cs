@@ -24,7 +24,6 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
 
             float utility = brain.Agent.Data.Role.IsImpostor ? ImpostorUtility(brain) : CrewmateUtility(brain);
 
-
             _utilityCache[agentId] = utility;
             _nextUpdateTime[agentId] = Time.time + 1f;
 
@@ -173,7 +172,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
                     minWalkDist = realWalkDist;
                     bestPath = path;
                 }
-
+                if (brain.PathCrossesAvoidedRoom(path)) continue;
                 if (bestPath != null)
                 {
                     validTasks.Add((task, minWalkDist, bestPath));

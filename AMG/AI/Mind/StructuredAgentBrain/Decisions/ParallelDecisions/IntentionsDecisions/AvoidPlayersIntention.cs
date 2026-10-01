@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using AMG.AI.Navigation;
-using AMG.AI.Tools;
 using AMG.Interfaces;
 using AMG.Patches.Gameplay;
-using AMG.Utilities;
 using UnityEngine;
 
 namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions.IntentionsDecisions
