@@ -11,6 +11,7 @@ namespace AMG.Utilities
         private const float BaseVisionRadius = 2.5f;
         private const float LightsOffVisionRadius = 0.25f;
         private const float EyeOffsetY = 0.5f;
+        private static readonly Vector2 EyeOffset = new(0f, 0.5f);
 
         private static readonly int VisionMask = (1 << (int)LayersEnum.Shadow) | (1 << (int)LayersEnum.IlluminatedBlocking);
 
@@ -181,15 +182,7 @@ namespace AMG.Utilities
                 if (p.Data == null || p.Data.IsDead || p.Data.Disconnected) continue;
 
                 Vector2 pos = p.GetTruePosition();
-
-                Vector2 eyesFrom = origin + Vector2.up * EyeOffsetY;
-                Vector2 eyesTo = pos + Vector2.up * EyeOffsetY;
-                
-                if (Vector2.Distance(origin, pos) > visionRadius) continue;
-
-                if (!IsWithinScreenBounds(origin, pos)) continue;
-                if (IsBlockedByClosedDoor(origin, pos)) continue;
-                if (IsObstructed(eyesFrom, eyesTo)) continue;
+                if (!IsInSight(origin, pos, visionRadius)) continue;
 
                 result.Add(p);
             }
@@ -210,14 +203,7 @@ namespace AMG.Utilities
 
                 Vector2 pos = body.Position;
 
-                Vector2 eyesFrom = origin + Vector2.up * EyeOffsetY;
-                Vector2 eyesTo = pos + Vector2.up * EyeOffsetY;
-
-                if (Vector2.Distance(origin, pos) > visionRadius) continue;
-
-                if (!IsWithinScreenBounds(origin, pos)) continue;
-                if (IsBlockedByClosedDoor(origin, pos)) continue;
-                if (IsObstructed(eyesFrom, eyesTo)) continue;
+                if (!IsInSight(origin, pos, visionRadius)) continue;
 
                 result.Add(body);
             }
@@ -296,6 +282,25 @@ namespace AMG.Utilities
             list.Sort((a, b) =>
                 Vector2.Distance(origin, a.GetTruePosition())
                 .CompareTo(Vector2.Distance(origin, b.GetTruePosition())));
+        }
+
+        private static bool IsInSight(Vector2 origin, Vector2 pos, float radius)
+        {
+            if ((pos - origin).sqrMagnitude > radius * radius) return false;
+            if (!IsWithinScreenBounds(origin, pos)) return false;
+            if (IsBlockedByClosedDoor(origin, pos)) return false;
+            return !IsObstructed(origin + EyeOffset, pos + EyeOffset);
+        }
+
+        public static bool CanSeePlayer(PlayerControl viewer, PlayerControl target, float incrementDistance = 0f)
+        {
+            if (viewer == null || target == null || viewer == target) return false;
+            if (target.Data == null || target.Data.IsDead || target.Data.Disconnected) return false;
+
+            return IsInSight(
+                viewer.GetTruePosition(),
+                target.GetTruePosition(),
+                GetLocalVisionRadius(viewer) + incrementDistance);
         }
     }
 }

@@ -20,7 +20,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions
                 new AvoidPlayersIntention(),
                 new ChasingDetectPL(),
                 new FakeTaskDetectPL(),
-                new AvoidRoomsIntention()
+                new AvoidRoomsIntention(),
+                new FollowPlayerIntention(),
             ];
     }
 }

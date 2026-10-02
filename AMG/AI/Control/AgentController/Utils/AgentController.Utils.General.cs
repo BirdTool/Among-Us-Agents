@@ -39,6 +39,8 @@ namespace AMG.AI.Control.AgentController
             }
         }
 
+        public bool CanSee(PlayerControl target) => AgentVision.CanSeePlayer(Agent, target);
+
         public List<RoundDeadBody> NearbyBodies => AgentVision.GetNearbyDeadBodies(Vector2Position, 6f);
         public List<RoundDeadBody> NearbyBodiesInVision => AgentVision.GetNearbyBodiesInVision(Vector2Position);
         public List<PlayerControl> NearbyPlayers => AgentVision.GetNearbyPlayers(Vector2Position, 6.5f, exclude: Agent);

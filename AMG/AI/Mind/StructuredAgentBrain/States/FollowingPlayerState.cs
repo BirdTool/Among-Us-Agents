@@ -11,6 +11,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 {
     public partial class StructuredAgentBrain
     {
+        public float FollowStartedAt { get; private set; }
+        public float FollowTargetLostFor => _hasSnapshot ? Time.time - _lastSeenTime : float.MaxValue;
+
         public PlayerControl PlayerToFollow = null;
 
         private const float RecheckInterval = 0.2f;
@@ -38,13 +41,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
         private void UpdateFollowingPlayer()
         {
-            if (PlayerToFollow == null || PlayerToFollow.Data.IsDead)
+            if (PlayerToFollow == null || PlayerToFollow.Data.IsDead || PlayerToFollow.Data.Disconnected)
             {
-                _IsLookingForPlayer = false;
-                _snapshotOwner = null;
-                _hasSnapshot = false;
-                ResetPath();
-                SetState(AgentState.Calculating);
+                StopFollowing();
                 return;
             }
 
@@ -58,8 +57,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             }
             _lastCheckTime = Time.time;
 
-            var nearbyPlayers = AgentVision.GetNearbyPlayersOutsideVision(Vector2Position, 7.5f, extraDistanceInPath: 14f, exclude: Agent);
-            bool visible = nearbyPlayers.Contains(PlayerToFollow);
+            bool visible = CanSee(PlayerToFollow); 
             Vector2 myPos = Agent.transform.position;
             Vector2 playerPos = PlayerToFollow.transform.position;
 
@@ -289,6 +287,41 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             var path = Pathfinder.FindPath(WaypointPosition, randomPosition, out float _);
 
             if (path != null && path.Count > 0) base.CommandGoToPath(path);
+        }
+
+        public void StartFollowing(PlayerControl target)
+        {
+            PlayerToFollow = target;
+            FollowStartedAt = Time.time;
+            _IsLookingForPlayer = false;
+            _snapshotOwner = target;
+            _hasSnapshot = false;
+            _lastSeenDir = Vector2.zero;
+            _predictedTarget = null;
+            _checkedRooms.Clear();
+            RegisterSighting(target.transform.position);
+            _lastCheckTime = 0f;
+            ResetPath();
+            SetState(AgentState.FollowingPlayer);
+        }
+
+        public void StopFollowing(bool changeState = true)
+        {
+            if (_IsLookingForPlayer)
+            {
+                RemoveNameTag(DefaultTags.Thoughts.LookingForPlayer);
+                _IsLookingForPlayer = false;
+            }
+
+            PlayerToFollow = null;
+            _snapshotOwner = null;
+            _hasSnapshot = false;
+            _predictedTarget = null;
+            _checkedRooms.Clear();
+
+            if (!changeState) return;
+            ResetPath();
+            SetState(AgentState.Calculating);
         }
     }
 }

@@ -23,6 +23,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
             }
 
             float utility = brain.Agent.Data.Role.IsImpostor ? ImpostorUtility(brain) : CrewmateUtility(brain);
+            utility += brain.Intentions.CompleteTaskAttention;
 
             _utilityCache[agentId] = utility;
             _nextUpdateTime[agentId] = Time.time + 1f;
