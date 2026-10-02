@@ -10,6 +10,7 @@ namespace AMG.Utilities
     {
         private const float BaseVisionRadius = 2.5f;
         private const float LightsOffVisionRadius = 0.25f;
+        private const float EyeOffsetY = 0.5f;
 
         private static readonly int VisionMask = (1 << (int)LayersEnum.Shadow) | (1 << (int)LayersEnum.IlluminatedBlocking);
 
@@ -180,11 +181,15 @@ namespace AMG.Utilities
                 if (p.Data == null || p.Data.IsDead || p.Data.Disconnected) continue;
 
                 Vector2 pos = p.GetTruePosition();
+
+                Vector2 eyesFrom = origin + Vector2.up * EyeOffsetY;
+                Vector2 eyesTo = pos + Vector2.up * EyeOffsetY;
+                
                 if (Vector2.Distance(origin, pos) > visionRadius) continue;
 
                 if (!IsWithinScreenBounds(origin, pos)) continue;
                 if (IsBlockedByClosedDoor(origin, pos)) continue;
-                if (IsObstructed(origin, pos)) continue;
+                if (IsObstructed(eyesFrom, eyesTo)) continue;
 
                 result.Add(p);
             }
@@ -204,11 +209,15 @@ namespace AMG.Utilities
                 if (body.ReportedByPlayerId.HasValue) continue;
 
                 Vector2 pos = body.Position;
+
+                Vector2 eyesFrom = origin + Vector2.up * EyeOffsetY;
+                Vector2 eyesTo = pos + Vector2.up * EyeOffsetY;
+
                 if (Vector2.Distance(origin, pos) > visionRadius) continue;
 
                 if (!IsWithinScreenBounds(origin, pos)) continue;
                 if (IsBlockedByClosedDoor(origin, pos)) continue;
-                if (IsObstructed(origin, pos)) continue;
+                if (IsObstructed(eyesFrom, eyesTo)) continue;
 
                 result.Add(body);
             }

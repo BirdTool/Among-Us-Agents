@@ -11,7 +11,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
     {
         public List<byte> AvoidPlayers { get; set; } = [];
         public List<SystemTypes> AvoidRooms { get; set; } = [];
-        public List<byte> FollowPlayers { get; set; } = [];
+        public List<(byte playerId, float priority)> FollowPlayers { get; set; } = [];
         public bool AvoidAllPlayers { get; set; } = false;
         public bool AvoidBeAlone { get; set; } = false;
         public float CompleteTaskAttention { get; set; } = 0f; // Negative: Avoid do task, Positive: Give more attention to do tasks

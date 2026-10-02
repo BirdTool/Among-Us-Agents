@@ -57,7 +57,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
                 {
                     _lastPlayersCountByObserver[brain.AgentId] = nearbyCount;
                     string names = string.Join(", ", brain.NearbyPlayersInVision.Select(p => p.Data.PlayerName));
-                    LogManager.LogDebug($"[FakeTaskDetectPL][DIAG] {brain.Agent.Data.PlayerName}: {nearbyCount} por perto ({names})");
+                    // LogManager.LogDebug($"[FakeTaskDetectPL][DIAG] {brain.Agent.Data.PlayerName}: {nearbyCount} por perto ({names})");
                 }
 
                 foreach (var target in brain.NearbyPlayersInVision)
@@ -107,7 +107,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
             bool isNewConsole = dwell == null || dwell.Console.ConsoleId != console.ConsoleId || dwell.TaskType != taskType;
             if (isNewConsole)
             {
-                LogManager.LogDebug($"[FakeTaskDetectPL][DIAG] {target.Data.PlayerName} começou dwell em {taskType} console {console.ConsoleId} (observador: {brain.Agent.Data.PlayerName})");
+                // LogManager.LogDebug($"[FakeTaskDetectPL][DIAG] {target.Data.PlayerName} começou dwell em {taskType} console {console.ConsoleId} (observador: {brain.Agent.Data.PlayerName})");
                 dwell = new DwellTracking { Console = console, TaskType = taskType, DwellStartTime = now, LastSeenTime = now, Confirmed = false, LongDwellFlagged = false };
                 _dwelling[key] = dwell;
                 return;
@@ -129,8 +129,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
                     dwell.LongDwellFlagged = true;
                     memory.RegisterLongTaskDwell(taskType, dwellDuration);
                     memory.IncreaseSuspiciusPercentage(SuspicionOnLongDwell);
-                    LogManager.LogDebug($"[FakeTaskDetectPL] {target.Data.PlayerName} demorou {dwellDuration:F1}s em {taskType} " +
-                        $"(esperado até {suspiciousThreshold:F1}s) — suspeito de estar só parado fingindo");
+                    // LogManager.LogDebug($"[FakeTaskDetectPL] {target.Data.PlayerName} demorou {dwellDuration:F1}s em {taskType} " +
+                    //    $"(esperado até {suspiciousThreshold:F1}s) — suspeito de estar só parado fingindo");
                     brain.RequestObserve(target, ObserveDurationOnViolation);
                 }
             }
@@ -147,7 +147,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
                 {
                     memory.RegisterFakeTask();
                     memory.IncreaseSuspiciusPercentage(SuspicionOnCommonTaskMismatch);
-                    LogManager.LogDebug($"[FakeTaskDetectPL] {target.Data.PlayerName} fingiu task comum {taskType}");
+                    // LogManager.LogDebug($"[FakeTaskDetectPL] {target.Data.PlayerName} fingiu task comum {taskType}");
                     brain.RequestObserve(target, ObserveDurationOnViolation);
                     return;
                 }
@@ -157,14 +157,14 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
 
             bool violatedOrder = memory.RegisterObservedTaskStep(taskType, console.ConsoleId, now);
 
-            LogManager.LogDebug($"[FakeTaskDetectPL][DIAG] {target.Data.PlayerName} confirmou uso de {taskType} " +
-                $"no console {console.ConsoleId} (violou ordem: {violatedOrder})");
+            // LogManager.LogDebug($"[FakeTaskDetectPL][DIAG] {target.Data.PlayerName} confirmou uso de {taskType} " +
+            //     $"no console {console.ConsoleId} (violou ordem: {violatedOrder})");
 
             if (!violatedOrder) return;
 
             memory.RegisterFakeTask();
             memory.IncreaseSuspiciusPercentage(SuspicionOnOrderViolation);
-            LogManager.LogDebug($"[FakeTaskDetectPL] {target.Data.PlayerName} usou {taskType} fora de ordem (console {console.ConsoleId})");
+            // LogManager.LogDebug($"[FakeTaskDetectPL] {target.Data.PlayerName} usou {taskType} fora de ordem (console {console.ConsoleId})");
 
             brain.RequestObserve(target, ObserveDurationOnViolation);
         }

@@ -4,6 +4,7 @@
     {
         Wandering, Stopped, Navigating, OnMeeting,
         SmartWandering, DoingTask, Calculating,
-        FixingSabotage, InVent, Observing
+        FixingSabotage, InVent, Observing,
+        FollowingPlayer
     }
 }

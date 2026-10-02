@@ -67,7 +67,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 [AgentState.Calculating] = UpdateCalculating,
                 [AgentState.FixingSabotage] = UpdateFixingSabotage,
                 [AgentState.InVent] = UpdateInVent,
-                [AgentState.Observing] = UpdateObserving
+                [AgentState.Observing] = UpdateObserving,
+                [AgentState.FollowingPlayer] = UpdateFollowingPlayer,
             };
 
             _updateTags = new()
@@ -81,7 +82,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                 [AgentState.Calculating] = DefaultTags.States.Calculating,
                 [AgentState.FixingSabotage] = DefaultTags.States.FixingSabotage,
                 [AgentState.InVent] = DefaultTags.States.InVent,
-                [AgentState.Observing] = DefaultTags.States.Observing 
+                [AgentState.Observing] = DefaultTags.States.Observing,
+                [AgentState.FollowingPlayer] = DefaultTags.States.FollowingPlayer,
             };
             _scenarios = ScenariosGroup.All;
 
