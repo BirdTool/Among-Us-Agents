@@ -15,8 +15,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         public bool AvoidAllPlayers { get; set; } = false;
         public bool AvoidBeAlone { get; set; } = false;
         public float CompleteTaskAttention { get; set; } = 0f; // Negative: Avoid do task, Positive: Give more attention to do tasks
-        public List<byte> PriorityKillTargets { get; set; } = [];
-        public float FixSabotageDrive { get; set; } = 0f;
+        public List<byte> PriorityKillTargets { get; set; } = []; // Make it later
+        public float FixSabotageDrive { get; set; } = 0f; // Same thing as CompleteTaskAttention but for sabotage
 
         public void Clear()
         {
