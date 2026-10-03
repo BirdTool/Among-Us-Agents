@@ -296,6 +296,7 @@ namespace AMG.Utilities
         {
             if (viewer == null || target == null || viewer == target) return false;
             if (target.Data == null || target.Data.IsDead || target.Data.Disconnected) return false;
+            if (target.inVent) return false;
 
             return IsInSight(
                 viewer.GetTruePosition(),
