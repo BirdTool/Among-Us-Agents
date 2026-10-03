@@ -46,15 +46,15 @@ namespace AMG.AI.Control
             CreateAgentInternal(name, false);
         }
 
-        public static void GenerateRandomAgent()
+        public static (PlayerControl player, StructuredAgentBrain brain) GenerateRandomAgent()
         {
             string randomName = GenerateUniqueRandomName();
-            CreateAgentInternal(randomName, true);
+            return CreateAgentInternal(randomName, true);
         }
 
-        private static void CreateAgentInternal(string name, bool randomizeCosmetics)
+        private static (PlayerControl player, StructuredAgentBrain brain) CreateAgentInternal(string name, bool randomizeCosmetics)
         {
-            if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
+            if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return (null, null);
 
             PlayerControl agentComponent = null;
 
@@ -147,6 +147,7 @@ namespace AMG.AI.Control
             brain.MapGameTasksToAILogic();
 
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
+            return (agentComponent, brain);
         }
 
         public static void ClearAllAgents()

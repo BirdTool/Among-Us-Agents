@@ -11,6 +11,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
     {
         private readonly CooldownTimer _calculatingTimer = new();
         private int _calculatingTries = 0;
+        private const float IntervalBetweenCalculations = 0.2f;
 
         // Door-lockout wandering
         private bool _isWaitingForDoor = false;
@@ -115,7 +116,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
                     {
                         // LogManager.LogDebug("[AI Brain] Nenhuma decisão pôde ser executada! Incrementando falha e aguardando...");
                         SetState(Enums.AgentEnums.AgentState.Calculating);
-                        _calculatingTimer.StartDelay(0.4f);
+                        _calculatingTimer.StartDelay(IntervalBetweenCalculations);
                     }
                 }
             }

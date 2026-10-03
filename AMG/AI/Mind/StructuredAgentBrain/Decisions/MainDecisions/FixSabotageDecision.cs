@@ -13,9 +13,10 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
         public float CalculateUtility(StructuredAgentBrain brain)
         {
             if (!Utils.IsAnySabotageActive || brain.IsDead) return 0f;
-            float points = 100f;
+            float points = 60;
             if (brain.IsCrewmate) { points += 70f; if (brain.AITasks.Count < 2) points += 35f; }
             if (brain.IsImpostor) { points -= 30f; if (Utils.SecondsSinceShipStart < 60) points += 20f; if (Utils.RemainingTasks < 6) points -= 30f; if (brain.NearbyPlayersInVision.Count > 3) points += 35f; }
+            points += brain.Intentions.FixSabotageDrive;
             return points;
         }
 
@@ -24,12 +25,6 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
             if (Utils.CurrentSabotage == null) return false;
 
             ISabotage activeSabotage = Utils.CurrentSabotage;
-            /*
-            if (!Utils.IsAnySabotageActive) return false;
-
-            ISabotage activeSabotage = SabotageManager.GetActiveManualSabotage();
-            if (activeSabotage == null) return false;
-            */
 
             Vector2 myPos = brain.transform.position;
             SabotageStep bestStep = null;
@@ -77,7 +72,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.MainDecisions
                     return false;
             }
 
-            LogManager.LogDebug($"[FixSabotageDecision] SUCESSO! Agente comandado para consertar sabotagem.");
+            // LogManager.LogDebug($"[FixSabotageDecision] SUCESSO! Agente comandado para consertar sabotagem.");
             brain.currentSabotageStep = bestStep;
             brain.CommandGoToPath(path);
 

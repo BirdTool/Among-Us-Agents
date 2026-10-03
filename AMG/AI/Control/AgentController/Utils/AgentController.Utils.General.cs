@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AMG.AI.Navigation;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
@@ -21,6 +22,10 @@ namespace AMG.AI.Control.AgentController
 
         public byte AgentId => Agent.PlayerId;
 
+        public int TotalTasks => ArtificialTasks.Count;
+        public int CompletedTasks => ArtificialTasks.Count(t => t.IsCompleted);
+        public int RemainingTasks => TotalTasks - CompletedTasks;
+
         public Waypoint WaypointPosition
         {
             get
@@ -33,6 +38,8 @@ namespace AMG.AI.Control.AgentController
                 return _cachedWaypointPosition;
             }
         }
+
+        public bool CanSee(PlayerControl target) => AgentVision.CanSeePlayer(Agent, target);
 
         public List<RoundDeadBody> NearbyBodies => AgentVision.GetNearbyDeadBodies(Vector2Position, 6f);
         public List<RoundDeadBody> NearbyBodiesInVision => AgentVision.GetNearbyBodiesInVision(Vector2Position);

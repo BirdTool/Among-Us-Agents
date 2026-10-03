@@ -66,7 +66,12 @@ namespace AMG.KeyDownActions
     {
         public static void Execute()
         {
-            AgentsCommander.MakeAllAgentsDoTask();
+            var allBrains = Utils.GetAllStructuredAgentBrain();
+            foreach (var brain in allBrains)
+            {
+                brain.PlayerToFollow = PlayerControl.LocalPlayer;
+                brain.SetState(Enums.AgentEnums.AgentState.FollowingPlayer);
+            }
         }
     }
 
