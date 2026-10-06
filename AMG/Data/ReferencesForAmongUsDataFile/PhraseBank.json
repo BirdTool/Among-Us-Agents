@@ -1,0 +1,1336 @@
+{
+  "Languages": {
+    "en": {
+      "Rooms": {
+        "Hallway": "the hallway",
+        "Storage": "Storage",
+        "Cafeteria": "Cafeteria",
+        "Reactor": "Reactor",
+        "UpperEngine": "Upper Engine",
+        "Nav": "Navigation",
+        "Admin": "Admin",
+        "Electrical": "Electrical",
+        "LifeSupp": "O2",
+        "Shields": "Shields",
+        "MedBay": "Medbay",
+        "Security": "Security",
+        "Weapons": "Weapons",
+        "LowerEngine": "Lower Engine",
+        "Comms": "Comms"
+      },
+      "Phrases": [
+        {
+          "Id": "Lobby_Greeting",
+          "Intent": "Greet",
+          "Context": "Lobby",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Hi everyone"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Hey!"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "Hello, good luck everyone"},
+              {"Tone": ["neutral"], "Weight": 0.4, "Text": "Hey guys, let's have a good game"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yo"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "sup"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "hey hey"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "gl hf"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "wassup"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "hi guys"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "ayo"}
+          ]
+        },
+        {
+          "Id": "Group_Up",
+          "Intent": "Request",
+          "Context": "Roaming",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Let's group up"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Please stay together"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "Don't split up, it's safer"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "Can we go together?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "group up?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "lets stay together"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "dont split pls"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone wanna group?"}
+          ]
+        },
+        {
+          "Id": "Check_Room",
+          "Intent": "Request",
+          "Context": "Roaming",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Can someone check {room}?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "someone check {room}?"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "anyone checking {room}?"}
+          ]
+        },
+        {
+          "Id": "Follow_Me",
+          "Intent": "Request",
+          "Context": "Roaming",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target}, can you come with me?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} follow me"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} come with me"}
+          ]
+        },
+        {
+          "Id": "Whereabouts_Player",
+          "Intent": "Question",
+          "Context": "Roaming",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target}, where are you?"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "Has anyone seen {target}?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "wya {target}?"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "where's {target} at?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone seen {target}?"}
+          ]
+        },
+        {
+          "Id": "Room_Occupancy",
+          "Intent": "Question",
+          "Context": "Roaming",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Is anyone in {room}?"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "Anyone near {room}?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone in {room}?"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "who's in {room}?"}
+          ]
+        },
+        {
+          "Id": "Body_Report",
+          "Intent": "Request",
+          "Context": "Roaming",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Please report the body"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Someone report this body!"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "Call the meeting!"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "report it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "report!"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "someone report"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "report it fast"}
+          ]
+        },
+        {
+          "Id": "Meeting_Reason",
+          "Intent": "Question",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Why was the meeting called?"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "What happened?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "why the meeting?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "wait what happened?"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "ok why the button?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "ok what's the emergency lol"}
+          ]
+        },
+        {
+          "Id": "Body_Location",
+          "Intent": "Question",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "Where?"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "Where was the body?"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "where tho?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "wheres the body?"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "loc?"},
+              {"Tone": ["neutral"], "Weight": 0.3, "Text": "Where was it?"}
+          ]
+        },
+        {
+          "Id": "Body_Location",
+          "Intent": "Report",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{room}"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "Found in {room}"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "The body was in {room}"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "I found {subject} in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "I found a body in {room}!"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Body in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.3, "Text": "{subject} is dead in {room}"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "body in {room}"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "{subject} dead in {room}"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "found {subject} in {room}"}
+          ]
+        },
+        {
+          "Id": "Body_Location",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Sorry, where was the body again?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "wait where was the body again?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "where was it again?"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "wait where was it?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "i forgot, where was the body?"}
+          ]
+        },
+        {
+          "Id": "Body_Location",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "It was in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "I found it in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "The body was in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "it was in {room}"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "in {room}"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "found it in {room}"},
+              {"Tone": ["casual"], "Weight": 0.2, "Text": "{room} lol"}
+          ]
+        },
+        {
+          "Id": "Body_Location",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, the body was in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yep it was in {room}"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "yeah {room}"}
+          ]
+        },
+        {
+          "Id": "Body_Location_Noisemaker",
+          "Intent": "Question",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "The noisemaker alert pointed toward {room}. Was the body there?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "noisemaker pointed to {room}, was the body there?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "wait, body was in {room}? noisemaker pointed there"}
+          ]
+        },
+        {
+          "Id": "Body_Location_Noisemaker",
+          "Intent": "Report",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "The noisemaker alert pointed toward {room}"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I saw the noisemaker alert, it pointed to {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "noisemaker pointed to {room}"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "noisemaker alert was toward {room}"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "the noisemaker pointed {room} way"}
+          ]
+        },
+        {
+          "Id": "Body_Location_Noisemaker",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, the noisemaker alert pointed there too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah the noisemaker pointed there too"}
+          ]
+        },
+        {
+          "Id": "Body_Near",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I found the body next to {target}", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} was right next to the body in {room}", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "{target} was by the body, sus", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} was right next to the body, sus", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "found the body, {target} was right there", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "{target} was by the body fr", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} was close to the body, maybe sus", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} was near the body, idk", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Body_Near",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I only found the body, I didn't kill anyone"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i just found it bro, didnt kill anyone"},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "I found it, that doesn't make me the killer!"}
+          ]
+        },
+        {
+          "Id": "Kill_Seen",
+          "Intent": "Report",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw a kill in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Someone just got killed in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "I saw {subject} die in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw a kill in {room}"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "someone got killed in {room} rn"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "saw {subject} die in {room}"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "yo i saw the kill in {room}"}
+          ]
+        },
+        {
+          "Id": "Kill_Seen_Unknown_Killer",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw the kill, but not who did it"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I saw it happen, but I couldn't tell who"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i saw it but not who"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "saw the kill, no clue who tho"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "i saw it, couldnt see who"}
+          ]
+        },
+        {
+          "Id": "Kill_Culprit",
+          "Intent": "Accuse",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "It was {target}! I saw the kill", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} killed, I saw it!", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target}!! saw the kill", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.8, "Text": "it was {target}, saw it", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "{target} is imp, saw the kill", "MinConfidence": 0.5},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "Vote {target}, I saw them kill!", "MinConfidence": 0.5},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "{target} is the impostor, I saw the kill!", "MinConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Kill_Culprit",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} kill someone in {room}!", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "{target} killed in {room}, I saw it with my own eyes", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} killed {subject}, I saw it", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} kill in {room} fr", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} killed {subject} in {room}, i saw it", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "no cap, {target} killed in {room}", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I think I saw {target} kill someone", "MaxConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Not sure, but I think {target} killed in {room}", "MaxConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Maybe {target}? I saw a kill near {room}", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "idk, i think {target} killed", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.8, "Text": "ngl i think i saw {target} kill", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "lowkey {target}? saw a kill near {room}", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Kill_Witness",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see the kill?"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Did anyone see who killed?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone see the kill?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "who saw it?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "did anyone actually see it?"}
+          ]
+        },
+        {
+          "Id": "Kill_Culprit_Challenge",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone actually see {target} kill?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "wait did u actually see {target} kill?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "u actually saw {target} kill?"},
+              {"Tone": ["aggressive"], "Weight": 1.0, "Text": "You actually saw {target} kill? Or just guessing?"},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "Prove it, did you really see {target} kill?"}
+          ]
+        },
+        {
+          "Id": "Kill_Seen",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, I saw the kill too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah i saw the kill too"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "same, saw it too"}
+          ]
+        },
+        {
+          "Id": "Kill_Seen",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I didn't kill anyone!"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I never killed, you're wrong"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "nah i didnt kill anyone"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "i never killed bro, thats cap"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "bro what, i never killed"},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "I never killed anyone, stop lying!"}
+          ]
+        },
+        {
+          "Id": "Kill_Culprit",
+          "Intent": "Request",
+          "Context": "Voting",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Vote {target}, they're the impostor!"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Vote out {target}, I saw the kill"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "vote {target}, saw the kill"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "vote {target} fr, saw them kill"}
+          ]
+        },
+        {
+          "Id": "Vent_Seen",
+          "Intent": "Report",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw someone vent in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Someone vented in {room}, I saw it"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "I saw someone jump into a vent"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw someone vent in {room}"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "someone vented in {room} ngl"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "yo someone jumped in a vent in {room}"},
+              {"Tone": ["casual"], "Weight": 0.3, "Text": "saw a vent in {room}, someone's imp"}
+          ]
+        },
+        {
+          "Id": "Vent_Culprit",
+          "Intent": "Accuse",
+          "Context": "MeetingStart",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} vented, I saw it!", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} vented!! saw it", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "yo {target} just vented", "MinConfidence": 0.5},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "{target} is the impostor, I saw them vent!", "MinConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Vent_Culprit",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} vent in {room}!", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "{target} jumped into a vent, they're the impostor", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} vent in {room} fr", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "{target} vented in {room}, no cap", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "caught {target} venting in {room}", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I think {target} vented near {room}", "MaxConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Not sure, but I think I saw {target} vent", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "ngl i think {target} vented", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "idk, {target} vented maybe? near {room}", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Vent_Witness",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see someone vent?"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Who saw {target} vent?"},
+              {"Tone": ["neutral"], "Weight": 0.4, "Text": "Did anyone see {target} vent in {room}?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "anyone see a vent?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "who saw the vent?"}
+          ]
+        },
+        {
+          "Id": "Vent_Which",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Which vent did you see?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Where did you see them vent?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "wait which vent?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "vent where?"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "u saw them vent? where?"}
+          ]
+        },
+        {
+          "Id": "Vent_Seen",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, I saw the vent too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah i saw the vent too"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "same, saw the vent"}
+          ]
+        },
+        {
+          "Id": "Vent_Seen",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I never vented, that's a lie"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I didn't vent, you're wrong"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i never vented, cap"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "nah i didnt vent bro"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "what vent? thats cap"}
+          ]
+        },
+        {
+          "Id": "Vent_Culprit",
+          "Intent": "Request",
+          "Context": "Voting",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Vote {target}, I saw them vent"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "vote {target}, saw them vent"}
+          ]
+        },
+        {
+          "Id": "Seen_In_Room",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "{target} was in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "I passed {target} in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} in {room}"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "{target} was in {room} fr"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "passed {target} in {room}"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "{target} was in {room} when i left"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I think I saw {target} near {room}", "MaxConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Not sure, but {target} was around {room}", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "pretty sure {target} was in {room}", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "ngl i think {target} was near {room}", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "idk, {target} was around {room} maybe", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Seen_In_Room",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Who saw {target} in {room}?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Did anyone see {target} in {room}?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone see {target} in {room}?"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "was {target} in {room}? who saw?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "who saw {target} in {room} fr?"}
+          ]
+        },
+        {
+          "Id": "Seen_In_Room",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} was in {room} right before the kill", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I saw {target} near {room}, that's sus", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} was in {room} right before, sus", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "saw {target} by {room}, kinda sus", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} was close to {room}, maybe sus", "MaxConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "{target} was around {room}, not sure though", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} was near {room}, idk tho", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "lowkey sus, {target} was around {room}", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Seen_In_Room",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, {target} was in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah {target} was in {room}"}
+          ]
+        },
+        {
+          "Id": "Seen_In_Room",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I was never in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i was never in {room} bro"}
+          ]
+        },
+        {
+          "Id": "Seen_In_Room",
+          "Intent": "Vouch",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} was with me in {room}, they're safe"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I saw {target} in {room} the whole time"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} was with me in {room}, safe"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "{target} was with me the whole time, vouch"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "was with {target} in {room}, safe"}
+          ]
+        },
+        {
+          "Id": "Alibi_Witness",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{witness} saw me in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Ask {witness}, they saw me in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "{witness} can vouch for me"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{witness} saw me in {room}, ask them"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "ask {witness}, they saw me"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "{witness} can vouch lol"}
+          ]
+        },
+        {
+          "Id": "Not_Seen_In_Room",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I didn't see {target} in {room}"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} wasn't in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "didnt see {target} in {room} tbh"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} wasn't in {room} ngl"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "{target} wasn't in {room} when i was there"}
+          ]
+        },
+        {
+          "Id": "Not_Seen_In_Room",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} said they were in {room}, but I never saw them", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I never saw {target} in {room}, that's sus", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} said {room} but i never saw them", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "never saw {target} in {room}, sus", "MinConfidence": 0.5},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "{target} wasn't in {room}, they're lying!", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I didn't see {target} in {room}, kinda sus", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "didn't see {target} in {room} tho, idk", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Not_Seen_In_Room",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target}, I didn't see you in {room}. Where were you?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Where were you, {target}? You weren't in {room}."},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} wya? u weren't in {room}"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "u weren't in {room} {target}, wya?"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "{target} wasn't in {room} tho, wya?"},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "{target}, you weren't in {room}. Explain."}
+          ]
+        },
+        {
+          "Id": "Not_Seen_In_Room",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "True, I didn't see {target} in {room} either"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "same, didnt see {target} in {room} either"}
+          ]
+        },
+        {
+          "Id": "Not_Seen_In_Room",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I was in {room}, you just didn't see me"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i was in {room}, u just didnt see me"}
+          ]
+        },
+        {
+          "Id": "Scan_Clear",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} do the medbay scan"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} scanned in medbay, I saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} scan in medbay"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} did the scan, saw it"}
+          ]
+        },
+        {
+          "Id": "Scan_Clear",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see {target} do the medbay scan?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Who saw {target} scan in medbay?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "who saw {target} scan?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "did anyone see {target} scan?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "{target} scanned? who saw?"}
+          ]
+        },
+        {
+          "Id": "Scan_Clear",
+          "Intent": "Vouch",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} did the medbay scan, I saw it"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I saw {target} scan, they're clear"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} scanned, saw it, clear"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "saw {target} scan, safe"}
+          ]
+        },
+        {
+          "Id": "Scan_Clear",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I did the medbay scan, I'm crew"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I scanned in medbay, you can check"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I'm clear, I did the medbay scan"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i did the medbay scan, im clear"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "literally scanned in medbay lol"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "i scanned, im clear"}
+          ]
+        },
+        {
+          "Id": "Scan_Clear",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, I saw {target} scan in medbay too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah saw {target} scan too"}
+          ]
+        },
+        {
+          "Id": "Scan_Clear",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} says they scanned, but I never saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "never saw {target} scan tho"}
+          ]
+        },
+        {
+          "Id": "Asteroids_Clear",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} shoot asteroids"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} did asteroids, I saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} shooting asteroids"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} did asteroids, saw it"}
+          ]
+        },
+        {
+          "Id": "Asteroids_Clear",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see {target} shoot asteroids?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Who saw {target} do asteroids?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "who saw {target} shoot asteroids?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "did anyone see {target} do asteroids?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "{target} did asteroids? who saw?"}
+          ]
+        },
+        {
+          "Id": "Asteroids_Clear",
+          "Intent": "Vouch",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} shoot asteroids, they're clear"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "{target} did asteroids, I saw it, they're safe"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} shoot asteroids, clear"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "{target} did asteroids, saw it, safe"}
+          ]
+        },
+        {
+          "Id": "Asteroids_Clear",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I shot asteroids, I'm clear"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I did asteroids in weapons, I'm crew"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i shot asteroids, im clear"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "i did asteroids bro, im crew"}
+          ]
+        },
+        {
+          "Id": "Asteroids_Clear",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, I saw {target} shoot asteroids too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah saw {target} shoot asteroids too"}
+          ]
+        },
+        {
+          "Id": "Asteroids_Clear",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} says they shot asteroids, but I never saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "never saw {target} shoot asteroids tho"}
+          ]
+        },
+        {
+          "Id": "Trash_Clear",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} empty the trash"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} did trash, I saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} empty the trash"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} did trash, saw it"}
+          ]
+        },
+        {
+          "Id": "Trash_Clear",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see {target} empty the trash?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Who saw {target} do trash?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "who saw {target} do trash?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "did anyone see {target} empty trash?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "{target} did trash? who saw?"}
+          ]
+        },
+        {
+          "Id": "Trash_Clear",
+          "Intent": "Vouch",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} empty the trash, they're safe"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} do trash, safe"}
+          ]
+        },
+        {
+          "Id": "Trash_Clear",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I emptied the trash, I'm clear"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I did trash, it's a visual task"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i did trash, its visual"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "emptied the trash, im clear"}
+          ]
+        },
+        {
+          "Id": "Trash_Clear",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, I saw {target} empty the trash too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah saw {target} do trash too"}
+          ]
+        },
+        {
+          "Id": "Trash_Clear",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} says they did trash, but I never saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "never saw {target} do trash tho"}
+          ]
+        },
+        {
+          "Id": "Shields_Clear",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} prime shields"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} did shields, I saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} prime shields"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} did shields, saw it"}
+          ]
+        },
+        {
+          "Id": "Shields_Clear",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see {target} prime shields?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Who saw {target} do shields?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "who saw {target} do shields?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "did anyone see {target} prime shields?"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "{target} did shields? who saw?"}
+          ]
+        },
+        {
+          "Id": "Shields_Clear",
+          "Intent": "Vouch",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} prime shields, crew confirmed"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} do shields, clear"}
+          ]
+        },
+        {
+          "Id": "Shields_Clear",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I primed shields, it's a visual task"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I did shields, I'm clear"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i did shields, its visual"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "primed shields, im clear"}
+          ]
+        },
+        {
+          "Id": "Shields_Clear",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, I saw {target} prime shields too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah saw {target} do shields too"}
+          ]
+        },
+        {
+          "Id": "Shields_Clear",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} says they did shields, but I never saw it"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "never saw {target} do shields tho"}
+          ]
+        },
+        {
+          "Id": "Fake_Swipe",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} swiped the card, but that's not our common task", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.8, "Text": "Swipe card isn't a task for us, {target} is faking!", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} swiped the card but thats not our task, fake", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "swipe isnt our task, {target} is faking lol", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Why was {target} swiping the card? I don't have that task", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "why was {target} swiping? i dont have that task", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Fake_Swipe",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} swipe the card in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} swiping the card in {room}"}
+          ]
+        },
+        {
+          "Id": "Fake_Swipe",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Does anyone have swipe card as a task?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Is swipe card a common task for you?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone got swipe card?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "do u guys have swipe card?"}
+          ]
+        },
+        {
+          "Id": "Fake_Swipe",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I really have swipe card as a task, check yours"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i do have swipe card, check urs"}
+          ]
+        },
+        {
+          "Id": "Fake_Swipe",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I'm not faking, I have that task"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "im not faking, i have that task"}
+          ]
+        },
+        {
+          "Id": "Fake_Swipe",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} fake the swipe too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} fake the swipe too"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} was doing wires, but that's not our common task", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.8, "Text": "Wires isn't a task for us, {target} is faking!", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} was doing wires but thats not our task, fake", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "wires isnt our task, {target} is faking lol", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Why was {target} doing wires? I don't have that task", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "why was {target} doing wires? i dont have that task", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Fake_Wires",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} doing wires in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} doing wires in {room}"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Does anyone have wires as a common task?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Is wires a common task for you?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone got wires as a task?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "do u guys have wires?"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Wires is my common task, I'm not faking"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "wires is my common task, not faking"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I'm not faking, wires is my task"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "not faking, wires is my task"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} fake the wires too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} fake the wires too"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires_Order",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} did the wires in a weird order, they're faking", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.8, "Text": "{target} connected the wires wrong, fake task", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} did wires in a weird order, faking", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target}'s wires were off, def faking", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target}'s wires looked off, maybe faking?", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target}'s wires looked weird, idk", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Fake_Wires_Order",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} connect the wires in a weird order"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} did the wires in a weird order tbh"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires_Order",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see how {target} did the wires?"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Who saw the wires order {target} used?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone see how {target} did the wires?"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "how did {target} do wires? who saw?"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires_Order",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I did the wires right, I'm not faking"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i did the wires right bro"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires_Order",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I did the wires correctly, I'm not faking"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i did the wires right, not faking"}
+          ]
+        },
+        {
+          "Id": "Fake_Wires_Order",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, those wires looked wrong to me too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "those wires looked off to me too"}
+          ]
+        },
+        {
+          "Id": "Fake_Download",
+          "Intent": "Accuse",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target} was faking the download task", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 0.8, "Text": "{target} fake downloaded in {room}", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} was faking the download, saw it", "MinConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} fake downloaded in {room} lol", "MinConfidence": 0.5},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target}'s download looked fake, not sure", "MaxConfidence": 0.5},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target}'s download looked sus, idk", "MaxConfidence": 0.5}
+          ]
+        },
+        {
+          "Id": "Fake_Download",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} downloading in {room}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} downloading in {room}"}
+          ]
+        },
+        {
+          "Id": "Fake_Download",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see {target} downloading?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Who saw {target} download in {room}?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone see {target} download?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "who saw {target} download in {room}?"}
+          ]
+        },
+        {
+          "Id": "Fake_Download",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I really have download, I wasn't faking"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i have download, wasn't faking"}
+          ]
+        },
+        {
+          "Id": "Fake_Download",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I'm not faking, I was really downloading"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "im not faking, i was downloading"}
+          ]
+        },
+        {
+          "Id": "Fake_Download",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I saw {target} fake the download too"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "saw {target} fake the download too"}
+          ]
+        },
+        {
+          "Id": "Info_Ask",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Does anyone have info?"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Did anyone see anything?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "anyone got info?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "any info?"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "so who saw something?"}
+          ]
+        },
+        {
+          "Id": "Info_None",
+          "Intent": "Report",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I didn't see anything"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I was in {room}, saw nothing"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Just doing tasks, nothing to report"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "nothing from me"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i saw nothing"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "just doing tasks lol"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "was in {room}, saw nothing"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "no info rn"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "i got nothing, sorry"}
+          ]
+        },
+        {
+          "Id": "Last_Seen_Ask",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Who saw {target} last?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "who last saw {target}?"}
+          ]
+        },
+        {
+          "Id": "Whereabouts_Ask",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target}, where were you?"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Where were you when it happened, {target}?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} wya?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "wya when it happened, {target}?"}
+          ]
+        },
+        {
+          "Id": "Room_Activity_Ask",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "{target}, what were you doing in {room}?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "{target} what were u doing in {room}?"}
+          ]
+        },
+        {
+          "Id": "Suspicion_Why",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Why do you suspect {target}?"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "What makes you say that?"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "What did you see?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "why {target} tho?"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "wdym {target}? why?"}
+          ]
+        },
+        {
+          "Id": "Proof_Ask",
+          "Intent": "Question",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "What proof do you have?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "proof?"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "based on what?"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "u got proof?"},
+              {"Tone": ["aggressive"], "Weight": 1.0, "Text": "Where's your proof?"},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "What proof do you have against {target}?"},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "Why are you accusing {target}? Explain."}
+          ]
+        },
+        {
+          "Id": "Innocent_Claim",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "It's not me, I was doing tasks"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I'm crew, I promise"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "Why me? I haven't done anything"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I swear I'm crew"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "not me, was doing tasks"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "bro im crew"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "why me tho?"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "swear im crew"},
+              {"Tone": ["aggressive"], "Weight": 1.0, "Text": "Stop accusing me, I'm innocent!"},
+              {"Tone": ["aggressive"], "Weight": 0.7, "Text": "You're wrong, I'm crew!"},
+              {"Tone": ["aggressive"], "Weight": 0.6, "Text": "Why are you targeting me?"}
+          ]
+        },
+        {
+          "Id": "Alibi_Tasks",
+          "Intent": "Defend",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I was in {room} doing tasks"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I was in {room} the whole time"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i was in {room} the whole time lol"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "literally just doing tasks in {room}"}
+          ]
+        },
+        {
+          "Id": "Deny_Generic",
+          "Intent": "Deny",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "It wasn't me"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I didn't do anything"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "That's not true"},
+              {"Tone": ["neutral"], "Weight": 0.4, "Text": "That's false"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "wasn't me lol"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "bro what? no"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "that's cap"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "nah thats cap"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "i didnt do anything bro"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "lol no"},
+              {"Tone": ["aggressive"], "Weight": 1.0, "Text": "You're lying, I'm crew!"},
+              {"Tone": ["aggressive"], "Weight": 0.7, "Text": "No way, that's a lie!"}
+          ]
+        },
+        {
+          "Id": "Vouch_Generic",
+          "Intent": "Vouch",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "I trust {target}"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} is safe, I'm sure"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "{target} is not sus to me"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "I don't think {target} is the impostor"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "{target} is crew, I vouch for them"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "i trust {target}"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} is safe fr"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "{target} aint sus to me"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "vouch {target}"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "{target} is chill, i vouch"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "i dont think its {target}"}
+          ]
+        },
+        {
+          "Id": "Agree_Generic",
+          "Intent": "Confirm",
+          "Context": "MeetingFollowUp",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Yes, that's true"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Yeah, I can confirm"},
+              {"Tone": ["neutral"], "Weight": 0.4, "Text": "Confirmed"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I agree"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "True, I saw that too"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "Makes sense, agreed"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yep"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "yeah"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "fr"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "same"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "facts"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "true, saw it too"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "can confirm"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "yeah that's right"}
+          ]
+        },
+        {
+          "Id": "Ack_Generic",
+          "Intent": "Reply",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "ok"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "okay"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "got it"},
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "makes sense"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I see"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "hmm, interesting"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "fair enough"},
+              {"Tone": ["neutral"], "Weight": 0.6, "Text": "thanks for the info"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "hmm, not sure about that"},
+              {"Tone": ["neutral"], "Weight": 0.5, "Text": "ok, noted"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "k"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "ight"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "bet"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "gotcha"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "aight"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "mhm"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "fair"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "lol ok"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "hmm"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "idk about that"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "ty"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "oh ok"},
+              {"Tone": ["casual"], "Weight": 0.5, "Text": "ahh"},
+              {"Tone": ["casual"], "Weight": 0.4, "Text": "oh damn"}
+          ]
+        },
+        {
+          "Id": "Vote_Request",
+          "Intent": "Request",
+          "Context": "Voting",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Let's vote {target}"},
+              {"Tone": ["neutral"], "Weight": 0.8, "Text": "Everyone vote {target}"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "vote {target}"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "just vote {target}"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "vote {target} guys"},
+              {"Tone": ["aggressive"], "Weight": 1.0, "Text": "Vote {target}, I'm serious"},
+              {"Tone": ["aggressive"], "Weight": 0.7, "Text": "Don't skip, vote {target}!"}
+          ]
+        },
+        {
+          "Id": "No_Skip",
+          "Intent": "Request",
+          "Context": "Voting",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Please don't skip"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "Let's not skip this vote"},
+              {"Tone": ["casual"], "Weight": 1.0, "Text": "dont skip pls"},
+              {"Tone": ["casual"], "Weight": 0.8, "Text": "no skip pls"}
+          ]
+        },
+        {
+          "Id": "Vote_Skip",
+          "Intent": "Request",
+          "Context": "Voting",
+          "Phrases": [
+              {"Tone": ["neutral"], "Weight": 1.0, "Text": "Let's skip, we don't have enough info"},
+              {"Tone": ["neutral"], "Weight": 0.7, "Text": "I think we should skip this one"},
+              {"Tone": ["casual"], "Weight": 0.7, "Text": "skip imo"},
+              {"Tone": ["casual"], "Weight": 0.8, "Text": "just skip, no info"},
+              {"Tone": ["casual"], "Weight": 0.6, "Text": "skip this one"}
+          ]
+        }
+      ]
+    }
+  }
+}

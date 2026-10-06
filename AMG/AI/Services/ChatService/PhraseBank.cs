@@ -14,16 +14,23 @@ namespace AMG.AI.Services.ChatService
         {
             if (!File.Exists(_contextFilePath))
             {
-                File.Create(_contextFilePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(_contextFilePath)!);
+                WriteFile(new PhraseBankData());
             }
             var json = File.ReadAllText(_contextFilePath);
-            return JsonSerializer.Deserialize<PhraseBankData>(json) ?? new PhraseBankData();
+            return JsonSerializer.Deserialize<PhraseBankData>(json, Options) ?? new PhraseBankData();
         }
 
         public static void WriteFile(PhraseBankData data)
         {
-            var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(data, Options);
             File.WriteAllText(_contextFilePath, json);
         }
+
+        private static readonly JsonSerializerOptions Options = new()
+        {
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
     }
 }
