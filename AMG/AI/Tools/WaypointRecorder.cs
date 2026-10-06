@@ -54,21 +54,19 @@ namespace AMG.AI.Tools
         }
     }
 
-    public class WaypointRecorder : MonoBehaviour
+    public class WaypointRecorder(IntPtr ptr) : MonoBehaviour(ptr)
     {
-        public WaypointRecorder(IntPtr ptr) : base(ptr) { }
-
         private string filePath;
 
         private bool isRecording = false;
-        private float distanceBetweenNodes = 0.5f;
+        private const float distanceBetweenNodes = 0.5f;
 
-        private List<Vector2> existingNodes = new List<Vector2>();
-        private List<string> newLinesBuffer = new List<string>();
+        private readonly List<Vector2> existingNodes = [];
+        private readonly List<string> newLinesBuffer = [];
 
         void Awake()
         {
-            filePath = Path.Combine(Application.dataPath, "AI_Skeld_Waypoints.txt");
+            filePath = Path.Combine(Application.dataPath, "AMG", "AI_Skeld_Waypoints.txt");
             LoadExistingNodes();
         }
 
