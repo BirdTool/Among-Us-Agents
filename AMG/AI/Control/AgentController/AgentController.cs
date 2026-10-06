@@ -7,7 +7,7 @@ namespace AMG.AI.Control.AgentController
     public partial class AgentController(IntPtr ptr) : MonoBehaviour(ptr)
     {
         public PlayerControl Agent { get; private set; }
-        protected string BaseName;
+        public string BaseName { get; protected set; }
         protected TextMeshPro NameTextComp;
         protected SpriteRenderer SpriteRenderer;
         public Vector2 DesiredVelocity { get; private set; }

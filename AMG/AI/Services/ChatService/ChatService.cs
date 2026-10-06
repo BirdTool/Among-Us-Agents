@@ -1,4 +1,4 @@
-namespace AMG.AI.Services
+namespace AMG.AI.Services.ChatService
 {
     public class ChatService
     {
