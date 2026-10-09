@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind.StructuredAgentBrain.Decisions;
 using AMG.AI.Navigation;
+using AMG.AI.Services.ChatService;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
@@ -36,6 +37,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         private List<IScenario> _scenarios;
 
         public SabotageStep currentSabotageStep = null;
+
+        public ChatService ChatService { get; private set; }
 
         private uint _level = 0;
         public uint Level
@@ -91,6 +94,8 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
             Utils.OnSabotageStarted += HandleSabotageStarted;
             Utils.OnSabotageEnded += HandleSabotageEnded;
+
+            ChatService = new ChatService(new ChatTransport(this));
 
             ChangeRandomDirection();
         }

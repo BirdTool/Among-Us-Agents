@@ -1,6 +1,6 @@
-using System;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Services.ChatService.History;
+using AMG.Enums.SafeRpcEnums;
 using AMG.Interfaces;
 using AMG.Utilities;
 
@@ -10,23 +10,22 @@ namespace AMG.AI.Services.ChatService
     {
         private readonly AgentController _brain = brain;
         public bool DebugMode = false;
-        
-        public void Send(string text)
+
+        public ChatRpcEnums TrySend(string text)
         {
             var result = _brain.SafeSendChat(text);
 
-            if (result != Enums.SafeRpcEnums.ChatRpcEnums.SUCCESS)
+            if (result == ChatRpcEnums.SUCCESS)
             {
-                if (DebugMode)
-                    LogManager.LogError($"[ChatTransport] Failed to send chat message: {result}");
-
-                throw new Exception($"[ChatTransport] Failed to send chat message: {result}");
+                if (DebugMode) LogManager.LogDebug($"[ChatTransport] Sent: {text}");
+                MessagesSentHistory.AddMessage(_brain, text);
+            }
+            else if (DebugMode && result != ChatRpcEnums.ERROR_InCooldown)
+            {
+                LogManager.LogError($"[ChatTransport] Failed to send chat message: {result}");
             }
 
-            if (DebugMode)
-                LogManager.LogDebug($"[ChatTransport] Sent: {text}");
-            
-            MessagesSentHistory.AddMessage(_brain, text);
+            return result;
         }
     }
 }

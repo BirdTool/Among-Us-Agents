@@ -1,7 +1,9 @@
+using AMG.Enums.SafeRpcEnums;
+
 namespace AMG.Interfaces
 {
     public interface IChatTransport
     {
-        void Send(string text);
+        ChatRpcEnums TrySend(string text);
     }
 }

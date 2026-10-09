@@ -10,7 +10,7 @@ namespace AMG.Patches
         [HarmonyPostfix]
         public static void ReceiveMessages(PlayerControl sourcePlayer, string chatText, bool censor, ChatController __instance)
         {
-            if(sourcePlayer == null) return;
+            if(sourcePlayer == null || sourcePlayer.Data.IsDead) return;
 
             ReplicatedChat.Enqueue(sourcePlayer, chatText);
         }
