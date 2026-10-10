@@ -28,6 +28,8 @@ public partial class AMGPlugin : BasePlugin
 
     public override void Load()
     {
+        ModPaths.Initialize(); // first thing: must run on the main thread (Application.dataPath)
+
         Log = base.Log;
         Plugin = this;
 
@@ -63,5 +65,6 @@ public partial class AMGPlugin : BasePlugin
         Harmony.PatchAll();
 
         LogManager.TransferLogsToAllLogs();
+        ModPaths.Initialize();
     }
 }

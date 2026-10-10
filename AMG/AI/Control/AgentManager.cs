@@ -16,20 +16,20 @@ namespace AMG.AI.Control
         public static bool RecycleDummies = true;
         public static bool WillBeImpostor = false;
 
-        private static readonly List<string> FirstNames = new()
-        {
+        private static readonly List<string> FirstNames =
+        [
             "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph",
             "Charles", "Thomas", "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth",
             "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Crewmate", "Impostor",
             "Cristiano", "Luna", "Luar", "Lua", "Léo", "Leonardo", "Cassilhas"
-        };
+        ];
 
-        private static readonly List<string> Surnames = new()
-        {
+        private static readonly List<string> Surnames =
+        [
             "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
             "Rodriguez", "Martinez", "Carsion", "Doe", "Silva", "Santos", "Oliveira", "Toretto",
             "Santos", "Máfia", "Giuseppe", "Morteiro", "Besta", "Gigante", "Giant", "Sol"
-        };
+        ];
 
         public static void AddAgent(PlayerControl agent, AgentData data)
         {
@@ -145,6 +145,7 @@ namespace AMG.AI.Control
             TaskAssignment.AssignTasks(agentComponent);
             brain.MapArtificialTasks();
             brain.MapGameTasksToAILogic();
+            brain.Level = 4;
 
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
             return (agentComponent, brain);

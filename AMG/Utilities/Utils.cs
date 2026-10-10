@@ -220,6 +220,16 @@ namespace AMG.Utilities
             return RandomizerExtensions.GetSecureRandomInt(min, max);
         }
 
+        public static float GetRandomFloat(float min, float max)
+        {
+            return RandomizerExtensions.GetSecureRandomFloat(min, max);
+        }
+
+        public static double GetRandomDouble(double min, double max)
+        {
+            return RandomizerExtensions.GetSecureRandomDouble(min, max);
+        }
+
         public static bool ExecuteProbability(double chance)
         {
             chance = Math.Clamp(chance, 0, 1);

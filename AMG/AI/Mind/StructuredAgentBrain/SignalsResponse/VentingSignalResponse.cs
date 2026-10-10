@@ -1,4 +1,5 @@
 using AMG.Models.Signals;
+using AMG.Utilities;
 
 namespace AMG.AI.Mind.StructuredAgentBrain
 {
@@ -14,6 +15,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             
             memory.SawVenting = true;
             memory.IncreaseSuspiciusPercentage(100);
+            memory.VentRoom = ventSignal.Player.transform.position.GetClosestNode().Room;
         }
     }
 }

@@ -6,7 +6,6 @@ using System.Text.Json.Serialization;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 using AMG.Utilities;
-using UnityEngine;
 
 namespace AMG.AI.Services.ChatService
 {
@@ -16,9 +15,8 @@ namespace AMG.AI.Services.ChatService
         /// so it can never collide with an Id the mod ships later.</summary>
         public const string VividPrefix = "Vivid_";
 
-        private static readonly string _folder = Path.Combine(Application.dataPath, "AMG");
-        private static readonly string _defaultPath = Path.Combine(_folder, "DefaultPhraseBank.json");
-        private static readonly string _vividPath = Path.Combine(_folder, "VividPhraseBank.json");
+        private static readonly string _defaultPath = ModPaths.Data("DefaultPhraseBank.json");
+        private static readonly string _vividPath = ModPaths.Data("VividPhraseBank.json");
 
         private static readonly JsonSerializerOptions Options = new()
         {
@@ -190,7 +188,6 @@ namespace AMG.AI.Services.ChatService
 
             try
             {
-                Directory.CreateDirectory(_folder);
                 var tmp = _vividPath + ".tmp";
                 File.WriteAllText(tmp, JsonSerializer.Serialize(data, Options));
                 File.Move(tmp, _vividPath, true);

@@ -1,4 +1,4 @@
-﻿using AMG.AI.Services.MeetingService;
+﻿using AMG.AI.Services.MeetingService.StructuredBrain;
 using AMG.Enums.AgentEnums;
 using AMG.Utilities;
 
@@ -6,7 +6,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 {
     public partial class StructuredAgentBrain
     {
-        public MeetingService MeetingService { get; private set; }
+        public MeetingServiceForStructuredBrain MeetingService { get; private set; }
 
         private void UpdateMeetingState()
         {
@@ -15,14 +15,17 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             if (Utils.IsMeeting)
             {
                 SetState(AgentState.OnMeeting);
-                MeetingService ??= new MeetingService();
+                MeetingService ??= new MeetingServiceForStructuredBrain(ChatService, this);
 
+                MeetingService.Update();
                 ChatService.Tick();
 
                 return;
             }
             else if (Utils.IsExiling)
             {
+                ChatService.Clear();
+                KnownBodyRoom = null;
                 MeetingService = null;
                 return;
             }

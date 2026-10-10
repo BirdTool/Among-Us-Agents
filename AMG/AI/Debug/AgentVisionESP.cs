@@ -257,7 +257,7 @@ namespace AMG.AI.Debug
         {
             try
             {
-                string path = Path.Combine(Environment.CurrentDirectory, "AmongUs_Layers.txt");
+                string path = ModPaths.Root("AmongUs_Layers.txt");
                 using StreamWriter writer = new(path);
 
                 writer.WriteLine("=== MAPA DE LAYERS DO AMONG US ===");

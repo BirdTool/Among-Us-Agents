@@ -22,7 +22,14 @@ namespace AMG.AI.Services.ChatService
                 !index.TryGetLanguage(DefaultLanguage, out lang))
                 return null;
 
-            var group = lang.Find(intent.PhraseId, intent.Type, intent.Context);
+            var candidates = new List<PhraseGroup>();
+            if (!string.IsNullOrEmpty(intent.PhraseId) && lang.Find(intent.PhraseId, intent.Type, intent.Context) is { } byId)
+                candidates.Add(byId);
+            if (intent.Evidence is { } ev)
+                foreach (var g in lang.FindByCondition(intent.Type, intent.Context, ev))
+                    if (!candidates.Contains(g)) candidates.Add(g);
+
+            var group = candidates.GetRandomWeighted(g => g.Weight);
             if (group == null || group.Phrases.Count == 0) return null;
 
             var variant = PickVariant(group, intent.Confidence, tone);

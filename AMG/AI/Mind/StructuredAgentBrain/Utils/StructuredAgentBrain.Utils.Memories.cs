@@ -8,6 +8,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
     {
         private readonly Dictionary<byte, AgentPeopleMemories> PeopleMemories = [];
         public readonly List<RoundDeadBody> bodiesSeenDead = [];
+        public SystemTypes? KnownBodyRoom;
 
         public AgentPeopleMemories GetOrCreateMemory(byte playerId)
         {

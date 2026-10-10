@@ -2,14 +2,18 @@ using System.Collections.Generic;
 using AMG.Enums.SafeRpcEnums;
 using AMG.Interfaces;
 using AMG.Models.ChatService;
-using AMG.Utilities;
+using UnityEngine;
 
 namespace AMG.AI.Services.ChatService
 {
-    public class ChatService(IChatTransport chatTransport)
+    public class ChatServiceClass(IChatTransport chatTransport, uint level)
     {
+        private uint Level { get; set; } = level;
         private readonly List<ChatIntent> _intents = [];
         private readonly IChatTransport _chatTransport = chatTransport;
+
+        private float _sendAt;
+        private const float MaxTypingDelay = 6f;
 
         private ChatIntent _current;
         private string _currentText;
@@ -44,13 +48,12 @@ namespace AMG.AI.Services.ChatService
             if (_currentText == null)
             {
                 _currentText = Realizer.Realize(_current);
+                if (string.IsNullOrWhiteSpace(_currentText)) { Finish(); return; }
 
-                if (string.IsNullOrWhiteSpace(_currentText))
-                {
-                    Finish();
-                    return;
-                }
+                _sendAt = Time.time + TypingDelay(_currentText, Level);
             }
+
+            if (Time.time < _sendAt) return;
 
             switch (_chatTransport.TrySend(_currentText))
             {
@@ -65,6 +68,16 @@ namespace AMG.AI.Services.ChatService
                 default:
                     break;
             }
+        }
+
+        private static float TypingDelay(string text, uint level)
+        {
+            float t = Mathf.Clamp01(level / 5f);
+            float think = Mathf.Lerp(2.0f, 0.4f, t); 
+            float cps = Mathf.Lerp(2.5f, 7.0f, t);
+            float jitter = Random.Range(0.85f, 1.2f);
+
+            return Mathf.Min((think + text.Length / cps) * jitter, MaxTypingDelay);
         }
 
         private void Finish()

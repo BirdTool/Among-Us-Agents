@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Debug;
@@ -53,20 +52,23 @@ namespace AMG.AI.Tools
             }
         }
     }
-
+    
     public class WaypointRecorder(IntPtr ptr) : MonoBehaviour(ptr)
     {
-        private string filePath;
+        private const float DistanceBetweenNodes = 0.5f;
+        private const float MinSqrDistance = DistanceBetweenNodes * 0.9f * DistanceBetweenNodes * 0.9f;
+        private const float RemoveSqrTolerance = 0.05f * 0.05f;
 
-        private bool isRecording = false;
-        private const float distanceBetweenNodes = 0.5f;
+        private readonly List<WaypointData> _nodes = [];
 
-        private readonly List<Vector2> existingNodes = [];
-        private readonly List<string> newLinesBuffer = [];
+        private MapNames _map;
+        private bool _isRecording;
+        private bool _loadFailed; // the file exists but couldn't be parsed: never record/save over it
+        private int _unsavedCount;
 
         void Awake()
         {
-            filePath = Path.Combine(Application.dataPath, "AMG", "AI_Skeld_Waypoints.txt");
+            _map = WaypointManager.CurrentMap;
             LoadExistingNodes();
         }
 
@@ -79,27 +81,30 @@ namespace AMG.AI.Tools
             }
 
             AMGPlugin.KeyDownManager.RegisterKeyDown(KeyCode.R, ToggleRecording);
-            AMGPlugin.KeyDownManager.RegisterKeyDown(KeyCode.P, SaveBufferToFile);
-        }
-
-        private void ToggleRecording()
-        {
-            isRecording = !isRecording;
-            LogManager.LogDebug(isRecording ? "[AI GPS] Gravação Contínua: LIGADA!" : "[AI GPS] Gravação Contínua: DESLIGADA.");
+            AMGPlugin.KeyDownManager.RegisterKeyDown(KeyCode.P, SaveNodes);
         }
 
         void Update()
         {
-            if (PlayerControl.LocalPlayer == null) return;
+            if (!_isRecording || _loadFailed || PlayerControl.LocalPlayer == null) return;
 
-            if (isRecording)
+            TryAddNode(PlayerControl.LocalPlayer.transform.position);
+            foreach (var agent in AgentManager.Agents)
             {
-                TrySaveNode(PlayerControl.LocalPlayer.transform.position);
-                foreach (var agent in AgentManager.Agents)
-                {
-                    TrySaveNode(agent.Control.transform.position);
-                }
+                TryAddNode(agent.Control.transform.position);
             }
+        }
+
+        private void ToggleRecording()
+        {
+            if (_loadFailed)
+            {
+                LogManager.LogError($"[AI GPS] Gravação bloqueada: não consegui ler {WaypointManager.GetJsonPath(_map)}. Corrija o arquivo e reinicie o jogo.");
+                return;
+            }
+
+            _isRecording = !_isRecording;
+            LogManager.LogDebug(_isRecording ? "[AI GPS] Gravação Contínua: LIGADA!" : $"[AI GPS] Gravação Contínua: DESLIGADA. {_unsavedCount} ponto(s) ainda não salvos (P para salvar).");
         }
 
         public void RemoveNode(Waypoint node)
@@ -108,94 +113,81 @@ namespace AMG.AI.Tools
 
             foreach (var neighbor in node.Neighbors)
             {
-                if (neighbor != null && neighbor.Neighbors.Contains(node))
-                {
-                    neighbor.Neighbors.Remove(node);
-                }
+                neighbor?.Neighbors.Remove(node);
+            }
+
+            foreach (var goldNeighbor in node.GoldNeighbors)
+            {
+                goldNeighbor?.GoldNeighbors.Remove(node);
             }
 
             WaypointManager.AllWaypoints.Remove(node);
 
-            existingNodes.RemoveAll(pos => Vector2.Distance(pos, node.Position) < 0.05f);
+            _nodes.RemoveAll(n => SqrDistance(n, node.Position) < RemoveSqrTolerance);
 
-            ResetAndSaveNodes();
+            Persist();
 
             LogManager.LogWarning($"[AI GPS] AUTO-LIMPEZA: Nó ruim em {node.Position} foi erradicado pela IA!");
         }
 
         private void LoadExistingNodes()
         {
-            if (!File.Exists(filePath)) return;
+            var data = WaypointManager.ReadData(_map);
 
-            string[] lines = File.ReadAllLines(filePath);
-            foreach (string line in lines)
+            if (data == null)
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                string[] parts = line.Split('|');
-                if (parts.Length >= 3 && parts[0] == "NODE")
-                {
-                    string cx = parts[1].Replace(',', '.');
-                    string cy = parts[2].Replace(',', '.');
-
-                    if (float.TryParse(cx, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x) &&
-                        float.TryParse(cy, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float y))
-                    {
-                        existingNodes.Add(new Vector2(x, y));
-                    }
-                }
-            }
-            LogManager.LogDebug($"[AI GPS] {existingNodes.Count} NODEs carregados na memória para prevenção de duplicatas.");
-        }
-
-        public void ResetAndSaveNodes()
-        {
-            newLinesBuffer.Clear();
-
-            foreach (var node in existingNodes)
-            {
-                BufferPoint("NODE", node);
+                _loadFailed = true;
+                return;
             }
 
-            File.WriteAllLines(filePath, newLinesBuffer);
-
-            newLinesBuffer.Clear();
+            _nodes.AddRange(data);
+            LogManager.LogDebug($"[AI GPS] {_nodes.Count} nós carregados de {WaypointManager.GetJsonPath(_map)} para prevenção de duplicatas.");
         }
 
-        private void TrySaveNode(Vector2 pos)
+        private void TryAddNode(Vector2 pos)
         {
-            foreach (Vector2 node in existingNodes)
+            foreach (var node in _nodes)
             {
-                if (Vector2.Distance(node, pos) < (distanceBetweenNodes * 0.9f)) return;
+                if (SqrDistance(node, pos) < MinSqrDistance) return;
             }
 
-            existingNodes.Add(pos);
-            BufferPoint("NODE", pos);
+            _nodes.Add(new WaypointData { X = Round2(pos.x), Y = Round2(pos.y), IsGold = false });
+            _unsavedCount++;
         }
 
-        private void BufferPoint(string type)
+        // P key: only writes when there is something new.
+        private void SaveNodes()
         {
-            BufferPoint(type, PlayerControl.LocalPlayer.transform.position);
-        }
-
-        private void BufferPoint(string type, Vector2 pos)
-        {
-            string line = $"{type}|{pos.x:F2}|{pos.y:F2}";
-            newLinesBuffer.Add(line);
-        }
-
-        private void SaveBufferToFile()
-        {
-            if (newLinesBuffer.Count == 0)
+            if (!_loadFailed && _unsavedCount == 0)
             {
                 LogManager.LogWarning("[AI GPS] Nenhum ponto novo na memória para salvar.");
                 return;
             }
 
-            File.AppendAllLines(filePath, newLinesBuffer);
-            LogManager.LogDebug($"[AI GPS] SUCESSO: {newLinesBuffer.Count} novos pontos descarregados no arquivo físico!");
-
-            newLinesBuffer.Clear();
+            Persist();
         }
+
+        private void Persist()
+        {
+            if (_loadFailed)
+            {
+                LogManager.LogError("[AI GPS] Não vou salvar: o arquivo de waypoints não pôde ser lido e seria sobrescrito.");
+                return;
+            }
+
+            if (!WaypointManager.WriteData(_map, _nodes)) return;
+
+            LogManager.LogDebug($"[AI GPS] SUCESSO: {_nodes.Count} pontos salvos ({_unsavedCount} novos) em {WaypointManager.GetJsonPath(_map)}.");
+            _unsavedCount = 0;
+        }
+
+        private static float SqrDistance(WaypointData node, Vector2 pos)
+        {
+            float dx = node.X - pos.x;
+            float dy = node.Y - pos.y;
+            return dx * dx + dy * dy;
+        }
+
+        private static float Round2(float value) => Mathf.Round(value * 100f) / 100f;
     }
 }

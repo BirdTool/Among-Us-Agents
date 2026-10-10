@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AMG.AI.Navigation;
 using AMG.AI.Tools;
 using AMG.Enums.SafeRpcEnums;
@@ -36,7 +37,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
         {
             byte id = brain.Agent.PlayerId;
 
-            if (brain.sawABody) 
+            if (brain.sawABody)
             {
                 if (_agentsPendingBodiesToReact.ContainsKey(id))
                 {
@@ -59,6 +60,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
                     _agentsPendingBodiesToReact[id] = nearbyBodies;
 
                     brain.bodiesSeenDead.AddRange(nearbyBodies);
+                    brain.KnownBodyRoom = AgentVision.GetRoomAtPosition(nearbyBodies.MaxBy<RoundDeadBody, float>(b => b.TimeOfDeath).Position);
 
                     return;
                 }

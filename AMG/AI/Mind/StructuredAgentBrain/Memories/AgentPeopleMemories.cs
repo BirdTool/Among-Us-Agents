@@ -30,6 +30,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
 
         public bool SawVenting = false;
 
+        public SystemTypes? KillRoom;
+        public SystemTypes? VentRoom;
+
         public bool SeenVerifiedTask = false;
         public float LastVerifiedTaskTime = -1f;
         public bool SeenFakeTask = false;
@@ -187,11 +190,12 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
             ClaimedTaskTime = time;
         }
 
-        public void RegisterKillWitnessed(byte victimId, float time)
+        public void RegisterKillWitnessed(byte victimId, float time, SystemTypes room)
         {
             SawKilling = true;
             LastVictimSeenKilled = victimId;
             TimeOfKillWitnessed = time;
+            KillRoom = room;
         }
 
         public void RegisterVote(byte? targetId, bool againstConsensus)

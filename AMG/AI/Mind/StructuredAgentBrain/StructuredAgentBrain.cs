@@ -38,7 +38,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
         public SabotageStep currentSabotageStep = null;
 
-        public ChatService ChatService { get; private set; }
+        public ChatServiceClass ChatService { get; private set; }
 
         private uint _level = 0;
         public uint Level
@@ -95,7 +95,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             Utils.OnSabotageStarted += HandleSabotageStarted;
             Utils.OnSabotageEnded += HandleSabotageEnded;
 
-            ChatService = new ChatService(new ChatTransport(this));
+            ChatService = new ChatServiceClass(new ChatTransport(this), Level);
 
             ChangeRandomDirection();
         }

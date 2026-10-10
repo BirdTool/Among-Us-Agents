@@ -64,11 +64,48 @@ namespace AMG.AI.Navigation
         private const float ConnectionRadius = 0.68f;
         private const float GoldVisionMaxDistance = 100f;
 
-        private static string GetJsonPath(MapNames map) =>
-            Path.Combine(Application.dataPath, $"AI_{map}_Waypoints.json");
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            WriteIndented = true,
+            PropertyNameCaseInsensitive = true
+        };
 
-        private static string GetLegacyTxtPath(MapNames map) =>
-            Path.Combine(Application.dataPath, $"AI_{map}_Waypoints.txt");
+        public static string GetJsonPath(MapNames map) => ModPaths.Data($"AI_{map}_Waypoints.json");
+
+        private static string GetLegacyTxtPath(MapNames map) => ModPaths.Data($"AI_{map}_Waypoints.txt");
+        public static List<WaypointData> ReadData(MapNames map)
+        {
+            string path = GetJsonPath(map);
+            if (!File.Exists(path)) return [];
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<WaypointData>>(File.ReadAllText(path), JsonOptions) ?? [];
+            }
+            catch (Exception ex)
+            {
+                LogManager.LogError($"[AI Nav] Erro ao ler {path}: {ex.Message}");
+                return null;
+            }
+        }
+
+        public static bool WriteData(MapNames map, List<WaypointData> data)
+        {
+            string path = GetJsonPath(map);
+
+            try
+            {
+                string tmp = path + ".tmp";
+                File.WriteAllText(tmp, JsonSerializer.Serialize(data, JsonOptions));
+                File.Move(tmp, path, true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogManager.LogError($"[AI Nav] Erro ao salvar {path}: {ex.Message}");
+                return false;
+            }
+        }
 
         public static void LoadWaypoints()
         {
@@ -85,17 +122,7 @@ namespace AMG.AI.Navigation
                 ConvertLegacyTxtToJson(CurrentMap);
             }
 
-            List<WaypointData> data;
-            try
-            {
-                data = JsonSerializer.Deserialize<List<WaypointData>>(File.ReadAllText(jsonPath));
-            }
-            catch (Exception ex)
-            {
-                LogManager.LogError($"[AI Nav] Erro ao ler JSON de waypoints: {ex.Message}");
-                return;
-            }
-
+            var data = ReadData(CurrentMap);
             if (data == null) return;
 
             foreach (var wp in data)
@@ -180,7 +207,7 @@ namespace AMG.AI.Navigation
                 }
             }
 
-            File.WriteAllText(GetJsonPath(map), JsonSerializer.Serialize(converted, new JsonSerializerOptions { WriteIndented = true }));
+            if (!WriteData(map, converted)) return;
             LogManager.LogDebug($"[AI Nav] Convertido {converted.Count} waypoints de TXT para JSON ({map}).");
         }
 
@@ -195,14 +222,11 @@ namespace AMG.AI.Navigation
 
         public static void AppendWaypoint(WaypointData data)
         {
-            string jsonPath = GetJsonPath(CurrentMap);
-
-            List<WaypointData> existing = File.Exists(jsonPath)
-                ? JsonSerializer.Deserialize<List<WaypointData>>(File.ReadAllText(jsonPath)) ?? []
-                : [];
+            var existing = ReadData(CurrentMap);
+            if (existing == null) return; // unreadable file: never overwrite it
 
             existing.Add(data);
-            File.WriteAllText(jsonPath, JsonSerializer.Serialize(existing, new JsonSerializerOptions { WriteIndented = true }));
+            WriteData(CurrentMap, existing);
         }
 
         public static void ComputeHallwayRoomAdjacency()

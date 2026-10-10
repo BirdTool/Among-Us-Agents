@@ -241,7 +241,7 @@ namespace AMG.Utilities
             return Mathf.Abs(delta.x) <= halfWidth && Mathf.Abs(delta.y) <= halfHeight;
         }
 
-        private static SystemTypes GetRoomAtPosition(Vector2 pos)
+        public static SystemTypes GetRoomAtPosition(Vector2 pos)
         {
             if (ShipStatus.Instance == null || ShipStatus.Instance.AllRooms == null) return SystemTypes.Hallway;
 
