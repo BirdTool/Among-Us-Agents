@@ -15,7 +15,7 @@ namespace AMG.Patches.Gameplay.Signals
             if (!didSucceed) return;
 
             var killSignal = new KillSignal(__instance, target);
-            SignalController.SendSignalRadiusCanSee(killSignal, __instance.transform.position);
+            SignalController.SendSignalRadiusCanSee(killSignal, __instance.transform.position, __instance);
         }
     }
 }

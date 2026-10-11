@@ -24,13 +24,13 @@ namespace AMG.Patches.Gameplay.Signals
             if (inVent && !wasInVent)
             {
                 var ventSignal = new VentSignal(__instance, false);
-                SignalController.SendSignalRadiusCanSee(ventSignal, __instance.transform.position);
+                SignalController.SendSignalRadiusCanSee(ventSignal, __instance.transform.position, __instance);
                 _playersInVent.Add(__instance.PlayerId);
             }
             else if (!inVent && wasInVent)
             {
                 var ventSignal = new VentSignal(__instance, true);
-                SignalController.SendSignalRadiusCanSee(ventSignal, __instance.transform.position);
+                SignalController.SendSignalRadiusCanSee(ventSignal, __instance.transform.position, __instance);
                 _playersInVent.Remove(__instance.PlayerId);
             }
         }
