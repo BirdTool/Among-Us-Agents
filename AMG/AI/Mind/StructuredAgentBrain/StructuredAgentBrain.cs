@@ -95,7 +95,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             Utils.OnSabotageStarted += HandleSabotageStarted;
             Utils.OnSabotageEnded += HandleSabotageEnded;
 
-            ChatService = new ChatServiceClass(new ChatTransport(this), Level);
+            ChatService = new ChatServiceClass(new ChatTransport(this), Level, () => AgentId);
 
             ChangeRandomDirection();
         }

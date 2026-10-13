@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests the PURE chat logic (parser, claim store, outbox) against the real source files, outside the game.
+       Run:  dotnet run in the ParserTests folder   (Stubs.cs fakes SystemTypes and the bits of UnityEngine used) -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UseAppHost>false</UseAppHost>
+    <AmgRoot Condition="'$(AmgRoot)' == ''">$(MSBuildThisFileDirectory)../AMG</AmgRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs;Stubs.cs" />
+    <Compile Include="$(AmgRoot)/Enums/ChatServiceEnums/*.cs" />
+    <Compile Include="$(AmgRoot)/Models/ChatService/ChatIntent.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatLexicon.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatOutbox.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/ClaimStore.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatParser.cs" />
+  </ItemGroup>
+</Project>

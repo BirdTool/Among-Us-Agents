@@ -17,6 +17,9 @@ namespace AMG.Models.ChatService
         public EvidenceEnum? Evidence; // no longer used to look up phrases (PhraseId does that)
         public byte? Witness;
 
+        // ClaimStore id of the claim this intent answers (null = not a direct answer)
+        public int? ReplyToClaim;
+
         // Time.time when the intent was created
         public float CreatedAt = Time.time;
 

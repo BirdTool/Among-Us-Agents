@@ -34,7 +34,10 @@ namespace AMG.AI.Services.ChatService.History
 
     public class MessageParsedData : MessageSentData
     {
-        public ChatIntent Intent { get; set; }
+        public ChatIntent Intent { get; set; }          // null = not understood
         public ChatContextEnum Context { get; set; }
+        public float Confidence { get; set; } = 1f;     // 0..1, how sure the parser is
+        public bool FromAgent { get; set; }             // intent came structured from an agent, not parsed from text
+        public string Rationale { get; set; } = "";     // why the parser decided that (debug)
     }
 }

@@ -6,9 +6,10 @@ using UnityEngine;
 
 namespace AMG.AI.Services.ChatService
 {
-    public class ChatServiceClass(IChatTransport chatTransport, uint level)
+    public class ChatServiceClass(IChatTransport chatTransport, uint level, System.Func<byte> getAgentId)
     {
         private uint Level { get; set; } = level;
+        private readonly System.Func<byte> _getAgentId = getAgentId;
         private readonly List<ChatIntent> _intents = [];
         private readonly IChatTransport _chatTransport = chatTransport;
 
@@ -24,6 +25,13 @@ namespace AMG.AI.Services.ChatService
         {
             _intents.Clear();
             ResetCurrent();
+        }
+
+        // Drops every queued intent that matches (e.g. a "where?" nobody needs to ask anymore)
+        public void Cancel(System.Predicate<ChatIntent> match)
+        {
+            _intents.RemoveAll(match);
+            if (_current != null && !_intents.Contains(_current)) ResetCurrent();
         }
 
         public bool HasPending => _intents.Count > 0;
@@ -58,6 +66,11 @@ namespace AMG.AI.Services.ChatService
             switch (_chatTransport.TrySend(_currentText))
             {
                 case ChatRpcEnums.SUCCESS:
+                    // keep the structured meaning: when this text comes back through AddChat it must not be re-parsed
+                    ChatOutbox.Register(_getAgentId(), _currentText, _current);
+                    Finish();
+                    break;
+
                 case ChatRpcEnums.ERROR_ContentIsEmpty:
                 case ChatRpcEnums.ERROR_ContentIsBiggerThan100:
                     Finish();

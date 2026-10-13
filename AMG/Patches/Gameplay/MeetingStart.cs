@@ -1,3 +1,4 @@
+using AMG.AI.Services.ChatService;
 using HarmonyLib;
 using AMG.Utilities;
 using System.Collections.Generic;
@@ -10,6 +11,10 @@ namespace AMG.Patches.Gameplay
     {
         public static void Prefix()
         {
+            ClaimStore.Reset();
+            ReplicatedChat.Clear();
+            ChatOutbox.Clear();
+
             if (!Utils.IsFreePlay) return;
             TableSpawnLocations.MakeAllAgentsSpawnAtTable();
         }

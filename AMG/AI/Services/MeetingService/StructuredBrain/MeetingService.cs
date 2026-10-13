@@ -18,6 +18,8 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
         private readonly float _startedAt = Time.time;
         private readonly List<(float dueAt, ChatIntent intent)> _delayed = [];
 
+        private bool _bodyLocationHandled;
+
         public ChatContextEnum Context =>
             Time.time - _startedAt < FollowUpAfter ? ChatContextEnum.MeetingStart : ChatContextEnum.MeetingFollowUp;
 
@@ -40,7 +42,8 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
                         PhraseId = "Kill_Culprit",
                         Evidence = EvidenceEnum.SawKilling,
                         Context = ChatContextEnum.MeetingStart,
-                        Subject = m.PlayerId,
+                        Target = m.PlayerId,                 // the culprit -> {target}
+                        Subject = m.LastVictimSeenKilled,    // the victim  -> {subject}
                         Room = m.KillRoom,
                         Urgency = 1f,
                         Confidence = 1f
@@ -53,16 +56,16 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
                         PhraseId = "Vent_Culprit",
                         Evidence = EvidenceEnum.SawVenting,
                         Context = ChatContextEnum.MeetingStart,
-                        Subject = m.PlayerId,
+                        Target = m.PlayerId,                 // the culprit -> {target}
                         Room = m.VentRoom,
                         Urgency = 0.95f,
                         Confidence = 1f
                     });
             }
 
-            var body = _brain.bodiesSeenDead.LastOrDefault();
             if (_brain.KnownBodyRoom is { } bodyRoom)
             {
+                _bodyLocationHandled = true;
                 _chat.Enqueue(new ChatIntent
                 {
                     Type = ChatIntentEnum.Report,
@@ -81,6 +84,39 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
                     PhraseId = "Body_Location",
                     Context = ChatContextEnum.MeetingStart,
                     Urgency = 0.4f
+                });
+            }
+        }
+        
+        public void OnClaim(Claim claim)
+        {
+            if (claim.ClaimerId == _brain.AgentId) return;
+            if (claim.Confidence < 0.4f) return; // unsure parse: don't react
+
+            var said = claim.Intent;
+            if (said == null || said.PhraseId != "Body_Location") return;
+
+            if (said.Type == ChatIntentEnum.Report)
+            {
+                _chat.Cancel(i => i.PhraseId == "Body_Location" && (i.Type == ChatIntentEnum.Question || i.ReplyToClaim != null));
+                return;
+            }
+
+            if (said.Type == ChatIntentEnum.Question
+                && _brain.KnownBodyRoom is { } room
+                && !_bodyLocationHandled
+                && !ClaimStore.Any("Body_Location", ChatIntentEnum.Report))
+            {
+                _bodyLocationHandled = true;
+                _chat.Enqueue(new ChatIntent
+                {
+                    Type = ChatIntentEnum.Report,
+                    PhraseId = "Body_Location",
+                    Context = ClaimStore.Context,
+                    Evidence = EvidenceEnum.FoundBody,
+                    Room = room,
+                    Urgency = 0.7f,
+                    ReplyToClaim = claim.Id,
                 });
             }
         }
