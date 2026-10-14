@@ -40,12 +40,32 @@ namespace AMG.AI.Services.ChatService
         [
             "in", "at", "near", "by", "the", "a", "around", "its", "it", "is", "was", "from", "outside", "inside",
             "next", "to", "rn", "right", "now", "tho", "though", "yeah", "yea", "yep", "uh", "um", "lol", "and",
-            "room", "area", "bro", "pls", "plz",
+            "room", "area", "bro", "pls", "plz", "yes", "ye",
         ];
 
         public static readonly HashSet<string> SelfWords = ["i", "im", "me", "my", "myself", "ive"];
 
         public static readonly HashSet<string> BodyWords = ["body", "bodies", "corpse", "dead", "found", "died", "report", "reported"];
+
+        // "red didnt vent" must never match the template "{target} vented": negation has to agree.
+        public static readonly HashSet<string> Negators =
+        [
+            "not", "no", "nope", "never", "dont", "didnt", "doesnt", "wasnt", "werent", "isnt", "arent",
+            "cant", "cannot", "wont", "couldnt", "neither", "nor",
+        ];
+
+        // "Doe" + s = "does": these are real words, never a possessive of a player ("red's" = "reds").
+        public static readonly HashSet<string> PossessiveBlocklist =
+            ["does", "goes", "says", "was", "has", "his", "its", "yes", "this", "thus", "gas", "bus", "plus", "less", "miss", "ass", "us", "as"];
+
+        // Words a short sentence may leave out of a longer template without changing its meaning ("red vented" for
+        // "{target} vented, I saw it!"). Anything not listed here (vent, kill, scan...) is meaning and must be present.
+        public static readonly HashSet<string> SoftWords =
+        [
+            "i", "im", "saw", "see", "it", "idk", "maybe", "lowkey", "tbh", "fr", "lol", "bro", "sure", "think", "pretty",
+            "just", "really", "literally", "honestly", "ngl", "imo", "so", "but", "and", "the", "a", "is", "was", "tho",
+            "though", "btw", "yeah", "yea", "yes", "ye", "ok", "that", "this", "they", "them",
+        ];
 
         public static readonly HashSet<string> WhereWords = ["where", "wheres", "loc", "location"];
 

@@ -6,6 +6,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>12</LangVersion>
     <Nullable>disable</Nullable>
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
     <ImplicitUsings>disable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <UseAppHost>false</UseAppHost>
@@ -19,5 +20,8 @@
     <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatOutbox.cs" />
     <Compile Include="$(AmgRoot)/AI/Services/ChatService/ClaimStore.cs" />
     <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatParser.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatParser.Templates.cs" />
+    <Compile Include="$(AmgRoot)/Models/ChatService/PhraseBank.cs" />
+    <None Include="$(AmgRoot)/Data/ReferencesForAmongUsDataFile/PhraseBank.json" Link="PhraseBank.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

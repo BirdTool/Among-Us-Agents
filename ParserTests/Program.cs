@@ -1,5 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using AMG.Models.ChatService;
 using AMG.AI.Services.ChatService;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
@@ -7,14 +12,20 @@ using AMG.Models.ChatService;
 static class T
 {
     static int fail, pass;
-    static readonly Dictionary<SystemTypes, string> Rooms = new()
+    static readonly LanguagePack Pack = LoadPack();
+    static Dictionary<SystemTypes, string> Rooms => Pack.Rooms;
+
+    static LanguagePack LoadPack()
     {
-        [SystemTypes.Hallway] = "the hallway", [SystemTypes.Storage] = "Storage", [SystemTypes.Cafeteria] = "Cafeteria",
-        [SystemTypes.Reactor] = "Reactor", [SystemTypes.UpperEngine] = "Upper Engine", [SystemTypes.Nav] = "Navigation",
-        [SystemTypes.Admin] = "Admin", [SystemTypes.Electrical] = "Electrical", [SystemTypes.LifeSupp] = "O2",
-        [SystemTypes.Shields] = "Shields", [SystemTypes.MedBay] = "Medbay", [SystemTypes.Security] = "Security",
-        [SystemTypes.Weapons] = "Weapons", [SystemTypes.LowerEngine] = "Lower Engine", [SystemTypes.Comms] = "Comms",
-    };
+        var opt = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true,
+            Converters = { new JsonStringEnumConverter() },
+        };
+        var path = Path.Combine(AppContext.BaseDirectory, "PhraseBank.json");
+        return JsonSerializer.Deserialize<PhraseBankData>(File.ReadAllText(path), opt).Languages["en"];
+    }
+
     static readonly List<ChatPlayer> Players =
     [
         new(0, "Guilherme", "Cyan"), new(1, "James Smith", "Red"), new(2, "Luna Doe", "White"),
@@ -24,7 +35,7 @@ static class T
 
     static ParseResult P(byte sender, string text, bool register = true)
     {
-        var r = ChatParser.Parse(text, sender, ClaimStore.Context, Players, Rooms);
+        var r = ChatParser.Parse(text, sender, ClaimStore.Context, Players, Rooms, Pack.Phrases);
         if (register && r.Intent != null) ClaimStore.Register(sender, r.Intent, false, r.Confidence);
         return r;
     }
@@ -111,6 +122,94 @@ static class T
         var aq = ClaimStore.Register(3, new ChatIntent { Type = ChatIntentEnum.Question, PhraseId = "Body_Location" }, true, 1f);
         ClaimStore.Register(1, new ChatIntent { Type = ChatIntentEnum.Report, PhraseId = "Body_Location", Room = SystemTypes.Admin }, true, 1f);
         Check("agent report closes agent question", aq.Status == ClaimStatus.Answered);
+
+        Console.WriteLine("\n== free sentences matched against the PhraseBank");
+        void T(string txt, string id, ChatIntentEnum? type = null, byte? target = null, SystemTypes? room = null, float at = 20, byte sender = 0)
+        {
+            NewMeeting(); UnityEngine.Time.time = at;
+            var r = P(sender, txt, false);
+            bool ok = r.Intent != null && r.Intent.PhraseId == id && (type == null || r.Intent.Type == type)
+                && (target == null || r.Intent.Target == target) && (room == null || r.Intent.Room == room);
+            Check($"'{txt}'", ok, r);
+        }
+        void NotId(string txt, string id)
+        {
+            NewMeeting(); UnityEngine.Time.time = 20;
+            var r = P(0, txt, false);
+            Check($"'{txt}' must not be {id}", r.Intent == null || r.Intent.PhraseId != id, r);
+        }
+        T("i saw red vent in cafe", "Vent_Culprit", ChatIntentEnum.Accuse, 1, SystemTypes.Cafeteria);
+        T("red vented", "Vent_Culprit", ChatIntentEnum.Accuse, 1, null, 3);
+        T("saw james kill someone in admin", "Kill_Culprit", ChatIntentEnum.Accuse, 1, SystemTypes.Admin);
+        T("vote james", "Vote_Request", null, 1);
+        T("lets vote luna", "Vote_Request", null, 2);
+        T("who saw luna in nav?", "Seen_In_Room", ChatIntentEnum.Question, 2, SystemTypes.Nav);
+        T("i saw mary in electrical", "Seen_In_Room", ChatIntentEnum.Report, 5, SystemTypes.Electrical);
+        T("yeah james was in admin", "Seen_In_Room", ChatIntentEnum.Confirm, 1, SystemTypes.Admin);
+        T("i trust mary", "Vouch_Generic", ChatIntentEnum.Vouch, 5);
+        T("did anyone see the kill?", "Kill_Witness", ChatIntentEnum.Question);
+        T("why do you suspect james?", "Suspicion_Why", ChatIntentEnum.Question, 1);
+        T("reds wires looked weird", "Fake_Wires_Order", null, 1);
+        T("why was the meeting called?", "Meeting_Reason", ChatIntentEnum.Question, null, null, 3);
+        T("does anyone have info?", "Info_Ask", ChatIntentEnum.Question);
+        T("i didnt see anything", "Info_None", ChatIntentEnum.Report);
+        T("i didnt see james in cafe", "Not_Seen_In_Room", ChatIntentEnum.Report, 1, SystemTypes.Cafeteria);
+        T("ok", "Ack_Generic");
+        T("skip this one", "Vote_Skip");
+        T("i was never in admin", "Seen_In_Room", ChatIntentEnum.Deny, null, SystemTypes.Admin);
+        NotId("red didnt vent", "Vent_Culprit");
+        NotId("red never vented", "Vent_Culprit");
+        NotId("james didnt kill anyone", "Kill_Culprit");
+
+        Console.WriteLine("\n== body location said before / late");
+        NewMeeting(); UnityEngine.Time.time = 25;
+        { var r = P(0, "it was in electrical", false); Check("late 'it was in electrical' with nobody having said it", Is(r, ChatIntentEnum.Report, "Body_Location", SystemTypes.Electrical), r); }
+        { var r = P(0, "elec", false); Check("late bare 'elec' stays unknown", r.Intent == null, r); }
+        NewMeeting(); UnityEngine.Time.time = 3;
+        ClaimStore.Register(1, new ChatIntent { Type = ChatIntentEnum.Report, PhraseId = "Body_Location", Room = SystemTypes.Electrical }, true, 1f);
+        UnityEngine.Time.time = 9;
+        { var r = P(0, "yeah elec", false); Check("'yeah elec' confirms", Is(r, ChatIntentEnum.Confirm, "Body_Location", SystemTypes.Electrical), r); }
+        { var r = P(0, "nav", false); Check("'nav' disputes (different room)", Is(r, ChatIntentEnum.Report, "Body_Location", SystemTypes.Nav), r); }
+        { var r = P(0, "body in electrical", false); Check("'body in electrical' agrees", Is(r, ChatIntentEnum.Confirm, "Body_Location", SystemTypes.Electrical), r); }
+        NotId("saw red vent", "Vent_Witness");           // a statement must not become the question "Who saw {target} vent?"
+        foreach (var vague in new[] { "i saw red", "saw red", "red?" })
+        {
+            NewMeeting(); UnityEngine.Time.time = 20;
+            var r = P(0, vague, false);
+            Check($"'{vague}' is too vague to become an accusation/claim", r.Intent == null, r);
+        }
+        NotId("red vented?", "Vent_Culprit");           // asking, not accusing
+
+        Console.WriteLine("\n== round trip: every variant of the bank, placeholders filled, must come back as its own group");
+        int total = 0, strict = 0, idOnly = 0;
+        var fails = new List<string>();
+        foreach (var g in Pack.Phrases)
+        foreach (var v in g.Phrases)
+        {
+            total++;
+            string text = v.Text.Replace("{target}", "James").Replace("{subject}", "Luna").Replace("{witness}", "Mary").Replace("{room}", "Cafeteria");
+            NewMeeting(); UnityEngine.Time.time = g.Context == ChatContextEnum.MeetingStart ? 3 : 20;
+            var r = P(0, text, false);
+            string gid = g.Id == "Whereabouts_Player" ? "Whereabouts_Ask" : g.Id; // same question, roaming vs meeting
+            bool idOk = r.Intent != null && r.Intent.PhraseId == gid;
+            bool typeOk = idOk && r.Intent.Type == g.Intent;
+            // identical text living in several groups cannot be told apart: accept any group that really has this text
+            if (!typeOk && r.Intent != null)
+            {
+                string norm = AMG.AI.Services.ChatService.ChatLexicon.Normalize(text);
+                bool same = Pack.Phrases.Any(o => o.Id == r.Intent.PhraseId && o.Intent == r.Intent.Type &&
+                    o.Phrases.Any(p => AMG.AI.Services.ChatService.ChatLexicon.Normalize(p.Text.Replace("{target}", "James").Replace("{subject}", "Luna").Replace("{witness}", "Mary").Replace("{room}", "Cafeteria")) == norm));
+                if (same) { typeOk = true; idOk = true; }
+            }
+            bool needsState = r.Rationale.StartsWith("room only") || (g.Id == "Body_Location" && g.Intent == ChatIntentEnum.Confirm);
+            if (!typeOk && needsState) { total--; continue; } // answers that only make sense after somebody else spoke
+            if (idOk) idOnly++;
+            if (typeOk) strict++;
+            else fails.Add($"{g.Id}/{g.Intent}: \"{text}\" -> {(r.Intent == null ? "UNKNOWN (" + r.Rationale + ")" : r.Intent.PhraseId + "/" + r.Intent.Type)}");
+        }
+        foreach (var f in fails.Take(60)) Console.WriteLine("   miss  " + f);
+        Console.WriteLine($"round trip: {strict}/{total} exact (id+intent), {idOnly}/{total} id only, {fails.Count} misses");
+        Check("round trip >= 90% exact", strict * 100 >= total * 90);
 
         Console.WriteLine($"\n{pass} passed, {fail} failed");
         Environment.Exit(fail == 0 ? 0 : 1);

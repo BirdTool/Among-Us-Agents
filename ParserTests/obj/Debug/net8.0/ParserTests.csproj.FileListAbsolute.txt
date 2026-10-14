@@ -1,3 +1,4 @@
+/home/guilherme/Documentos/Projetos/AmongUsAIAgent/ParserTests/bin/Debug/net8.0/PhraseBank.json
 /home/guilherme/Documentos/Projetos/AmongUsAIAgent/ParserTests/bin/Debug/net8.0/ParserTests.deps.json
 /home/guilherme/Documentos/Projetos/AmongUsAIAgent/ParserTests/bin/Debug/net8.0/ParserTests.runtimeconfig.json
 /home/guilherme/Documentos/Projetos/AmongUsAIAgent/ParserTests/bin/Debug/net8.0/ParserTests.dll

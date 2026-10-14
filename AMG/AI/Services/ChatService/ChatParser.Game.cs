@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AMG.AI.Services.ChatService.History;
 using AMG.Enums.ChatServiceEnums;
+using AMG.Models.ChatService;
 using AMG.Utilities;
 using UnityEngine;
 
@@ -9,9 +10,10 @@ namespace AMG.AI.Services.ChatService
 {
     public static partial class ChatParser
     {
-        private static object _roomsSource;
-        private static string _roomsLanguage;
+        private static object _languageSource;
+        private static string _languageName;
         private static Dictionary<SystemTypes, string> _rooms = [];
+        private static IReadOnlyList<PhraseGroup> _groups;
 
         public static MessageParsedData Parse(PlayerControl sender, string text, ChatContextEnum context)
         {
@@ -22,7 +24,8 @@ namespace AMG.AI.Services.ChatService
                 players.Add(new ChatPlayer(p.PlayerId, p.Data.PlayerName ?? "", Utils.Colours.GetPlayerColor(p)?.ToString() ?? ""));
             }
 
-            var result = Parse(text, sender.PlayerId, context, players, GetRooms());
+            LoadLanguage();
+            var result = Parse(text, sender.PlayerId, context, players, _rooms, _groups);
 
             return new MessageParsedData
             {
@@ -38,22 +41,27 @@ namespace AMG.AI.Services.ChatService
             };
         }
 
-        private static Dictionary<SystemTypes, string> GetRooms()
+        // Room names and phrase groups of the active language pack; rebuilt only when the bank or the language changes.
+        private static void LoadLanguage()
         {
             var index = PhraseBank.Index;
-            if (ReferenceEquals(index, _roomsSource) && _roomsLanguage == Realizer.Language) return _rooms;
+            if (ReferenceEquals(index, _languageSource) && _languageName == Realizer.Language) return;
 
             var rooms = new Dictionary<SystemTypes, string>();
+            IReadOnlyList<PhraseGroup> groups = null;
+
             if (index.TryGetLanguage(Realizer.Language, out var lang) || index.TryGetLanguage(Realizer.DefaultLanguage, out lang))
             {
                 foreach (SystemTypes room in Enum.GetValues(typeof(SystemTypes)))
                     if (lang.TryGetRoom(room, out var name)) rooms[room] = name;
+
+                groups = lang.Groups;
             }
 
-            _roomsSource = index;
-            _roomsLanguage = Realizer.Language;
+            _languageSource = index;
+            _languageName = Realizer.Language;
             _rooms = rooms;
-            return rooms;
+            _groups = groups;
         }
     }
 }

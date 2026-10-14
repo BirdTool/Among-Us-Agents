@@ -28,6 +28,8 @@ namespace AMG.AI.Services.ChatService
         private sealed class Entities
         {
             public bool[] Consumed;
+            public int[] Kind;                                   // per token: 0 plain, 1 room, 2 player, 3 continuation of the previous entity
+            public readonly List<byte?> PlayerSlots = [];        // in order of appearance; null = a player was named but is ambiguous
             public readonly List<byte> Players = [];
             public bool PlayerAmbiguous;
             public SystemTypes? Room;
@@ -35,7 +37,8 @@ namespace AMG.AI.Services.ChatService
         }
 
         public static ParseResult Parse(string text, byte senderId, ChatContextEnum context,
-            IReadOnlyList<ChatPlayer> players, IReadOnlyDictionary<SystemTypes, string> rooms)
+            IReadOnlyList<ChatPlayer> players, IReadOnlyDictionary<SystemTypes, string> rooms,
+            IReadOnlyList<PhraseGroup> groups = null)
         {
             var tokens = ChatLexicon.Normalize(text).Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
             if (tokens.Count == 0) return Unknown("empty");
@@ -49,8 +52,12 @@ namespace AMG.AI.Services.ChatService
             bool youWord = tokens.Any(ChatLexicon.YouWords.Contains);
             bool abbrev = tokens.Any(ChatLexicon.WhereYouAbbrev.Contains);
 
+            bool negated = tokens.Any(ChatLexicon.Negators.Contains);
+
             // 1) "white wya?" / "where were you white" -> asking somebody where they were
-            if (ent.Players.Count == 1 && !ent.PlayerAmbiguous && ent.Players[0] != senderId && (abbrev || (asksWhere && youWord)))
+            //    (not when it carries a room or a negation: "I didn't see you in cafe, where were you?" is Not_Seen_In_Room)
+            if (ent.Players.Count == 1 && !ent.PlayerAmbiguous && ent.Players[0] != senderId && ent.Room == null && !negated
+                && (abbrev || (asksWhere && youWord)))
             {
                 return Ok(new ChatIntent
                 {
@@ -66,13 +73,17 @@ namespace AMG.AI.Services.ChatService
                     0.9f, "body location question");
             }
 
-            // a question about a room ("body in elec?") needs the Confirm/Deny flow, not here yet
-            if (ent.Room != null && hasBody && hasQuestionMark)
-                return Unknown("body/room question (not supported yet)");
-
-            // 3) "body in electrical" / "found in elec"
-            if (ent.Room is { } bodyRoom && ent.Players.Count == 0 && hasBody)
+            // 3) "body in electrical" / "found in elec" ("body in elec?" is a question: templates decide, see below)
+            if (ent.Room is { } bodyRoom && ent.Players.Count == 0 && hasBody && !hasQuestionMark)
             {
+                // same room as the one already said = agreeing with it
+                var said = ClaimStore.Latest("Body_Location", ChatIntentEnum.Report);
+                if (said != null && said.Intent.Room == bodyRoom && said.ClaimerId != senderId)
+                {
+                    return Ok(new ChatIntent { Type = ChatIntentEnum.Confirm, PhraseId = "Body_Location", Context = context, Room = bodyRoom },
+                        0.85f, "agrees with the body location already said");
+                }
+
                 return Ok(new ChatIntent { Type = ChatIntentEnum.Report, PhraseId = "Body_Location", Context = context, Room = bodyRoom },
                     0.85f, "body location statement");
             }
@@ -116,15 +127,38 @@ namespace AMG.AI.Services.ChatService
                         0.7f - hedge, "own location statement");
                 }
 
-                // nobody asked, nobody said where the body is, meeting just started: most likely the reporter
-                if (!ClaimStore.Any("Body_Location", ChatIntentEnum.Report) && ClaimStore.Elapsed <= BodyGuessWindow)
+                var already = ClaimStore.Latest("Body_Location", ChatIntentEnum.Report);
+
+                // the room was already said: a bare room now agrees with it or disputes it
+                if (already != null && already.ClaimerId != senderId && already.Intent.Room != null)
+                {
+                    bool same = already.Intent.Room == room;
+                    return Ok(new ChatIntent
+                    {
+                        Type = same ? ChatIntentEnum.Confirm : ChatIntentEnum.Report, PhraseId = "Body_Location", Context = context, Room = room,
+                    }, 0.7f - hedge, same ? "bare room agrees with the body location said" : "bare room differs from the body location said");
+                }
+
+                // nobody said where the body is: early in the meeting (the reporter), or later if they say "it was in X"
+                bool refersToIt = tokens.Contains("it");
+                if (already == null && (ClaimStore.Elapsed <= BodyGuessWindow || refersToIt))
                 {
                     return Ok(new ChatIntent { Type = ChatIntentEnum.Report, PhraseId = "Body_Location", Context = context, Room = room },
-                        0.6f - hedge, "guess: first room at meeting start = body location");
+                        (ClaimStore.Elapsed <= BodyGuessWindow ? 0.6f : 0.55f) - hedge, "guess: first room said = body location");
                 }
 
                 return Unknown("room only, nothing to attach it to");
             }
+
+            // 5) anything else: look for the closest sentence in the PhraseBank itself
+            if (groups != null)
+            {
+                var matched = MatchTemplates(tokens, ent, groups, context);
+                if (matched != null) return matched;
+            }
+
+            if (ent.Room != null && hasBody && hasQuestionMark)
+                return Unknown("body/room question with no template for it");
 
             return Unknown("no rule matched");
         }
@@ -132,7 +166,7 @@ namespace AMG.AI.Services.ChatService
 
         private static Entities Extract(List<string> tokens, IReadOnlyList<ChatPlayer> players, IReadOnlyDictionary<SystemTypes, string> rooms)
         {
-            var e = new Entities { Consumed = new bool[tokens.Count] };
+            var e = new Entities { Consumed = new bool[tokens.Count], Kind = new int[tokens.Count] };
             int n = tokens.Count;
 
             // rooms (strong aliases, longest first)
@@ -143,17 +177,20 @@ namespace AMG.AI.Services.ChatService
                 {
                     SetRoom(e, two);
                     e.Consumed[i] = e.Consumed[i + 1] = true;
+                    e.Kind[i] = 1; e.Kind[i + 1] = 3;
                     i++;
                 }
                 else if (strong.TryGetValue(tokens[i], out var one))
                 {
                     SetRoom(e, one);
                     e.Consumed[i] = true;
+                    e.Kind[i] = 1;
                 }
                 else if (ChatLexicon.AmbiguousRoomWords.Contains(tokens[i]))
                 {
                     e.RoomAmbiguous = true;
                     e.Consumed[i] = true;
+                    e.Kind[i] = 1;
                 }
             }
 
@@ -167,17 +204,20 @@ namespace AMG.AI.Services.ChatService
                 {
                     AddPlayers(e, ids2);
                     e.Consumed[i] = e.Consumed[i + 1] = true;
+                    e.Kind[i] = 2; e.Kind[i + 1] = 3;
                     i++;
                 }
                 else if (keys.TryGetValue(tokens[i], out var ids1))
                 {
                     AddPlayers(e, ids1);
                     e.Consumed[i] = true;
+                    e.Kind[i] = 2;
                 }
                 else if (TryFuzzy(tokens[i], keys, out var fuzzy))
                 {
                     AddPlayers(e, fuzzy);
                     e.Consumed[i] = true;
+                    e.Kind[i] = 2;
                 }
             }
 
@@ -192,6 +232,7 @@ namespace AMG.AI.Services.ChatService
 
                     e.Room = weak;
                     e.Consumed[i] = true;
+                    e.Kind[i] = 1;
                     break;
                 }
             }
@@ -207,8 +248,10 @@ namespace AMG.AI.Services.ChatService
 
         private static void AddPlayers(Entities e, List<byte> ids)
         {
-            if (ids.Count != 1) { e.PlayerAmbiguous = true; return; }
-            if (!e.Players.Contains(ids[0])) e.Players.Add(ids[0]);
+            if (ids.Count != 1) { e.PlayerAmbiguous = true; e.PlayerSlots.Add(null); return; }
+            if (e.Players.Contains(ids[0])) return; // the same player named twice is still one slot
+            e.Players.Add(ids[0]);
+            e.PlayerSlots.Add(ids[0]);
         }
 
         private static Dictionary<string, SystemTypes> BuildStrongRooms(IReadOnlyDictionary<SystemTypes, string> rooms)
@@ -234,6 +277,13 @@ namespace AMG.AI.Services.ChatService
         {
             var keys = new Dictionary<string, List<byte>>();
 
+            // "red's wires" is normalised to "reds wires"
+            void AddPossessive(string word, byte id)
+            {
+                var poss = word + "s";
+                if (word.Length >= 3 && !ChatLexicon.PossessiveBlocklist.Contains(poss) && !IsKnownWord(poss)) Add(poss, id);
+            }
+
             void Add(string key, byte id)
             {
                 if (key.Length < 2) return;
@@ -248,11 +298,11 @@ namespace AMG.AI.Services.ChatService
                 {
                     Add(name, p.Id);
                     foreach (var word in name.Split(' '))
-                        if (!ChatLexicon.StopNames.Contains(word)) Add(word, p.Id);
+                        if (!ChatLexicon.StopNames.Contains(word)) { Add(word, p.Id); AddPossessive(word, p.Id); }
                 }
 
                 var color = ChatLexicon.Normalize(p.Color);
-                if (color.Length > 0) Add(color, p.Id);
+                if (color.Length > 0) { Add(color, p.Id); if (!color.Contains(' ')) AddPossessive(color, p.Id); }
             }
 
             return keys;

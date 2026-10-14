@@ -68,6 +68,9 @@ namespace AMG.AI.Services.ChatService
         public static bool Any(string phraseId, ChatIntentEnum? type = null) =>
             _claims.Any(c => c.Intent.PhraseId == phraseId && (type == null || c.Intent.Type == type));
 
+        public static Claim Latest(string phraseId, ChatIntentEnum? type = null) =>
+            _claims.LastOrDefault(c => c.Intent.PhraseId == phraseId && (type == null || c.Intent.Type == type));
+
         public static Claim FindById(int id) => _claims.FirstOrDefault(c => c.Id == id);
         public static Claim OpenQuestionFor(byte answererId) =>
             LatestOpenQuestion(c => c.Intent.Target == answererId && c.ClaimerId != answererId);
