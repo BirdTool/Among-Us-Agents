@@ -6,7 +6,8 @@ using AMG.Models.ChatService;
 
 namespace AMG.AI.Services.ChatService
 {
-    public readonly record struct ChatPlayer(byte Id, string Name, string Color);
+    // The colour as the game displays it (may be translated); another way players may refer to them.
+    public readonly record struct ChatPlayer(byte Id, string Name, string Color, string ColorAlt = null);
 
     public sealed class ParseResult
     {
@@ -25,6 +26,9 @@ namespace AMG.AI.Services.ChatService
         // A bare room with no open question counts as the body location only this early in the meeting
         private const float BodyGuessWindow = 15f;
 
+        /// <summary>A bare room only agrees/disagrees with a body location said this recently.</summary>
+        private const float BodyReplyWindow = 25f;
+
         private sealed class Entities
         {
             public bool[] Consumed;
@@ -42,6 +46,9 @@ namespace AMG.AI.Services.ChatService
         {
             var tokens = ChatLexicon.Normalize(text).Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
             if (tokens.Count == 0) return Unknown("empty");
+
+            tokens = SplitGlued(tokens, players);
+            tokens = [.. tokens.Select(t => ChatLexicon.Typos.TryGetValue(t, out var fixedWord) ? fixedWord : t)];
 
             bool hasQuestionMark = tokens.Contains("?");
             var ent = Extract(tokens, players, rooms);
@@ -78,7 +85,7 @@ namespace AMG.AI.Services.ChatService
             {
                 // same room as the one already said = agreeing with it
                 var said = ClaimStore.Latest("Body_Location", ChatIntentEnum.Report);
-                if (said != null && said.Intent.Room == bodyRoom && said.ClaimerId != senderId)
+                if (said != null && said.Age <= BodyReplyWindow && said.Intent.Room == bodyRoom && said.ClaimerId != senderId)
                 {
                     return Ok(new ChatIntent { Type = ChatIntentEnum.Confirm, PhraseId = "Body_Location", Context = context, Room = bodyRoom },
                         0.85f, "agrees with the body location already said");
@@ -89,7 +96,7 @@ namespace AMG.AI.Services.ChatService
             }
 
             // 4) bare room: "elec", "upper", "it was in nav" -> an answer to whatever was just asked
-            bool onlyFillers = OnlyFillers(tokens, ent.Consumed, -1);
+            bool onlyFillers = OnlyFillers(tokens, ent.Consumed, -1, selfRef);
 
             if (ent.Room == null && ent.RoomAmbiguous && ent.Players.Count == 0 && onlyFillers)
                 return Unknown("ambiguous room (engine: upper or lower?)");
@@ -130,7 +137,7 @@ namespace AMG.AI.Services.ChatService
                 var already = ClaimStore.Latest("Body_Location", ChatIntentEnum.Report);
 
                 // the room was already said: a bare room now agrees with it or disputes it
-                if (already != null && already.ClaimerId != senderId && already.Intent.Room != null)
+                if (already != null && already.Age <= BodyReplyWindow && already.ClaimerId != senderId && already.Intent.Room != null)
                 {
                     bool same = already.Intent.Room == room;
                     return Ok(new ChatIntent
@@ -168,6 +175,8 @@ namespace AMG.AI.Services.ChatService
             var tokens = ChatLexicon.Normalize(text).Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
             if (tokens.Count == 0) return "";
 
+            tokens = SplitGlued(tokens, players);
+
             var ent = Extract(tokens, players, rooms);
             var parts = new List<string>(tokens.Count);
             for (int i = 0; i < tokens.Count; i++)
@@ -199,7 +208,7 @@ namespace AMG.AI.Services.ChatService
                     e.Kind[i] = 1; e.Kind[i + 1] = 3;
                     i++;
                 }
-                else if (strong.TryGetValue(tokens[i], out var one))
+                else if (TryStrongRoom(strong, tokens[i], out var one))
                 {
                     SetRoom(e, one);
                     e.Consumed[i] = true;
@@ -257,6 +266,38 @@ namespace AMG.AI.Services.ChatService
             }
 
             return e;
+        }
+
+        // "storages", "meds", "cams": the plural of an alias is the same room
+        private static bool TryStrongRoom(Dictionary<string, SystemTypes> strong, string token, out SystemTypes room) =>
+            strong.TryGetValue(token, out room)
+            || (token.Length >= 4 && token.EndsWith('s') && strong.TryGetValue(token[..^1], out room));
+
+        // "maroonwya" -> "maroon wya" (a player and a keyword typed without the space).
+        private static List<string> SplitGlued(List<string> tokens, IReadOnlyList<ChatPlayer> players)
+        {
+            List<string> result = null;
+            HashSet<string> keys = null;
+
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                var t = tokens[i];
+                if (t.Length >= 5 && (t.EndsWith("wya") || t.EndsWith("wru")))
+                {
+                    keys ??= [.. BuildPlayerKeys(players).Keys];
+                    var prefix = t[..^3];
+                    if (keys.Contains(prefix))
+                    {
+                        result ??= [.. tokens.Take(i)];
+                        result.Add(prefix);
+                        result.Add(t[^3..]);
+                        continue;
+                    }
+                }
+                result?.Add(t);
+            }
+
+            return result ?? tokens;
         }
 
         private static void SetRoom(Entities e, SystemTypes room)
@@ -321,7 +362,16 @@ namespace AMG.AI.Services.ChatService
                 }
 
                 var color = ChatLexicon.Normalize(p.Color);
-                if (color.Length > 0) { Add(color, p.Id); if (!color.Contains(' ')) AddPossessive(color, p.Id); }
+                if (color.Length > 0)
+                {
+                    Add(color, p.Id);
+                    if (!color.Contains(' ')) AddPossessive(color, p.Id);
+                    if (ChatLexicon.ColorNicknames.TryGetValue(color, out var nicks))
+                        foreach (var nick in nicks) { Add(nick, p.Id); AddPossessive(nick, p.Id); }
+                }
+
+                var shown = ChatLexicon.Normalize(p.ColorAlt);   // the colour as the (maybe translated) game shows it
+                if (shown.Length > 0 && shown != color) { Add(shown, p.Id); if (!shown.Contains(' ')) AddPossessive(shown, p.Id); }
             }
 
             return keys;
@@ -361,13 +411,14 @@ namespace AMG.AI.Services.ChatService
             return edits + (a.Length - i) + (b.Length - j) <= 1;
         }
 
-        private static bool OnlyFillers(List<string> tokens, bool[] consumed, int except)
+        private static bool OnlyFillers(List<string> tokens, bool[] consumed, int except, bool selfTalk = false)
         {
             for (int i = 0; i < tokens.Count; i++)
             {
                 if (i == except || consumed[i]) continue;
                 var t = tokens[i];
                 if (t == "?" || ChatLexicon.Fillers.Contains(t) || ChatLexicon.SelfWords.Contains(t)) continue;
+                if (selfTalk && ChatLexicon.StateWords.Contains(t)) continue;
                 return false;
             }
             return true;

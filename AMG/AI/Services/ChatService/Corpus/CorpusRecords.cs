@@ -35,9 +35,34 @@ namespace AMG.AI.Services.ChatService.Corpus
         public string Text { get; set; }
     }
 
+    // LOCAL ONLY (ChatRaw.jsonl): what was actually typed, joined to the shareable records by Id.
+    public sealed class CorpusRaw
+    {
+        public string Kind { get; set; } = "raw";
+        public string Id { get; set; }
+        public string Raw { get; set; }
+    }
+
+    public sealed class CorpusRosterPlayer
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Color { get; set; }
+    }
+
+    // LOCAL ONLY (ChatRaw.jsonl): who was in the match, so old messages can be re-masked when the parser improves.
+    public sealed class CorpusRoster
+    {
+        public string Kind { get; set; } = "roster";
+        public string Session { get; set; }
+        public int Meeting { get; set; }
+        public List<CorpusRosterPlayer> Players { get; set; } = [];
+    }
+
     public sealed class CorpusMessage
     {
         public string Kind { get; set; } = "msg";
+        public string Id { get; set; }                // session-meeting-seq: the key into ChatRaw.jsonl
         public string Session { get; set; }
         public int Meeting { get; set; }
         public float At { get; set; }                 // seconds since the meeting started

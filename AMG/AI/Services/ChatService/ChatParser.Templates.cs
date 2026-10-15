@@ -116,7 +116,8 @@ namespace AMG.AI.Services.ChatService
             var messagePlain = Grams(plain);
             var wordsPlain = new HashSet<string>(plain);
             bool negated = masked.Any(ChatLexicon.Negators.Contains);
-            bool hasContent = plain.Any(t => t != PlayerSlot && t != "?" && !ChatLexicon.SoftWords.Contains(t) && !ChatLexicon.Fillers.Contains(t));
+            bool hasContent = plain.Any(t => t != PlayerSlot && t != "?" && !ChatLexicon.SoftWords.Contains(t) && !ChatLexicon.Fillers.Contains(t)
+                && !ChatLexicon.Interrogatives.Contains(t));
 
             bool messageAsks = masked.Contains("?");
 

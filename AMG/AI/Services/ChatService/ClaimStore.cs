@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
-using UnityEngine;
 
 namespace AMG.AI.Services.ChatService
 {
@@ -21,6 +20,8 @@ namespace AMG.AI.Services.ChatService
         public int? ReplyToClaimId;
 
         public bool IsQuestion => Intent.Type == ChatIntentEnum.Question;
+
+        public float Age => UnityEngine.Time.time - Time;
     }
 
     // Public record of what was SAID in the current meeting (shared by every agent, reset on each meeting).

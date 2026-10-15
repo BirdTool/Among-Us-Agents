@@ -11,7 +11,7 @@ namespace AMG.AI.Services.ChatService
         {
             if (string.IsNullOrWhiteSpace(text)) return "";
 
-            var decomposed = text.ToLowerInvariant().Normalize(NormalizationForm.FormD);
+            var decomposed = text.ToLowerInvariant().Normalize(NormalizationForm.FormKD);
             var sb = new StringBuilder(decomposed.Length + 4);
             char last = '\0';
             int run = 0;
@@ -40,7 +40,7 @@ namespace AMG.AI.Services.ChatService
         [
             "in", "at", "near", "by", "the", "a", "around", "its", "it", "is", "was", "from", "outside", "inside",
             "next", "to", "rn", "right", "now", "tho", "though", "yeah", "yea", "yep", "uh", "um", "lol", "and",
-            "room", "area", "bro", "pls", "plz", "yes", "ye",
+            "room", "area", "bro", "pls", "plz", "yes", "ye", "on", "into", "towards", "toward",
         ];
 
         public static readonly HashSet<string> SelfWords = ["i", "im", "me", "my", "myself", "ive"];
@@ -66,6 +66,50 @@ namespace AMG.AI.Services.ChatService
             "just", "really", "literally", "honestly", "ngl", "imo", "so", "but", "and", "the", "a", "is", "was", "tho",
             "though", "btw", "yeah", "yea", "yes", "ye", "ok", "that", "this", "they", "them",
         ];
+
+        // Movement/state words that carry no information next to a room WHEN the speaker talks about themselves:
+        // "i just entered {room}", "i was locked in {room}", "im going to {room}".
+        public static readonly HashSet<string> StateWords =
+        [
+            "just", "then", "entered", "enter", "went", "going", "heading", "headed", "walking", "walked", "ran", "running",
+            "passed", "came", "coming", "arrived", "standing", "stood", "checking", "waiting", "tasking", "doing", "locked", "stuck", "trapped",
+        ];
+
+        // A question word alone ("who?", "what") never stands for a longer question that merely contains it.
+        public static readonly HashSet<string> Interrogatives = ["who", "whom", "what", "why", "how", "when", "which", "where"];
+
+        // How people actually type it (typos, shortenings). Applied to tokens before matching.
+        public static readonly Dictionary<string, string> Typos = new()
+        {
+            ["wher"] = "where", ["whre"] = "where", ["wyere"] = "where", ["wheer"] = "where",
+            ["skkip"] = "skip", ["skp"] = "skip",
+            ["vot"] = "vote", ["vite"] = "vote",
+            ["okey"] = "ok", ["okay"] = "ok", ["alr"] = "ok", ["alright"] = "ok", ["aight"] = "ok",
+            ["sm1"] = "someone",
+        };
+
+        // Game colour ids in the order the game numbers them (language independent, unlike the displayed colour name).
+        public static readonly string[] ColorNamesById =
+            ["red", "blue", "green", "pink", "orange", "yellow", "black", "white", "purple", "brown", "cyan", "lime", "maroon", "rose", "banana", "gray", "tan", "coral", "fortegreen"];
+
+        public static string ColorName(int colorId) => colorId >= 0 && colorId < ColorNamesById.Length ? ColorNamesById[colorId] : "";
+
+        // Shortenings players use for a colour ("nana" is banana, "purp" is purple).
+        public static readonly Dictionary<string, string[]> ColorNicknames = new()
+        {
+            ["banana"] = ["nana", "bana", "banan", "bnn"],
+            ["purple"] = ["purp", "purpl"],
+            ["orange"] = ["org", "orng"],
+            ["black"] = ["blk", "blck"],
+            ["white"] = ["wht"],
+            ["gray"] = ["grey", "gry"],
+            ["brown"] = ["brn"],
+            ["cyan"] = ["cyn"],
+            ["pink"] = ["pnk"],
+            ["green"] = ["grn"],
+            ["yellow"] = ["yel", "yllw"],
+            ["blue"] = ["blu"],
+        };
 
         public static readonly HashSet<string> WhereWords = ["where", "wheres", "loc", "location"];
 
@@ -95,6 +139,7 @@ namespace AMG.AI.Services.ChatService
             ["admin"] = SystemTypes.Admin,
             ["electrical"] = SystemTypes.Electrical, ["elec"] = SystemTypes.Electrical, ["elect"] = SystemTypes.Electrical, ["electric"] = SystemTypes.Electrical, ["electricity"] = SystemTypes.Electrical,
             ["lower engine"] = SystemTypes.LowerEngine, ["lowerengine"] = SystemTypes.LowerEngine, ["lower"] = SystemTypes.LowerEngine, ["lower e"] = SystemTypes.LowerEngine, ["low engine"] = SystemTypes.LowerEngine,
+            ["medicine"] = SystemTypes.MedBay,
             ["upper engine"] = SystemTypes.UpperEngine, ["upperengine"] = SystemTypes.UpperEngine, ["upper"] = SystemTypes.UpperEngine, ["upper e"] = SystemTypes.UpperEngine, ["up engine"] = SystemTypes.UpperEngine,
             ["security"] = SystemTypes.Security, ["cams"] = SystemTypes.Security, ["cameras"] = SystemTypes.Security, ["camera"] = SystemTypes.Security,
             ["reactor"] = SystemTypes.Reactor, ["reac"] = SystemTypes.Reactor,

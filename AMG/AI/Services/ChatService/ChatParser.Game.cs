@@ -15,15 +15,28 @@ namespace AMG.AI.Services.ChatService
         private static Dictionary<SystemTypes, string> _rooms = [];
         private static IReadOnlyList<PhraseGroup> _groups;
 
-        public static List<ChatPlayer> SnapshotPlayers(out IReadOnlyDictionary<SystemTypes, string> rooms)
+        // Adds the players currently in the match to the roster (call it early: players may leave later).
+        public static List<ChatPlayer> RememberPlayers()
         {
-            var players = new List<ChatPlayer>();
+            var current = new List<ChatPlayer>();
             foreach (var p in Utils.Players.AllPlayers)
             {
                 if (p == null || p.Data == null) continue;
-                players.Add(new ChatPlayer(p.PlayerId, p.Data.PlayerName ?? "", Utils.Colours.GetPlayerColor(p)?.ToString() ?? ""));
+
+                // the colour id does not depend on the game's language; the displayed colour name does
+                string color = p.Data.DefaultOutfit != null ? ChatLexicon.ColorName(p.Data.DefaultOutfit.ColorId) : "";
+                if (color.Length == 0) color = Utils.Colours.GetPlayerColor(p)?.ToString() ?? "";
+
+                current.Add(new ChatPlayer(p.PlayerId, p.Data.PlayerName ?? "", color, p.Data.ColorName));
             }
 
+            return ChatRoster.Merge(current);
+        }
+
+        // Everybody seen in the match and the room names of the active language, for the parser and the corpus.
+        public static List<ChatPlayer> SnapshotPlayers(out IReadOnlyDictionary<SystemTypes, string> rooms)
+        {
+            var players = RememberPlayers();
             LoadLanguage();
             rooms = _rooms;
             return players;

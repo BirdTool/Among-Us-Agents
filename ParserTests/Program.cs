@@ -212,6 +212,39 @@ static class T
         Console.WriteLine($"round trip: {strict}/{total} exact (id+intent), {idOnly}/{total} id only, {fails.Count} misses");
         Check("round trip >= 90% exact", strict * 100 >= total * 90);
 
+        Console.WriteLine("\n== real messages from the first corpus (UnknownMessages.jsonl)");
+        var withColors = new List<ChatPlayer>(Players) { new(7, "Zed", "Banana"), new(8, "Kai", "Gray"), new(9, "Lia", "Purple", "Roxo") };
+        ParseResult PC(byte sender, string text, float at = 20) { NewMeeting(); UnityEngine.Time.time = at; return ChatParser.Parse(text, sender, ClaimStore.Context, withColors, Rooms, Pack.Phrases); }
+        void Mask2(string txt, string expected) { var m = ChatParser.MaskEntities(txt, withColors, Rooms); Check($"mask '{txt}' -> '{m}'", m == expected); }
+        Mask2("nana imp", "{player} imp");                         // "nana" is banana, not a name
+        Mask2("not nana or red", "not {player} or {player}");
+        Mask2("purp was in cafe rn", "{player} was in {room} rn");
+        Mask2("roxo safe", "{player} safe");                       // the colour as a translated game shows it
+        Mask2("grey is dead", "{player} is dead");
+        Mask2("maroonwya", "maroonwya");                           // maroon is not in this lobby: nothing to mask
+        Mask2("redwya", "{player} wya");
+        Mask2("ＺＥＤ is sus", "{player} is sus");                  // fullwidth letters fold to plain ones
+        { var r = PC(0, "i was on cafeteria"); Check("'i was on cafeteria' is an alibi", Is(r, ChatIntentEnum.Defend, "Alibi_Tasks", SystemTypes.Cafeteria), r); }
+        { var r = PC(0, "i was locked in electrical"); Check("'i was locked in electrical' is an alibi", Is(r, ChatIntentEnum.Defend, "Alibi_Tasks", SystemTypes.Electrical), r); }
+        { var r = PC(0, "i just entered admin"); Check("'i just entered admin' is an alibi", Is(r, ChatIntentEnum.Defend, "Alibi_Tasks", SystemTypes.Admin), r); }
+        { var r = PC(0, "i was in medicine"); Check("'medicine' is medbay", Is(r, ChatIntentEnum.Defend, "Alibi_Tasks", SystemTypes.MedBay), r); }
+        { var r = PC(0, "i was in storages"); Check("'storages' is storage", Is(r, ChatIntentEnum.Defend, "Alibi_Tasks", SystemTypes.Storage), r); }
+        { var r = PC(0, "maroonwya".Replace("maroon", "red")); Check("glued 'redwya' asks red", Is(r, ChatIntentEnum.Question, "Whereabouts_Ask", null, 1), r); }
+        foreach (var typo in new[] { "wher", "wyere", "whre" })
+        { var r = PC(1, typo + "?"); Check($"'{typo}?' is the body question", Is(r, ChatIntentEnum.Question, "Body_Location"), r); }
+        { var r = PC(0, "skkip"); Check("'skkip' is skip", r.Intent != null && r.Intent.PhraseId == "Vote_Skip", r); }
+        { var r = PC(0, "vot james"); Check("'vot james' is a vote request", r.Intent != null && r.Intent.PhraseId == "Vote_Request" && r.Intent.Target == 1, r); }
+        { var r = PC(0, "okey"); Check("'okey' is ok", r.Intent != null && r.Intent.PhraseId == "Ack_Generic", r); }
+        foreach (var qw in new[] { "who", "who?", "what", "why", "how" })
+        { var r = PC(0, qw); Check($"'{qw}' alone is a reaction, not Kill_Witness", r.Intent == null || r.Intent.PhraseId != "Kill_Witness", r); }
+        NewMeeting(); UnityEngine.Time.time = 3;
+        ClaimStore.Register(0, new ChatIntent { Type = ChatIntentEnum.Report, PhraseId = "Body_Location", Room = SystemTypes.Security }, true, 1f);
+        UnityEngine.Time.time = 46;
+        { var r = ChatParser.Parse("in electrical", 1, ClaimStore.Context, withColors, Rooms, Pack.Phrases); Check("'in electrical' 43s later does NOT dispute the body location", r.Intent == null || r.Intent.PhraseId != "Body_Location", r); }
+        UnityEngine.Time.time = 12;
+        { var r = ChatParser.Parse("electrical", 1, ClaimStore.Context, withColors, Rooms, Pack.Phrases); Check("'electrical' 9s later does dispute it", Is(r, ChatIntentEnum.Report, "Body_Location", SystemTypes.Electrical), r); }
+        Check("colour ids follow the game's numbering", ChatLexicon.ColorName(14) == "banana" && ChatLexicon.ColorName(15) == "gray" && ChatLexicon.ColorName(12) == "maroon" && ChatLexicon.ColorName(99) == "");
+
         Console.WriteLine("\n== corpus: safety filter (judges messages, never players)");
         var filter = ChatSafetyFilter.Parse(ChatSafetyFilter.DefaultFile.Split('\n'));
         void Safe(string txt, string expectedCategory, bool expectedDrop)
@@ -278,6 +311,16 @@ static class T
             Events = [new CorpusEvent { Type = "phantom_vanish", SecBefore = 14.2f }] });
         Check("meeting record carries marked events", meetingLine.Contains("phantom_vanish") && meetingLine.Contains("\"secBefore\":14.2"));
         Check("lines parse back as JSON", System.Text.Json.JsonDocument.Parse(line).RootElement.GetProperty("bucket").GetString() == "unknown");
+
+        Console.WriteLine("\n== corpus: raw text lives in its own local file, joined by id");
+        var shareable = CorpusJson.Line(new CorpusMessage { Id = "ab12cd-3-5", Session = "ab12cd", Meeting = 3, At = 2f, Speaker = "S1", Text = "i was with {player}", Bucket = "unknown" });
+        var local = CorpusJson.Line(new CorpusRaw { Id = "ab12cd-3-5", Raw = "i was with rose" });
+        var roster = CorpusJson.Line(new CorpusRoster { Session = "ab12cd", Meeting = 3, Players = [new CorpusRosterPlayer { Id = 2, Name = "Someone", Color = "rose" }] });
+        Console.WriteLine("   " + shareable); Console.WriteLine("   " + local); Console.WriteLine("   " + roster);
+        Check("shareable line has the id and no raw field", shareable.Contains("\"id\":\"ab12cd-3-5\"") && !shareable.Contains("\"raw\""));
+        Check("shareable line never carries the original text", !shareable.Contains("with rose"));
+        Check("local line carries the original under the same id", local.Contains("\"raw\":\"i was with rose\"") && local.Contains("ab12cd-3-5"));
+        Check("roster line has names (local file only)", roster.Contains("\"name\":\"Someone\"") && roster.Contains("\"kind\":\"roster\""));
 
         Console.WriteLine($"\n{pass} passed, {fail} failed");
         Environment.Exit(fail == 0 ? 0 : 1);
