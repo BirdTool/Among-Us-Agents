@@ -22,6 +22,9 @@
     <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatParser.cs" />
     <Compile Include="$(AmgRoot)/AI/Services/ChatService/ChatParser.Templates.cs" />
     <Compile Include="$(AmgRoot)/Models/ChatService/PhraseBank.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Corpus/ChatSafetyFilter.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Corpus/ChatRedactor.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Corpus/CorpusRecords.cs" />
     <None Include="$(AmgRoot)/Data/ReferencesForAmongUsDataFile/PhraseBank.json" Link="PhraseBank.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

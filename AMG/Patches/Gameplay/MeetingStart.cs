@@ -1,7 +1,7 @@
 using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Corpus;
 using HarmonyLib;
 using AMG.Utilities;
-using System.Collections.Generic;
 using AMG.Utilities.MapUtils;
 
 namespace AMG.Patches.Gameplay
@@ -14,6 +14,7 @@ namespace AMG.Patches.Gameplay
             ClaimStore.Reset();
             ReplicatedChat.Clear();
             ChatOutbox.Clear();
+            ChatCorpus.OnMeetingStart();
 
             if (!Utils.IsFreePlay) return;
             TableSpawnLocations.MakeAllAgentsSpawnAtTable();

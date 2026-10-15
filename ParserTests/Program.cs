@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AMG.Models.ChatService;
 using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Corpus;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 
@@ -210,6 +211,73 @@ static class T
         foreach (var f in fails.Take(60)) Console.WriteLine("   miss  " + f);
         Console.WriteLine($"round trip: {strict}/{total} exact (id+intent), {idOnly}/{total} id only, {fails.Count} misses");
         Check("round trip >= 90% exact", strict * 100 >= total * 90);
+
+        Console.WriteLine("\n== corpus: safety filter (judges messages, never players)");
+        var filter = ChatSafetyFilter.Parse(ChatSafetyFilter.DefaultFile.Split('\n'));
+        void Safe(string txt, string expectedCategory, bool expectedDrop)
+        {
+            var v = filter.Check(txt);
+            Check($"'{txt}' -> {(expectedCategory ?? "clean")}{(expectedDrop ? " (dropped)" : "")}", v.Category == expectedCategory && v.Drop == expectedDrop);
+        }
+        foreach (var clean in new[] { "red vented in cafe", "i was in essex", "assassin", "cocktail", "analysis", "scunthorpe", "class pass grass bass",
+                 "dickens", "sus", "o2", "where was it", "vote james", "i saw him s", "x y" })
+            Safe(clean, null, false);
+        foreach (var bad in new[] { "sex", "SEX!!!", "s3x", "s e x", "s.e.x", "seeeex", "red is sexy", "h0rny", "porn" })
+            Safe(bad, "sexual", true);
+        Safe("kys", "harassment", true);
+        Safe("k y s", "harassment", true);
+        Safe("kill yourself red", "harassment", true);
+        Safe("wtf shit", "profanity", false);
+        Safe("holy shit red vented", "profanity", false);
+        Safe("fuck sex", "sexual", true);                 // the worse category wins over a merely flagged one
+        Safe("sexo", "sexual", true);
+        var weakened = ChatSafetyFilter.Parse(ChatSafetyFilter.DefaultFile.Split('\n').Concat(new[] { "# user emptied everything else" }));
+        Check("user file can only add: defaults still apply", weakened.Check("sex").Drop);
+        var extended = ChatSafetyFilter.Parse(ChatSafetyFilter.DefaultFile.Split('\n').Concat(new[] { "[hate]", "examplebadword" }));
+        Check("user terms are added", extended.Check("you examplebadword").Category == "hate");
+
+        Console.WriteLine("\n== corpus: contact info drops the whole message");
+        foreach (var c in new[] { "add me on discord", "https://foo.gg/x", "www.site.com", "foo.com", "mail me john@x.com", "user#1234", "call 11999998888", "@streamer on twitch", "snap me" })
+            Check($"'{c}' is contact", ChatRedactor.HasContactInfo(c));
+        foreach (var c in new[] { "red vented in cafe at 2", "o2", "sus", "meet at 12:30", "1 2 3", "i did 2 tasks", "where?" })
+            Check($"'{c}' is not contact", !ChatRedactor.HasContactInfo(c));
+
+        Console.WriteLine("\n== corpus: names never reach the stored text");
+        void Mask(string txt, string expected)
+        {
+            var m = ChatParser.MaskEntities(txt, Players, Rooms);
+            Check($"'{txt}' -> '{m}'", m == expected);
+        }
+        Mask("james vented in cafe", "{player} vented in {room}");
+        Mask("I saw James's body in admin", "i saw {player} body in {room}");
+        Mask("where?", "where?");
+        Mask("red and blue were in nav", "{player} and {player} were in {room}");
+        Mask("cristian is sus", "{player} is sus");
+        Mask("luna doe poofed", "{player} poofed");
+        Mask("red farted", "{player} farted");
+        Mask("elec", "{room}");
+        Mask("wait one sec", "wait one sec");
+        Mask("does anyone have info?", "does anyone have info?");
+        foreach (var name in new[] { "james", "smith", "luna", "cristiano", "mary" })
+        {
+            var m = ChatParser.MaskEntities($"{name} did something near {name}s task", Players, Rooms);
+            Check($"'{name}' is masked", !m.Contains(name));
+        }
+
+        Console.WriteLine("\n== corpus: one JSON object per line");
+        var msg = new CorpusMessage { Session = "ab12cd", Meeting = 2, At = 4.3f, Speaker = "S1", Text = "{player} poofed", Bucket = "unknown", Reason = "no rule matched",
+            Prev = [new CorpusPrev { Speaker = "me", Text = "where?" }], Open = ["Body_Location"] };
+        var line = CorpusJson.Line(msg);
+        Console.WriteLine("   " + line);
+        Check("single line", !line.Contains('\n'));
+        Check("camelCase + kind", line.Contains("\"kind\":\"msg\"") && line.Contains("\"speaker\":\"S1\""));
+        Check("{player} not escaped", line.Contains("{player} poofed"));
+        var filtered = CorpusJson.Line(new CorpusMessage { Session = "ab12cd", Meeting = 2, At = 1f, Speaker = "S2", Bucket = "filtered", Category = "sexual" });
+        Check("filtered record has no text field", !filtered.Contains("\"text\""));
+        var meetingLine = CorpusJson.Line(new CorpusMeeting { Session = "ab12cd", Meeting = 2, Utc = "2026-10-15T12:00:00Z", Alive = 9,
+            Events = [new CorpusEvent { Type = "phantom_vanish", SecBefore = 14.2f }] });
+        Check("meeting record carries marked events", meetingLine.Contains("phantom_vanish") && meetingLine.Contains("\"secBefore\":14.2"));
+        Check("lines parse back as JSON", System.Text.Json.JsonDocument.Parse(line).RootElement.GetProperty("bucket").GetString() == "unknown");
 
         Console.WriteLine($"\n{pass} passed, {fail} failed");
         Environment.Exit(fail == 0 ? 0 : 1);

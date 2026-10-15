@@ -163,6 +163,25 @@ namespace AMG.AI.Services.ChatService
             return Unknown("no rule matched");
         }
 
+        public static string MaskEntities(string text, IReadOnlyList<ChatPlayer> players, IReadOnlyDictionary<SystemTypes, string> rooms)
+        {
+            var tokens = ChatLexicon.Normalize(text).Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+            if (tokens.Count == 0) return "";
+
+            var ent = Extract(tokens, players, rooms);
+            var parts = new List<string>(tokens.Count);
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                switch (ent.Kind[i])
+                {
+                    case 0: parts.Add(tokens[i]); break;
+                    case 1: parts.Add("{room}"); break;
+                    case 2: parts.Add("{player}"); break;
+                }
+            }
+
+            return string.Join(' ', parts).Replace(" ?", "?");
+        }
 
         private static Entities Extract(List<string> tokens, IReadOnlyList<ChatPlayer> players, IReadOnlyDictionary<SystemTypes, string> rooms)
         {

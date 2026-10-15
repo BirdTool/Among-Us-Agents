@@ -68,6 +68,10 @@ namespace AMG.AI.Services.ChatService
         public static bool Any(string phraseId, ChatIntentEnum? type = null) =>
             _claims.Any(c => c.Intent.PhraseId == phraseId && (type == null || c.Intent.Type == type));
 
+        public static List<string> OpenQuestionPhraseIds() =>
+            [.. _claims.Where(c => c.Status == ClaimStatus.Open && c.IsQuestion && UnityEngine.Time.time - c.Time <= QuestionMaxAge)
+                   .Select(c => c.Intent.PhraseId).Distinct()];
+
         public static Claim Latest(string phraseId, ChatIntentEnum? type = null) =>
             _claims.LastOrDefault(c => c.Intent.PhraseId == phraseId && (type == null || c.Intent.Type == type));
 

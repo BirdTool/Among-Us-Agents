@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AMG.AI.Services.ChatService.Corpus;
 using AMG.AI.Services.ChatService.History;
 using AMG.Utilities;
 using UnityEngine;
@@ -59,17 +60,23 @@ namespace AMG.AI.Services.ChatService
                 parsed = ChatParser.Parse(sender, text, context);
             }
 
+            // What real players type may contain names, links or worse: it is stored/logged only masked or dropped
+            // (the agents' own messages are ours, so they are shown as they are).
+            string shown = parsed.FromAgent ? text : ChatCorpus.Record(sender, text, parsed);
+            string who = parsed.FromAgent ? sender.Data.PlayerName : "player";
+            if (!parsed.FromAgent) parsed.Content = shown;
+
             MessagesParsedHistory.AddMessage(parsed);
 
             if (parsed.Intent == null)
             {
-                LogManager.LogDebug($"[Chat] not understood: {sender.Data.PlayerName}: \"{text}\" ({parsed.Rationale})");
+                LogManager.LogDebug($"[Chat] not understood: {who}: \"{shown}\" ({parsed.Rationale})");
                 return;
             }
 
             var claim = ClaimStore.Register(parsed.SenderId, parsed.Intent, parsed.FromAgent, parsed.Confidence);
 
-            LogManager.LogDebug($"[Chat] #{claim.Id} {sender.Data.PlayerName}: \"{text}\" => {parsed.Intent.Type}/{parsed.Intent.PhraseId} " +
+            LogManager.LogDebug($"[Chat] #{claim.Id} {who}: \"{shown}\" => {parsed.Intent.Type}/{parsed.Intent.PhraseId} " +
                 $"room={parsed.Intent.Room} target={parsed.Intent.Target} conf={parsed.Confidence:0.00} ({parsed.Rationale})");
 
             foreach (var brain in Utils.GetAllStructuredAgentBrain())

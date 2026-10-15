@@ -15,7 +15,7 @@ namespace AMG.AI.Services.ChatService
         private static Dictionary<SystemTypes, string> _rooms = [];
         private static IReadOnlyList<PhraseGroup> _groups;
 
-        public static MessageParsedData Parse(PlayerControl sender, string text, ChatContextEnum context)
+        public static List<ChatPlayer> SnapshotPlayers(out IReadOnlyDictionary<SystemTypes, string> rooms)
         {
             var players = new List<ChatPlayer>();
             foreach (var p in Utils.Players.AllPlayers)
@@ -25,7 +25,14 @@ namespace AMG.AI.Services.ChatService
             }
 
             LoadLanguage();
-            var result = Parse(text, sender.PlayerId, context, players, _rooms, _groups);
+            rooms = _rooms;
+            return players;
+        }
+
+        public static MessageParsedData Parse(PlayerControl sender, string text, ChatContextEnum context)
+        {
+            var players = SnapshotPlayers(out var rooms);
+            var result = Parse(text, sender.PlayerId, context, players, rooms, _groups);
 
             return new MessageParsedData
             {
