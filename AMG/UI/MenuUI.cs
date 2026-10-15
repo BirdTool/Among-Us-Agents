@@ -35,7 +35,7 @@ public class MenuUI(IntPtr ptr) : MonoBehaviour(ptr)
     {
         if (InputFocusUtils.IsTypingInInputField()) return;
 
-        KeyCode toggleKey = KeyCode.Delete;
+        KeyCode toggleKey = KeyCode.Insert;
 
         if (AMGPlugin.MenuKeybind != null && !string.IsNullOrEmpty(AMGPlugin.MenuKeybind.Value))
         {

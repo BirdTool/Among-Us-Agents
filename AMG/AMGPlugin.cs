@@ -44,7 +44,7 @@ public partial class AMGPlugin : BasePlugin
 
         MenuKeybind = Config.Bind("AMG.GUI",
                                "Keybind",
-                               "Delete",
+                               "Insert",
                                "The keyboard key used to toggle the GUI on and off. List of supported keycodes: https://docs.unity3d.com/Packages/com.unity.tiny@0.16/api/Unity.Tiny.Input.KeyCode.html");
 
         MenuHtmlColor = Config.Bind("AMG.GUI",
