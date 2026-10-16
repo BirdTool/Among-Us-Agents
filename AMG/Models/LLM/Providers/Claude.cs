@@ -5,10 +5,11 @@ using AMG.Interfaces;
 
 namespace AMG.Models.LLM.Providers
 {
-    public class ClaudeClient(string key, uint index) : ILLMClient
+    public class ClaudeClient(string key, uint index, string clientId) : ILLMClient
     {
         public uint Index { get; } = index;
         public string Key { get; } = key;
+        public string ClientId { get; } = clientId;
         public LlmProvider Provider => LlmProvider.Claude;
         
         public ILLMResponse<string, T> Request<T>(ILLMRequest<T> llm)

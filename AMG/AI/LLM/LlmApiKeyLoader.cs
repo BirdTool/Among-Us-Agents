@@ -10,7 +10,7 @@ namespace AMG.AI.LLM
     {
         public static readonly string FilePath = ModPaths.Data("PrivateConfig", "config.cfg");
 
-        private static (LlmProvider provider, string key, uint index)? GetApiKeyFromLine(string line)
+        private static (LlmProvider provider, string key, uint index, string clientId)? GetApiKeyFromLine(string line)
         {
             if (string.IsNullOrWhiteSpace(line))
                 return null;
@@ -37,8 +37,10 @@ namespace AMG.AI.LLM
             if (string.IsNullOrWhiteSpace(key))
                 return null;
 
+            string clientId = $"{providerStr.ToUpperInvariant()}_KEY_{index}";
+
             if (Enum.TryParse(providerStr, true, out LlmProvider provider) && Enum.IsDefined(typeof(LlmProvider), provider))
-                return (provider, key, index);
+                return (provider, key, index, clientId);
 
             LogManager.LogWarning($"[LLM] Unknown provider in config.cfg: {providerStr}");
 
@@ -60,9 +62,9 @@ namespace AMG.AI.LLM
                 var parsedData = GetApiKeyFromLine(line);
                 if (parsedData.HasValue)
                 {
-                    var (provider, key, index) = parsedData.Value;
+                    var (provider, key, index, clientId) = parsedData.Value;
                     LogManager.LogInfo($"[LLM] Loaded key for {provider} at index {index}.");
-                    LlmProviderClient.AddClient(LlmProviderClient.CreateClient(provider, key, index));
+                    LlmProviderClient.AddClient(LlmProviderClient.CreateClient(provider, key, index, clientId));
                 }
             }
         }

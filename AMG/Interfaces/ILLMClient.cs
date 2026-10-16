@@ -4,6 +4,7 @@ namespace AMG.Interfaces
 {
     public interface ILLMClient
     {
+        string ClientId { get; }
         uint Index { get; }
         string Key { get; }
         LlmProvider Provider { get; }

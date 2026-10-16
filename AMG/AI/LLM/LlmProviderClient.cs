@@ -25,14 +25,14 @@ namespace AMG.AI.LLM
             Clients.Add(client);
         }
 
-        internal static ILLMClient CreateClient(LlmProvider provider, string key, uint index)
+        internal static ILLMClient CreateClient(LlmProvider provider, string key, uint index, string clientId)
         {
             return provider switch
             {
-                LlmProvider.OpenAI => new OpenAIClient(key, index),
-                LlmProvider.Gemini => new GeminiClient(key, index),
-                LlmProvider.Claude => new ClaudeClient(key, index),
-                LlmProvider.DeepSeek => new DeepSeekClient(key, index),
+                LlmProvider.OpenAI => new OpenAIClient(key, index, clientId),
+                LlmProvider.Gemini => new GeminiClient(key, index, clientId),
+                LlmProvider.Claude => new ClaudeClient(key, index, clientId),
+                LlmProvider.DeepSeek => new DeepSeekClient(key, index, clientId),
                 _ => null
             };
         }

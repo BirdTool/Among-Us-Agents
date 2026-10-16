@@ -7,4 +7,10 @@ namespace AMG.Enums
         OpenAI,
         Claude
     }
+
+    public enum LlmConsumer
+    {
+        ChatService,
+        UnknowMessagesTrainering
+    }
 }
