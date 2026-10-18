@@ -1,20 +1,14 @@
-using System;
-using System.Collections.Generic;
 using AMG.Enums;
-using AMG.Interfaces;
 
 namespace AMG.Models.LLM.Providers
 {
-    public class OpenAIClient(string key, uint index, string clientId) : ILLMClient
+    public class OpenAIClient(string key, uint index, string clientId) : OpenAICompatibleClient(key, index, clientId)
     {
-        public uint Index { get; } = index;
-        public string Key { get; } = key;
-        public string ClientId { get; } = clientId;
-        public LlmProvider Provider => LlmProvider.OpenAI;
-        
-        public ILLMResponse<string, T> Request<T>(ILLMRequest<T> llm)
-        {
-            throw new NotImplementedException();
-        }
+        public override LlmProvider Provider => LlmProvider.OpenAI;
+
+        protected override string DefaultModel => "gpt-5.4-mini";
+        protected override string BaseUrl => "https://api.openai.com/v1";
+
+        protected override string MaxTokensField => "max_completion_tokens";
     }
 }

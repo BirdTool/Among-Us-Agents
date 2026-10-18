@@ -31,7 +31,7 @@ namespace AMG.Models.LLM
             int? inputTokens = null,
             int? outputTokens = null,
             double durationMs = 0,
-            string? errorCode = null)
+            string errorCode = null)
         {
             durationMs = Math.Max(0, durationMs);
 
