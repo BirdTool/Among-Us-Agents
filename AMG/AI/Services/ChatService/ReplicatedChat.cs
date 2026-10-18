@@ -36,6 +36,7 @@ namespace AMG.AI.Services.ChatService
 
         private static void Handle(PlayerControl sender, string text)
         {
+            ClaimStore.NoteMessage();
             var context = ClaimStore.Context;
             MessageParsedData parsed;
 

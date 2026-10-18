@@ -138,6 +138,9 @@ namespace AMG.AI.Services.ChatService
             ["storage"] = SystemTypes.Storage, ["stor"] = SystemTypes.Storage,
             ["admin"] = SystemTypes.Admin,
             ["electrical"] = SystemTypes.Electrical, ["elec"] = SystemTypes.Electrical, ["elect"] = SystemTypes.Electrical, ["electric"] = SystemTypes.Electrical, ["electricity"] = SystemTypes.Electrical,
+            // "upper eng" / "lower eng" is the room; a lone "eng" is the Engineer role ("im eng"), so it is NOT an alias by itself
+            ["lower eng"] = SystemTypes.LowerEngine, ["low eng"] = SystemTypes.LowerEngine,
+            ["upper eng"] = SystemTypes.UpperEngine, ["up eng"] = SystemTypes.UpperEngine,
             ["lower engine"] = SystemTypes.LowerEngine, ["lowerengine"] = SystemTypes.LowerEngine, ["lower"] = SystemTypes.LowerEngine, ["lower e"] = SystemTypes.LowerEngine, ["low engine"] = SystemTypes.LowerEngine,
             ["medicine"] = SystemTypes.MedBay,
             ["upper engine"] = SystemTypes.UpperEngine, ["upperengine"] = SystemTypes.UpperEngine, ["upper"] = SystemTypes.UpperEngine, ["upper e"] = SystemTypes.UpperEngine, ["up engine"] = SystemTypes.UpperEngine,

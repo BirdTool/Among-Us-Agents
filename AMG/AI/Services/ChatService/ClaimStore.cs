@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AMG.Enums.ChatServiceEnums;
@@ -22,6 +23,9 @@ namespace AMG.AI.Services.ChatService
         public bool IsQuestion => Intent.Type == ChatIntentEnum.Question;
 
         public float Age => UnityEngine.Time.time - Time;
+
+        // Position of this message in the meeting (1 = first message). Questions go stale by messages, not only by seconds.
+        public int MessageIndex;
     }
 
     // Public record of what was SAID in the current meeting (shared by every agent, reset on each meeting).
@@ -31,6 +35,14 @@ namespace AMG.AI.Services.ChatService
         public const float StartWindow = 8f;
 
         public const float QuestionMaxAge = 45f;
+
+        public const int QuestionMaxDistance = 8;
+
+        private static int _messageCount;
+
+        public static void NoteMessage() => _messageCount++;
+
+        public static int MessagesBefore => Math.Max(0, _messageCount - 1);
 
         private static readonly List<Claim> _claims = [];
         private static int _nextId = 1;
@@ -44,6 +56,7 @@ namespace AMG.AI.Services.ChatService
         {
             _claims.Clear();
             _nextId = 1;
+            _messageCount = 0;
             MeetingStartedAt = UnityEngine.Time.time;
         }
 
@@ -58,6 +71,7 @@ namespace AMG.AI.Services.ChatService
                 FromAgent = fromAgent,
                 Confidence = confidence,
                 ReplyToClaimId = intent.ReplyToClaim,
+                MessageIndex = _messageCount,
             };
 
             if (!claim.IsQuestion) CloseQuestionAnsweredBy(claim);
@@ -70,7 +84,8 @@ namespace AMG.AI.Services.ChatService
             _claims.Any(c => c.Intent.PhraseId == phraseId && (type == null || c.Intent.Type == type));
 
         public static List<string> OpenQuestionPhraseIds() =>
-            [.. _claims.Where(c => c.Status == ClaimStatus.Open && c.IsQuestion && UnityEngine.Time.time - c.Time <= QuestionMaxAge)
+            [.. _claims.Where(c => c.Status == ClaimStatus.Open && c.IsQuestion && UnityEngine.Time.time - c.Time <= QuestionMaxAge
+                                   && _messageCount - c.MessageIndex <= QuestionMaxDistance)
                    .Select(c => c.Intent.PhraseId).Distinct()];
 
         public static Claim Latest(string phraseId, ChatIntentEnum? type = null) =>
@@ -90,6 +105,7 @@ namespace AMG.AI.Services.ChatService
                 var c = _claims[i];
                 if (c.Status != ClaimStatus.Open || !c.IsQuestion) continue;
                 if (UnityEngine.Time.time - c.Time > QuestionMaxAge) continue;
+                if (_messageCount - c.MessageIndex > QuestionMaxDistance) continue;
                 if (match(c)) return c;
             }
             return null;
