@@ -1,3 +1,4 @@
+using AMG.AI.LLM;
 using AMG.Utilities;
 using AMG.Utilities.KeyDown;
 using BepInEx;
@@ -66,5 +67,6 @@ public partial class AMGPlugin : BasePlugin
 
         LogManager.TransferLogsToAllLogs();
         ModPaths.Initialize();
+        LlmApiKeyLoader.LoadKeys();
     }
 }

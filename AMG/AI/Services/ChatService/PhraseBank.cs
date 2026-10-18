@@ -29,10 +29,10 @@ namespace AMG.AI.Services.ChatService
         };
 
         private static readonly object _lock = new();
-        private static PhraseBankData? _default;
-        private static PhraseBankData? _vivid;
+        private static PhraseBankData _default;
+        private static PhraseBankData _vivid;
         private static bool _vividReadOnly;          // vivid file is from a newer schema: never overwrite it
-        private static volatile PhraseIndex? _index;
+        private static volatile PhraseIndex _index;
 
 
         public static PhraseIndex Index

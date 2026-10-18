@@ -34,7 +34,7 @@ namespace AMG.AI.Services.ChatService
 
         public bool TryGetRoom(SystemTypes room, out string name) => _rooms.TryGetValue(room, out name!);
 
-        public PhraseGroup? Find(string id, ChatIntentEnum intent, ChatContextEnum? context)
+        public PhraseGroup Find(string id, ChatIntentEnum intent, ChatContextEnum? context)
         {
             if (!_byIdIntent.TryGetValue(Key(id, intent), out var candidates)) return null;
 
