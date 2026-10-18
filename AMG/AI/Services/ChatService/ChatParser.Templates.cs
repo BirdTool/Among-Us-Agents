@@ -13,6 +13,9 @@ namespace AMG.AI.Services.ChatService
     {
         private const float TemplateThreshold = 0.72f;
 
+        // Per meaning word the template has and the sentence lacks.
+        private const float MissingMeaningPenalty = 0.12f;
+
         private const string RoomSlot = "zzroomzz";
         private const string PlayerSlot = "zzplayerzz";
 
@@ -28,6 +31,7 @@ namespace AMG.AI.Services.ChatService
             public readonly List<string> PlayerRoles = []; // "target" / "subject" / "witness", in order of appearance
             public bool HasRoom;
             public bool Negated;
+            public string[] MeaningWords;   // words that carry meaning (not slots, fillers, soft words, question words)
         }
 
         private static IReadOnlyList<PhraseGroup> _templatesSource;
@@ -81,6 +85,8 @@ namespace AMG.AI.Services.ChatService
 
             t.Negated = tokens.Any(ChatLexicon.Negators.Contains);
             t.Tokens = [.. tokens];
+            t.MeaningWords = [.. tokens.Where(w => w != PlayerSlot && w != RoomSlot && w != "?" && !ChatLexicon.SoftWords.Contains(w)
+                && !ChatLexicon.Fillers.Contains(w) && !ChatLexicon.Interrogatives.Contains(w)).Distinct()];
             t.Words = [.. tokens];
             t.Grams = Grams(tokens);
             return t;
@@ -136,6 +142,10 @@ namespace AMG.AI.Services.ChatService
                 float dice = Dice(message, t.Grams);
                 if (!t.HasRoom) dice = Math.Max(dice, Dice(messagePlain, t.Grams));
                 if (statementForQuestion) dice -= 0.25f;                    // "body in elec?" is not "Body in {room}"
+
+                // the template says something the sentence does not ("did anyone see X" is not "did anyone see X scan")
+                int missing = t.MeaningWords.Count(w => !wordsPlain.Contains(w));
+                dice -= MissingMeaningPenalty * missing;
 
                 float quality = dice;
 

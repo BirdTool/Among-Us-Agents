@@ -26,7 +26,10 @@ namespace AMG.AI.Services.ChatService
         // A bare room with no open question counts as the body location only this early in the meeting
         private const float BodyGuessWindow = 15f;
 
-        /// <summary>A bare room only agrees/disagrees with a body location said this recently.</summary>
+        // "First room said = the body" only makes sense at the very start of the chat, not after talk about votes.
+        private const int BodyGuessMaxPriorMessages = 2;
+
+        // A bare room only agrees/disagrees with a body location said this recently.
         private const float BodyReplyWindow = 25f;
 
         private sealed class Entities
@@ -148,10 +151,11 @@ namespace AMG.AI.Services.ChatService
 
                 // nobody said where the body is: early in the meeting (the reporter), or later if they say "it was in X"
                 bool refersToIt = tokens.Contains("it");
-                if (already == null && (ClaimStore.Elapsed <= BodyGuessWindow || refersToIt))
+                bool earlyInChat = ClaimStore.Elapsed <= BodyGuessWindow && ClaimStore.MessagesBefore <= BodyGuessMaxPriorMessages;
+                if (already == null && (earlyInChat || refersToIt))
                 {
                     return Ok(new ChatIntent { Type = ChatIntentEnum.Report, PhraseId = "Body_Location", Context = context, Room = room },
-                        (ClaimStore.Elapsed <= BodyGuessWindow ? 0.6f : 0.55f) - hedge, "guess: first room said = body location");
+                        (earlyInChat ? 0.6f : 0.55f) - hedge, "guess: first room said = body location");
                 }
 
                 return Unknown("room only, nothing to attach it to");

@@ -36,6 +36,7 @@ static class T
 
     static ParseResult P(byte sender, string text, bool register = true)
     {
+        ClaimStore.NoteMessage();   // the game counts every message, understood or not
         var r = ChatParser.Parse(text, sender, ClaimStore.Context, Players, Rooms, Pack.Phrases);
         if (register && r.Intent != null) ClaimStore.Register(sender, r.Intent, false, r.Confidence);
         return r;
@@ -244,6 +245,42 @@ static class T
         UnityEngine.Time.time = 12;
         { var r = ChatParser.Parse("electrical", 1, ClaimStore.Context, withColors, Rooms, Pack.Phrases); Check("'electrical' 9s later does dispute it", Is(r, ChatIntentEnum.Report, "Body_Location", SystemTypes.Electrical), r); }
         Check("colour ids follow the game's numbering", ChatLexicon.ColorName(14) == "banana" && ChatLexicon.ColorName(15) == "gray" && ChatLexicon.ColorName(12) == "maroon" && ChatLexicon.ColorName(99) == "");
+
+        Console.WriteLine("\n== 'eng': the Engineer role vs 'upper eng' / 'lower eng' (the room)");
+        Mask2("saw red kill in upper eng", "saw {player} kill in {room}");
+        Mask2("go lower eng and upper eng", "go {room} and {room}");
+        Mask2("im eng", "im eng");                                   // the role: nothing to mask
+        Mask2("who is eng", "who is eng");
+        Mask2("red cd?", "{player} cd?");                            // "blue cd?": asking someone who says they are engineer for their vent cooldown
+        Mask2("im eng cd is 5 sec", "im eng cd is 5 sec");
+        { var r = PC(0, "upper eng", 3); Check("'upper eng' is a bare room", r.Intent != null && r.Intent.Room == SystemTypes.UpperEngine, r); }
+        { var r = PC(0, "eng"); Check("a lone 'eng' is not a room", r.Intent == null || r.Intent.Room == null, r); }
+
+        Console.WriteLine("\n== stale questions (first corpus: a bare room absorbed by a question from long ago)");
+        void Chatter(int n) { for (int i = 0; i < n; i++) P((byte)(4 + i % 3), "random chatter number " + i, false); }
+        NewMeeting(); UnityEngine.Time.time = 2; P(3, "where"); Chatter(3); UnityEngine.Time.time = 8;
+        { var r = P(0, "in electrical", false); Check("3 messages after 'where': still its answer", r.Intent != null && r.Intent.PhraseId == "Body_Location" && r.Intent.ReplyToClaim != null, r); }
+        NewMeeting(); UnityEngine.Time.time = 2; P(3, "where"); Chatter(12); UnityEngine.Time.time = 21;
+        { var r = P(0, "in electrical", false); Check("12 messages after 'where': NOT an answer to it", r.Intent == null || r.Intent.ReplyToClaim == null, r); }
+        NewMeeting(); UnityEngine.Time.time = 2; P(3, "where"); Chatter(12);
+        Check("a question 12 messages old is no longer listed as open", !ClaimStore.OpenQuestionPhraseIds().Contains("Body_Location"));
+        NewMeeting(); UnityEngine.Time.time = 10; P(0, "white wya?"); Chatter(2); UnityEngine.Time.time = 14;
+        { var r = P(2, "nav", false); Check("white answers 'wya' 2 messages later", r.Intent != null && r.Intent.PhraseId == "Alibi_Tasks" && r.Intent.ReplyToClaim != null, r); }
+        NewMeeting(); UnityEngine.Time.time = 10; P(0, "white wya?"); Chatter(10); UnityEngine.Time.time = 25;
+        { var r = P(2, "nav", false); Check("white's 'nav' 10 messages later is not the answer", r.Intent == null || r.Intent.ReplyToClaim == null, r); }
+
+        Console.WriteLine("\n== 'first room said = the body' only at the very start of the chat");
+        NewMeeting(); UnityEngine.Time.time = 3;
+        { var r = P(1, "electrical", false); Check("first message of the chat", Is(r, ChatIntentEnum.Report, "Body_Location", SystemTypes.Electrical), r); }
+        NewMeeting(); UnityEngine.Time.time = 5; Chatter(2);
+        { var r = P(1, "electrical", false); Check("third message: still early", Is(r, ChatIntentEnum.Report, "Body_Location", SystemTypes.Electrical), r); }
+        NewMeeting(); UnityEngine.Time.time = 14; P(1, "we go james first", false); P(2, "but i saw james last round", false); P(0, "vote james first do luna after", false);
+        { var r = P(3, "in electrical", false); Check("after 3 messages about voting it is NOT the body location", r.Intent == null, r); }
+
+        Console.WriteLine("\n== a template that says more than the sentence (first corpus: 'did anyone see X' became Scan_Clear)");
+        { var r = PC(0, "did anyone see james"); Check("'did anyone see james' is not the scan question", r.Intent == null || r.Intent.PhraseId != "Scan_Clear", r); }
+        { var r = PC(0, "did anyone see james scan"); Check("'did anyone see james scan' is", r.Intent != null && r.Intent.PhraseId == "Scan_Clear" && r.Intent.Target == 1, r); }
+        { var r = PC(0, "who saw james scan in medbay?"); Check("'who saw james scan in medbay?' is", r.Intent != null && r.Intent.PhraseId == "Scan_Clear" && r.Intent.Target == 1, r); }
 
         Console.WriteLine("\n== corpus: safety filter (judges messages, never players)");
         var filter = ChatSafetyFilter.Parse(ChatSafetyFilter.DefaultFile.Split('\n'));
