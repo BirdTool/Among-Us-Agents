@@ -15,6 +15,7 @@ namespace AMG.Models.LLM
         public bool HasResponse => !HasError;
 
         public string RequestId { get; init; } = string.Empty;
+        public string ClientId { get; init; } = string.Empty;
         public string ErrorCode { get; init; } = string.Empty;
         public string Model { get; init; } = string.Empty;
         public string FinishReason { get; init; } = string.Empty;

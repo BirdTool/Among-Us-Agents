@@ -22,6 +22,8 @@ namespace AMG.Models.LLM
 
         public string ErrorCode { get; set; } = string.Empty;
 
+        public string ReasoningId { get; set; } = string.Empty;
+
         public static LlmUsageEntry Create(
             string requestId,
             string clientId,
@@ -31,7 +33,8 @@ namespace AMG.Models.LLM
             int? inputTokens = null,
             int? outputTokens = null,
             double durationMs = 0,
-            string errorCode = null)
+            string errorCode = null,
+            string reasoningId = null)
         {
             durationMs = Math.Max(0, durationMs);
 
@@ -51,7 +54,8 @@ namespace AMG.Models.LLM
                 DurationMs = durationMs,
 
                 Success = success,
-                ErrorCode = errorCode ?? string.Empty
+                ErrorCode = errorCode ?? string.Empty,
+                ReasoningId = reasoningId ?? string.Empty
             };
         }
     }

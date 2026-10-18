@@ -146,6 +146,14 @@ namespace AMG.AI.LLM
             return GetStats(e => e.Consumer == consumer);
         }
 
+        public static LlmUsageStats GetReasoningStats(string reasoningId)
+        {
+            if (string.IsNullOrWhiteSpace(reasoningId))
+                throw new ArgumentException("Reasoning ID cannot be empty.", nameof(reasoningId));
+
+            return GetStats(e => string.Equals(e.ReasoningId, reasoningId, StringComparison.Ordinal));
+        }
+
         private static LlmUsageStats GetStats(
             Func<LlmUsageEntry, bool> predicate)
         {

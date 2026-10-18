@@ -127,6 +127,7 @@ namespace AMG.Models.LLM.Providers
                     Error = convertError,
                     ErrorCode = "ParseError",
                     RequestId = requestId,
+                    ClientId = ClientId,
                     Model = call.Model,
                     FinishReason = result.FinishReason,
                     InputTokens = input,
@@ -142,6 +143,7 @@ namespace AMG.Models.LLM.Providers
                 TokenCost = (input ?? 0) + (output ?? 0),
                 Response = value,
                 RequestId = requestId,
+                    ClientId = ClientId,
                 Model = call.Model,
                 FinishReason = result.FinishReason,
                 InputTokens = input,
@@ -347,6 +349,7 @@ namespace AMG.Models.LLM.Providers
                 Error = message,
                 ErrorCode = code,
                 RequestId = requestId,
+                    ClientId = ClientId,
                 Model = model ?? string.Empty,
                 Attempts = attempts
             };
@@ -356,7 +359,8 @@ namespace AMG.Models.LLM.Providers
         {
             var entry = LlmUsageEntry.Create(
                 requestId, ClientId, Provider, consumer, success,
-                input, output, watch.Elapsed.TotalMilliseconds, errorCode);
+                input, output, watch.Elapsed.TotalMilliseconds, errorCode,
+                LlmReasoningContext.CurrentId);
 
             _ = LlmUsageTracker.RecordAsync(entry);
         }
