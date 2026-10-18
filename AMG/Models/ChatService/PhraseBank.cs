@@ -25,11 +25,11 @@ namespace AMG.Models.ChatService
 
         public float Weight { get; set; } = 1f;
 
-        public string? ReplyTo { get; set; }
+        public string ReplyTo { get; set; }
 
         public EvidenceEnum? Evidence { get; set; }
 
-        public List<string>? Tags { get; set; }
+        public List<string> Tags { get; set; }
 
         public PhraseSourceEnum? Source { get; set; }
 
