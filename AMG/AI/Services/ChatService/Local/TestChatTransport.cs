@@ -2,7 +2,7 @@ using AMG.Enums.SafeRpcEnums;
 using AMG.Interfaces;
 using AMG.Utilities;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public class TestChatTransport : IChatTransport
     {

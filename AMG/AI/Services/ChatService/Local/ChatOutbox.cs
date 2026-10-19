@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using AMG.Models.ChatService;
 using UnityEngine;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public static class ChatOutbox
     {

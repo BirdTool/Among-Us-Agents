@@ -3,6 +3,7 @@ using AMG.AI.Mind;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Local;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using HarmonyLib;
@@ -27,8 +28,11 @@ namespace AMG.Patches.RoundPatches
             Pathfinder.Initialize();
 
             // new match: forget the previous one's players, then remember everybody who started this one
-            ChatRoster.Reset();
-            ChatParser.RememberPlayers();
+            if (!ChatMode.IsLlm)
+            {
+                ChatRoster.Reset();
+                ChatParser.RememberPlayers();
+            }
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]

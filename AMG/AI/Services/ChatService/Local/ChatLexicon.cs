@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public static class ChatLexicon
     {

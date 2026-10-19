@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using AMG.AI.Control.AgentController;
 using UnityEngine;
 
-namespace AMG.AI.Services.ChatService.History
+namespace AMG.AI.Services.ChatService.Local.History
 {
     public static class MessagesSentHistory
     {

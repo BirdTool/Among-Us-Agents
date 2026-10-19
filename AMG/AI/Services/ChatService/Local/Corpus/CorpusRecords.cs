@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace AMG.AI.Services.ChatService.Corpus
+namespace AMG.AI.Services.ChatService.Local.Corpus
 {
 
     public sealed class CorpusEvent

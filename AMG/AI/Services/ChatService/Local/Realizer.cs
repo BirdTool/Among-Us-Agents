@@ -4,7 +4,7 @@ using System.Linq;
 using AMG.Models.ChatService;
 using AMG.Utilities;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public static class Realizer
     {

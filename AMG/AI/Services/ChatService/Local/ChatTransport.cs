@@ -1,10 +1,10 @@
 using AMG.AI.Control.AgentController;
-using AMG.AI.Services.ChatService.History;
+using AMG.AI.Services.ChatService.Local.History;
 using AMG.Enums.SafeRpcEnums;
 using AMG.Interfaces;
 using AMG.Utilities;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public class ChatTransport(AgentController brain) : IChatTransport
     {

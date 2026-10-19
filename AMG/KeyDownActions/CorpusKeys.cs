@@ -1,4 +1,4 @@
-using AMG.AI.Services.ChatService.Corpus;
+using AMG.AI.Services.ChatService.Local.Corpus;
 using AMG.Utilities.KeyDown;
 using UnityEngine;
 

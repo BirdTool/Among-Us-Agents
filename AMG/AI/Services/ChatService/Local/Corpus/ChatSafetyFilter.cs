@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace AMG.AI.Services.ChatService.Corpus
+namespace AMG.AI.Services.ChatService.Local.Corpus
 {
     public sealed class SafetyVerdict
     {

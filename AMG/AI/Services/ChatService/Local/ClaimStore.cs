@@ -4,7 +4,7 @@ using System.Linq;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public enum ClaimStatus { Open, Answered }
 

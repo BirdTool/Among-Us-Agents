@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public sealed class LanguageIndex
     {

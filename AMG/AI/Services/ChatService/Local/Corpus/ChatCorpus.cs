@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AMG.AI.Services.ChatService.History;
+using AMG.AI.Services.ChatService.Local.History;
 using AMG.Utilities;
 using UnityEngine;
 
-namespace AMG.AI.Services.ChatService.Corpus
+namespace AMG.AI.Services.ChatService.Local.Corpus
 {
     // Passive collector of what real players say. It only OBSERVES: nothing here sends chat, touches the bank or
     // influences an agent. Output (Among Us_Data/AMG/Corpus/)

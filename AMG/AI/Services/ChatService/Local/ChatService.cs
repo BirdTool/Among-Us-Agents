@@ -4,7 +4,7 @@ using AMG.Interfaces;
 using AMG.Models.ChatService;
 using UnityEngine;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public class ChatServiceClass(IChatTransport chatTransport, uint level, System.Func<byte> getAgentId)
     {
@@ -83,7 +83,7 @@ namespace AMG.AI.Services.ChatService
             }
         }
 
-        private static float TypingDelay(string text, uint level)
+        public static float TypingDelay(string text, uint level)
         {
             float t = Mathf.Clamp01(level / 5f);
             float think = Mathf.Lerp(2.0f, 0.4f, t); 

@@ -10,10 +10,10 @@ namespace AMG.AI.Control.AgentController
     public partial class AgentController
     {
         protected float _lastMessage = 0;
-        protected const byte SkipVotePlayerId = 253;
 
-        public VoteRpcEnums SafeVoteNotExecute(byte playerId)
+        public VoteRpcEnums SafeVoteNotExecute(byte? targetId)
         {
+            byte playerId = targetId ?? Utils.SkipVotePlayerId;
             if (IsDead) return VoteRpcEnums.ERROR_AgentIsDead;
             if (!Utils.IsMeeting) return VoteRpcEnums.ERROR_IsNotInMeeting;
             if (!Utils.IsMeetingVoting) return VoteRpcEnums.ERROR_IsNotInVoteTime;
@@ -29,11 +29,12 @@ namespace AMG.AI.Control.AgentController
             return VoteRpcEnums.SUCCESS;
         }
 
-        public VoteRpcEnums SafeVote(byte playerId)
+        public VoteRpcEnums SafeVote(byte? targetId)
         {
+            byte playerId = targetId ?? Utils.SkipVotePlayerId;
             bool isSkipVote = playerId == unchecked((byte)-1)
                 || playerId >= 250;
-            if (isSkipVote) playerId = SkipVotePlayerId;
+            if (isSkipVote) playerId = Utils.SkipVotePlayerId;
             var result = SafeVoteNotExecute(playerId);
             
             if (result != VoteRpcEnums.SUCCESS) 

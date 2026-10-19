@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using AMG.AI.Services.ChatService.History;
+using AMG.AI.Services.ChatService.Local.History;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 using AMG.Utilities;
 using UnityEngine;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     public static partial class ChatParser
     {

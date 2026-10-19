@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using AMG.AI.Mind.StructuredAgentBrain;
-using AMG.AI.Services.ChatService;
-using AMG.AI.Services.ChatService.History;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.AI.Services.ChatService.Local;
+using AMG.AI.Services.ChatService.Local.History;
 using AMG.Enums.ChatServiceEnums;
+using AMG.Enums.SafeRpcEnums;
 using AMG.Models.ChatService;
 using AMG.Utilities;
 using UnityEngine;
@@ -14,6 +16,7 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
     {
         private const float FollowUpAfter = 8f;
         private readonly ChatServiceClass _chat;
+        private readonly LlmMeetingSession _llm;
         private readonly StructuredAgentBrain _brain;
         private readonly float _startedAt = Time.time;
         private readonly List<(float dueAt, ChatIntent intent)> _delayed = [];
@@ -23,10 +26,29 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
         public ChatContextEnum Context =>
             Time.time - _startedAt < FollowUpAfter ? ChatContextEnum.MeetingStart : ChatContextEnum.MeetingFollowUp;
 
-        public MeetingServiceForStructuredBrain(ChatServiceClass chat, StructuredAgentBrain brain)
+        private readonly List<ChatIntent> _llmOpenings = [];
+        private ChatIntent _llmCurrent;
+        private string _llmText;
+        private float _llmSendAt;
+
+        public MeetingServiceForStructuredBrain(ChatServiceClass chat, StructuredAgentBrain brain) : this(brain)
         {
-            _chat = chat; _brain = brain;
+            _chat = chat;
             PlanOpening();
+        }
+
+        public MeetingServiceForStructuredBrain(LlmMeetingSession llm, StructuredAgentBrain brain) : this(brain)
+        {
+            _llm = llm;
+            PlanOpening();
+        }
+
+        private MeetingServiceForStructuredBrain(StructuredAgentBrain brain) => _brain = brain;
+
+        private void Emit(ChatIntent intent)
+        {
+            if (_chat != null) _chat.Enqueue(intent);
+            else _llmOpenings.Add(intent);
         }
 
         private void PlanOpening()
@@ -36,7 +58,7 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
                 if (m.PlayerId == _brain.AgentId) continue;
 
                 if (m.SawKilling)
-                    _chat.Enqueue(new ChatIntent
+                    Emit(new ChatIntent
                     {
                         Type = ChatIntentEnum.Accuse,
                         PhraseId = "Kill_Culprit",
@@ -50,7 +72,7 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
                     });
 
                 if (m.SawVenting)
-                    _chat.Enqueue(new ChatIntent
+                    Emit(new ChatIntent
                     {
                         Type = ChatIntentEnum.Accuse,
                         PhraseId = "Vent_Culprit",
@@ -66,7 +88,7 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
             if (_brain.KnownBodyRoom is { } bodyRoom)
             {
                 _bodyLocationHandled = true;
-                _chat.Enqueue(new ChatIntent
+                Emit(new ChatIntent
                 {
                     Type = ChatIntentEnum.Report,
                     PhraseId = "Body_Location",
@@ -78,7 +100,7 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
             }
             else
             {
-                _chat.Enqueue(new ChatIntent
+                Emit(new ChatIntent
                 {
                     Type = ChatIntentEnum.Question,
                     PhraseId = "Body_Location",
@@ -87,9 +109,10 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
                 });
             }
         }
-        
+
         public void OnClaim(Claim claim)
         {
+            if (_chat == null) return;
             if (claim.ClaimerId == _brain.AgentId) return;
             if (claim.Confidence < 0.4f) return; // unsure parse: don't react
 
@@ -124,7 +147,59 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
         public void Update()
         {
             for (int i = _delayed.Count - 1; i >= 0; i--)
-                if (Time.time >= _delayed[i].dueAt) { _chat.Enqueue(_delayed[i].intent); _delayed.RemoveAt(i); }
+                if (Time.time >= _delayed[i].dueAt) { Emit(_delayed[i].intent); _delayed.RemoveAt(i); }
+
+            if (_llm != null) TickLlmOpenings();
+        }
+
+        private void TickLlmOpenings()
+        {
+            _llmOpenings.RemoveAll(i => i.IsExpired);
+            if (_llmCurrent != null && !_llmOpenings.Contains(_llmCurrent)) ResetLlmCurrent();
+            if (_llmOpenings.Count == 0) return;
+
+            var best = _llmOpenings[0];
+            foreach (var i in _llmOpenings)
+                if (i.Urgency > best.Urgency) best = i;
+            if (_llmCurrent == null || best.Urgency > _llmCurrent.Urgency)
+            {
+                _llmCurrent = best;
+                _llmText = null;
+            }
+
+            if (_llmText == null)
+            {
+                _llmText = Realizer.Realize(_llmCurrent);
+                if (string.IsNullOrWhiteSpace(_llmText)) { FinishLlmOpening(); return; }
+
+                _llmSendAt = Time.time + ChatServiceClass.TypingDelay(_llmText, _brain.Level);
+            }
+
+            if (Time.time < _llmSendAt) return;
+
+            switch (_llm.Say(_llmText))
+            {
+                case ChatRpcEnums.SUCCESS:
+                case ChatRpcEnums.ERROR_ContentIsEmpty:
+                case ChatRpcEnums.ERROR_ContentIsBiggerThan100:
+                    FinishLlmOpening();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void FinishLlmOpening()
+        {
+            _llmOpenings.Remove(_llmCurrent);
+            ResetLlmCurrent();
+        }
+
+        private void ResetLlmCurrent()
+        {
+            _llmCurrent = null;
+            _llmText = null;
         }
     }
 }

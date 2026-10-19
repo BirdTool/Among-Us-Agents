@@ -42,6 +42,7 @@ namespace AMG.Utilities
         internal static bool IsAirshipMap => (MapNames)GetCurrentMapID() == MapNames.Airship;
         internal static bool IsFungleMap => (MapNames)GetCurrentMapID() == MapNames.Fungle;
         internal static ISabotage CurrentSabotage { get; set; } = null;
+        public const byte SkipVotePlayerId = 253;
 
         public static Action<ISabotage> OnSabotageStarted;
         public static Action OnSabotageEnded;

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace AMG.AI.Services.ChatService.Corpus
+namespace AMG.AI.Services.ChatService.Local.Corpus
 {
     public static class ChatRedactor
     {

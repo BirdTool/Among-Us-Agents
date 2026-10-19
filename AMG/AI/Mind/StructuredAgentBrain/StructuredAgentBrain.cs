@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind.StructuredAgentBrain.Decisions;
 using AMG.AI.Navigation;
-using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.AI.Services.ChatService.Local;
 using AMG.AI.Tools;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
@@ -39,6 +40,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         public SabotageStep currentSabotageStep = null;
 
         public ChatServiceClass ChatService { get; private set; }
+        public LlmMeetingSession LlmMeeting { get; private set; }
 
         private uint _level = 0;
         public uint Level
@@ -96,6 +98,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             Utils.OnSabotageEnded += HandleSabotageEnded;
 
             ChatService = new ChatServiceClass(new ChatTransport(this), Level, () => AgentId);
+            LlmMeeting = new LlmMeetingSession(this);
 
             ChangeRandomDirection();
         }

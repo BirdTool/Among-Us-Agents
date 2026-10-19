@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     // Understands free sentences by comparing them with the PhraseBank itself: every variant of every group is a template,
     // so phrases and groups added later (e.g. by the external AI) are understood without touching C#.

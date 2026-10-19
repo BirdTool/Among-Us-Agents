@@ -4,7 +4,7 @@ using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 using UnityEngine;
 
-namespace AMG.AI.Services.ChatService.History
+namespace AMG.AI.Services.ChatService.Local.History
 {
     public static class MessagesParsedHistory
     {

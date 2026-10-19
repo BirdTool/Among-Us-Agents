@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using AMG.AI.Services.ChatService.Corpus;
-using AMG.AI.Services.ChatService.History;
+using AMG.AI.Services.ChatService.Local.Corpus;
+using AMG.AI.Services.ChatService.Local.History;
 using AMG.Utilities;
 using UnityEngine;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     // Every chat message of the meeting, in arrival order. ChatController.AddChat only enqueues here; Proccess() runs
     // once per frame (MeetingHud.Update) and turns each message into a Claim every agent can react to.

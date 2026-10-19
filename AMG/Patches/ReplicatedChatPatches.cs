@@ -1,4 +1,6 @@
 using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.AI.Services.ChatService.Local;
 using AMG.Utilities;
 using HarmonyLib;
 
@@ -13,6 +15,12 @@ namespace AMG.Patches
         {
             if (!Utils.IsMeeting) return;
             if (sourcePlayer == null || sourcePlayer.Data.IsDead) return;
+
+            if (ChatMode.IsLlm)
+            {
+                LlmMeetingTranscript.Add(sourcePlayer, chatText);
+                return;
+            }
 
             ReplicatedChat.Enqueue(sourcePlayer, chatText);
         }

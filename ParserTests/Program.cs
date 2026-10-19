@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AMG.Models.ChatService;
-using AMG.AI.Services.ChatService;
-using AMG.AI.Services.ChatService.Corpus;
+using AMG.AI.Services.ChatService.Local;
+using AMG.AI.Services.ChatService.Local.Corpus;
 using AMG.Enums.ChatServiceEnums;
 using AMG.Models.ChatService;
 
@@ -198,9 +198,9 @@ static class T
             // identical text living in several groups cannot be told apart: accept any group that really has this text
             if (!typeOk && r.Intent != null)
             {
-                string norm = AMG.AI.Services.ChatService.ChatLexicon.Normalize(text);
+                string norm = AMG.AI.Services.ChatService.Local.ChatLexicon.Normalize(text);
                 bool same = Pack.Phrases.Any(o => o.Id == r.Intent.PhraseId && o.Intent == r.Intent.Type &&
-                    o.Phrases.Any(p => AMG.AI.Services.ChatService.ChatLexicon.Normalize(p.Text.Replace("{target}", "James").Replace("{subject}", "Luna").Replace("{witness}", "Mary").Replace("{room}", "Cafeteria")) == norm));
+                    o.Phrases.Any(p => AMG.AI.Services.ChatService.Local.ChatLexicon.Normalize(p.Text.Replace("{target}", "James").Replace("{subject}", "Luna").Replace("{witness}", "Mary").Replace("{room}", "Cafeteria")) == norm));
                 if (same) { typeOk = true; idOk = true; }
             }
             bool needsState = r.Rationale.StartsWith("room only") || (g.Id == "Body_Location" && g.Intent == ChatIntentEnum.Confirm);

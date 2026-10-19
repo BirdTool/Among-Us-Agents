@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace AMG.AI.Services.ChatService
+namespace AMG.AI.Services.ChatService.Local
 {
     // Everybody who was in the match, even after leaving or dying: players keep being mentioned ("white left"),
     // so their names and colours must still be recognised (and masked) in later messages.
