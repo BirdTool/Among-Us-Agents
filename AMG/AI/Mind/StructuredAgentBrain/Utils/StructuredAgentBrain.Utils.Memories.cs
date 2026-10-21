@@ -32,5 +32,29 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             var memory = GetOrCreateMemory(playerId);
             memory.DecreaseSuspiciusPercentage(value);
         }
+
+        public void SetSuspiciusPercentage(byte playerId, float value)
+        {
+            var memory = GetOrCreateMemory(playerId);
+            memory.SetSuspiciusPercentage(value);
+        }
+
+        public void IncreaseTrust(byte playerId, float value)
+        {
+            var memory = GetOrCreateMemory(playerId);
+            memory.IncreaseTrust(value);
+        }
+
+        public void DecreaseTrust(byte playerId, float value)
+        {
+            var memory = GetOrCreateMemory(playerId);
+            memory.DecreaseTrust(value);
+        }
+
+        public void SetTrust(byte playerId, float value)
+        {
+            var memory = GetOrCreateMemory(playerId);
+            memory.SetTrust(value);
+        }
     }
 }
