@@ -13,14 +13,15 @@ namespace AMG.Patches
         [HarmonyPostfix]
         public static void ReceiveMessages(PlayerControl sourcePlayer, string chatText, bool censor, ChatController __instance)
         {
-            if (!Utils.IsMeeting) return;
             if (sourcePlayer == null || sourcePlayer.Data.IsDead) return;
 
             if (ChatMode.IsLlm)
             {
-                LlmMeetingTranscript.Add(sourcePlayer, chatText);
+                if (Utils.IsMeeting || Utils.IsLobby) LlmMeetingTranscript.Add(sourcePlayer, chatText);
                 return;
             }
+
+            if (!Utils.IsMeeting) return;
 
             ReplicatedChat.Enqueue(sourcePlayer, chatText);
         }

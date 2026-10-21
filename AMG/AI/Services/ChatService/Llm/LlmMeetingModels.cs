@@ -3,16 +3,31 @@ using System.Text.Json.Serialization;
 
 namespace AMG.AI.Services.ChatService.Llm
 {
-    public enum LlmTier { Low, Medium, High }
+    public enum LlmTier { Lobby, Low, Medium, High, Laboratory }
 
     public sealed partial class LlmMeetingSession
     {
         private const int MaxCommandsPerStep = 5;
 
-        private sealed record TierProfile(int MaxSteps, float DeadlineSeconds, string[] Commands);
+        private sealed record TierProfile(
+            int MaxSteps, float DeadlineSeconds, string[] Commands,
+            int MaxTokens = 1024,     // output cap per request
+            float MinInterval = 2f,   // minimum pause between chains
+            int MaxChatLines = 0,     // 0 = whole chat; otherwise only the last N lines
+            bool TrustChat = false,   // chat = orders from the tester
+            bool Lobby = false);      // no role, no meeting
+
+        private static readonly string[] AllCommands = [
+            "send_message", "vote", "wait",
+            "get_role_info", "get_player_info", "get_meeting_observations",
+            "get_notes", "add_notes", "remove_notes",
+            "get_persistent_note", "add_persistent_note", "remove_persistent_note",
+            "change_suspicious", "set_suspicious", "change_trust", "set_trust"
+        ];
 
         private static readonly System.Collections.Generic.Dictionary<LlmTier, TierProfile> Profiles = new()
         {
+            [LlmTier.Lobby] = new(2, 15f, ["send_message", "wait"], MaxTokens: 200, MinInterval: 12f, MaxChatLines: 15, Lobby: true),
             [LlmTier.Low] = new(3, 20f, ["send_message", "vote", "wait"]),
             [LlmTier.Medium] = new(6, 40f, [
                 "send_message", "vote", "wait",
@@ -20,13 +35,8 @@ namespace AMG.AI.Services.ChatService.Llm
                 "get_persistent_note", "add_persistent_note", "remove_persistent_note",
                 "change_suspicious", "set_suspicious", "change_trust", "set_trust"
             ]),
-            [LlmTier.High] = new(12, 90f, [
-                "send_message", "vote", "wait",
-                "get_role_info", "get_player_info", "get_meeting_observations",
-                "get_notes", "add_notes", "remove_notes",
-                "get_persistent_note", "add_persistent_note", "remove_persistent_note",
-                "change_suspicious", "set_suspicious", "change_trust", "set_trust"
-            ]),
+            [LlmTier.High] = new(12, 90f, AllCommands),
+            [LlmTier.Laboratory] = new(15, 120f, AllCommands, MaxTokens: 2048, MinInterval: 1f, TrustChat: true),
         };
 
         private static readonly Dictionary<string, string> CommandDocs = new()

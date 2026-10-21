@@ -1,6 +1,5 @@
 using AMG.UI.Elements;
 using AMG.UI.UIActions;
-using UnityEngine;
 
 namespace AMG.UI.Tabs;
 

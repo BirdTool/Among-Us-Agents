@@ -39,9 +39,6 @@ namespace AMG.AI.Mind.StructuredAgentBrain
 
         public SabotageStep currentSabotageStep = null;
 
-        public ChatServiceClass ChatService { get; private set; }
-        public LlmMeetingSession LlmMeeting { get; private set; }
-
         private uint _level = 0;
         public uint Level
         {
