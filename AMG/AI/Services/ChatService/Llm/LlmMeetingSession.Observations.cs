@@ -12,6 +12,7 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             var sb = new StringBuilder();
             sb.AppendLine("=== Meeting Observations ===");
+            if (!string.IsNullOrEmpty(LlmMeetingContext.Description)) sb.AppendLine(LlmMeetingContext.Description);
 
             if (MeetingHud.Instance != null)
             {

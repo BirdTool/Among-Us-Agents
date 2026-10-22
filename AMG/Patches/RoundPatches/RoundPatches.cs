@@ -3,6 +3,7 @@ using AMG.AI.Mind;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.ChatService.Local;
 using AMG.AI.Tools;
 using AMG.Utilities;
@@ -53,6 +54,9 @@ namespace AMG.Patches.RoundPatches
         [HarmonyPostfix]
         public static void PlayerControl_ReportDeadBody_Postfix(PlayerControl __instance, NetworkedPlayerInfo target)
         {
+            LlmMeetingContext.Capture(__instance, target);
+            if (target == null) return;   // emergency button: there is no body
+
             var body = Utils.Round.CurrentRoundDeadBodies.FirstOrDefault(x => x.PlayerId == target.PlayerId);
             body?.TimeOfReport = Time.time;
         }

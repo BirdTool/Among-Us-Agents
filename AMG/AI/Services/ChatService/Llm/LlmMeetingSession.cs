@@ -78,8 +78,18 @@ namespace AMG.AI.Services.ChatService.Llm
                 _thinkAt = Time.time + Debounce + UnityEngine.Random.value;
             }
 
-            if (count > _promptCount && Time.time >= _thinkAt)
-                BeginChain($"[{count - _promptCount} new chat message(s). The chat in the first message is updated.]");
+            int fresh = NewFromOthers();   // the agent's own messages never wake it up
+            if (fresh > 0 && Time.time >= _thinkAt)
+                BeginChain($"[{fresh} new chat message(s). The chat in the first message is updated.]");
+        }
+
+        private int NewFromOthers()
+        {
+            var all = LlmMeetingTranscript.All;
+            int n = 0;
+            for (int i = _promptCount; i < all.Count; i++)
+                if (all[i].SenderId != _brain.AgentId) n++;
+            return n;
         }
 
         private void BeginChain(string wakeNote)
@@ -210,6 +220,15 @@ namespace AMG.AI.Services.ChatService.Llm
             foreach (var p in GameData.Instance.AllPlayers)
                 sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU)" : "")} {p.PlayerId} {Clean(p.PlayerName)} (Colour: {p.ColorName}) {(p.IsDead ? "dead" : "alive")}");
             sb.AppendLine();
+
+            if (!profile.Lobby)
+            {
+                sb.AppendLine("Meeting: " + (string.IsNullOrEmpty(LlmMeetingContext.Description)
+                    ? "reason unknown."
+                    : LlmMeetingContext.Description));
+                sb.AppendLine("Only use facts given in this prompt or returned by commands. Never invent bodies, locations, kills or events.");
+                sb.AppendLine();
+            }
 
             sb.AppendLine($"Commands. You may send up to {MaxCommandsPerStep} per reply; they run in order:");
             foreach (var name in profile.Commands) sb.AppendLine("- " + CommandDocs[name]);

@@ -411,5 +411,61 @@ namespace AMG.Utilities
             }
             return closest;
         }
+
+        public static void AddChatPrivate(string text, string overrideName = "", bool setRight = false)
+        {
+            if (!IsInGame)
+                return;
+
+            var chat = HudManager.Instance.Chat;
+            if (chat == null)
+                return;
+
+            var data = PlayerControl.LocalPlayer.Data;
+            if (data == null)
+                return;
+
+            var pooledBubble = chat.GetPooledBubble();
+            var messageName = $"<color=#ffffff><b>(<color=#00ff44>System Message</color>)</b>";
+
+            if (!string.IsNullOrEmpty(overrideName))
+                messageName = overrideName;
+
+            try
+            {
+                pooledBubble.transform.SetParent(chat.scroller.Inner);
+                pooledBubble.transform.localScale = Vector3.one;
+                pooledBubble.SetCosmetics(data);
+                pooledBubble.gameObject.transform.Find("PoolablePlayer").gameObject.SetActive(false);
+                pooledBubble.ColorBlindName.gameObject.SetActive(false);
+
+                if (!setRight)
+                {
+                    pooledBubble.SetLeft();
+                    pooledBubble.gameObject.transform.Find("NameText (TMP)").transform.localPosition += new Vector3(-0.7f, 0f);
+                    pooledBubble.gameObject.transform.Find("ChatText (TMP)").transform.localPosition += new Vector3(-0.7f, 0f);
+                }
+                else
+                {
+                    pooledBubble.SetRight();
+                }
+
+                chat.SetChatBubbleName(pooledBubble, data, false, false, PlayerNameColor.Get(data), null);
+                pooledBubble.SetText(text);
+                pooledBubble.AlignChildren();
+                chat.AlignAllBubbles();
+                pooledBubble.NameText.text = messageName;
+
+                if (!chat.IsOpenOrOpening && chat.notificationRoutine == null)
+                {
+                    chat.notificationRoutine = chat.StartCoroutine(chat.BounceDot());
+                }
+
+                SoundManager.Instance.PlaySound(chat.messageSound, false, 1f, null).pitch = 0.5f + data.PlayerId / 15f;
+            }
+            catch
+            {
+            }
+        }
     }
 }
