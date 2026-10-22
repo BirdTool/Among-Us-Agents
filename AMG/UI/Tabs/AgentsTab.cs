@@ -1,5 +1,6 @@
 using AMG.AI.Services.MessagesService;
 using AMG.Data;
+using System;
 using AMG.UI.Elements;
 using AMG.UI.UIActions;
 
@@ -26,10 +27,17 @@ public class AgentsTab : TabBase
             AgentsController.ImpostorCount = (int)value;
         });
 
+        new MenuSubText("My identity (private messages)");
 
         new MenuButton("Spawn Agents", () => 
         {
             AgentsController.SpawnAgents();
         });
+
+        new MenuTextSlider(
+            Enum.GetNames(typeof(PrivateMessageSenderEnum)),
+            (int)GlobalVariables.MyIdentity,
+            (index) => GlobalVariables.MyIdentity = (PrivateMessageSenderEnum)index,
+            () => (int)GlobalVariables.MyIdentity);
     }
 }
