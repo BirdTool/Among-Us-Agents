@@ -40,7 +40,7 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
         public MeetingServiceForStructuredBrain(LlmMeetingSession llm, StructuredAgentBrain brain) : this(brain)
         {
             _llm = llm;
-            PlanOpening();
+            if (llm.AllowLocalOpenings) PlanOpening();
         }
 
         private MeetingServiceForStructuredBrain(StructuredAgentBrain brain) => _brain = brain;
@@ -149,7 +149,7 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
             for (int i = _delayed.Count - 1; i >= 0; i--)
                 if (Time.time >= _delayed[i].dueAt) { Emit(_delayed[i].intent); _delayed.RemoveAt(i); }
 
-            if (_llm != null) TickLlmOpenings();
+            if (_llm != null && _llm.AllowLocalOpenings) TickLlmOpenings();
         }
 
         private void TickLlmOpenings()

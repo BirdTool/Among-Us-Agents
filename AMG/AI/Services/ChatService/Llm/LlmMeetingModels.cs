@@ -17,12 +17,23 @@ namespace AMG.AI.Services.ChatService.Llm
             bool TrustChat = false,   // chat = orders from the tester
             bool Lobby = false);      // no role, no meeting
 
+        private static readonly string[] IntentionCommandsMedium = [
+            "intention_avoid_players"
+        ];
+
+        private static readonly string[] IntentionCommandsHighLab = [
+            "intention_avoid_players", "intention_avoid_be_alone",
+            "intention_follow_player", "intention_priority_kill", "intention_clear"
+        ];
+
         private static readonly string[] AllCommands = [
             "send_message", "vote", "wait",
             "get_role_info", "get_player_info", "get_meeting_observations",
             "get_notes", "add_notes", "remove_notes",
             "get_persistent_note", "add_persistent_note", "remove_persistent_note",
-            "change_suspicious", "set_suspicious", "change_trust", "set_trust"
+            "change_suspicious", "set_suspicious", "change_trust", "set_trust",
+            "intention_avoid_players", "intention_avoid_be_alone",
+            "intention_follow_player", "intention_priority_kill", "intention_clear"
         ];
 
         private static readonly System.Collections.Generic.Dictionary<LlmTier, TierProfile> Profiles = new()
@@ -33,7 +44,8 @@ namespace AMG.AI.Services.ChatService.Llm
                 "send_message", "vote", "wait",
                 "get_role_info", "get_player_info", "get_meeting_observations",
                 "get_persistent_note", "add_persistent_note", "remove_persistent_note",
-                "change_suspicious", "set_suspicious", "change_trust", "set_trust"
+                "change_suspicious", "set_suspicious", "change_trust", "set_trust",
+                "intention_avoid_players"
             ]),
             [LlmTier.High] = new(12, 90f, AllCommands),
             [LlmTier.Laboratory] = new(15, 120f, AllCommands, MaxTokens: 2048, MinInterval: 1f, TrustChat: true),
@@ -57,6 +69,14 @@ namespace AMG.AI.Services.ChatService.Llm
             ["set_suspicious"] = "set_suspicious {target, text/value}: set suspiciousness to an exact value. Range 0-100.",
             ["change_trust"] = "change_trust {target, text/value}: adjust trust by +/- delta (e.g. \"+15\", \"-20\"). Range -100..+100, 0=neutral.",
             ["set_trust"] = "set_trust {target, text/value}: set trust to an exact value. Range -100..+100, 0=neutral, negative=distrust, positive=trusted.",
+
+            // --- Intention commands ---
+            ["intention_avoid_players"] = "intention_avoid_players {target?, text?}: manage the avoid-players list. Use target=player-id to add a player. text=\"remove {id}\" to remove one. text=\"all\" to avoid every player. text=\"clear\" to clear the whole list.",
+            ["intention_avoid_be_alone"] = "intention_avoid_be_alone {text}: text=\"on\" makes the agent wander to find company when alone; text=\"off\" disables it.",
+            ["intention_follow_player"] = "intention_follow_player {target, value?}: add a player to follow with priority 1-100 (value field). The follow is not permanent — it fires only when the target is visible and stops naturally after a while. Use value=0 to remove the player from the list.",
+            ["intention_priority_kill"] = "intention_priority_kill {target?, text?}: (impostors only) add a player as a priority kill target (target=player-id). text=\"clear\" to clear all priority targets. Text=\"remove {id}\" to remove one.",
+            ["intention_clear"] = "intention_clear: reset ALL active intentions (avoid lists, follow list, priority kills, avoid-be-alone).",
+            ["intentions_get"] = "intentions_get: get all active intentions."
         };
 
         private static readonly System.Collections.Generic.HashSet<string> InfoCommands =
@@ -66,6 +86,8 @@ namespace AMG.AI.Services.ChatService.Llm
             "get_persistent_note", "add_persistent_note", "remove_persistent_note",
             "change_suspicious", "set_suspicious", "change_trust", "set_trust",
             "change_suspicion", "set_suspicion",
+            "intention_avoid_players", "intention_avoid_be_alone",
+            "intention_follow_player", "intention_priority_kill", "intention_clear",
         ];
     }
 

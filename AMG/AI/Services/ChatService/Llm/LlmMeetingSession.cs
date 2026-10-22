@@ -51,12 +51,18 @@ namespace AMG.AI.Services.ChatService.Llm
         private int _promptCount;
         private int _lastCount;
         private float _thinkAt, _sendAt;
+        private byte? _pendingVote;   // vote ordered during discussion, cast when voting opens
+        private bool _voteWoken;      // already woke the agent for the voting phase
 
         public bool IsBusy => _pending != null;
+
+        // Local phrase-bank openings are disabled in Laboratory so only the LLM speaks.
+        public bool AllowLocalOpenings => !Profiles[Active].TrustChat;
 
         public void Update()
         {
             PumpOutbox();
+            TryPendingVote();
 
             if (_pending != null)
             {
@@ -68,6 +74,16 @@ namespace AMG.AI.Services.ChatService.Llm
             {
                 if (_thinkAt <= 0f) _thinkAt = Time.time + 1f + UnityEngine.Random.value;
                 if (Time.time >= _thinkAt) BeginChain(null);
+                return;
+            }
+
+            // Voting opened: wake the agent once, even if nobody wrote in the chat
+            if (!_voteWoken && Utils.IsMeetingVoting && _pendingVote == null
+                && MeetingHud.Instance != null && !MeetingHud.Instance.DidVote(_brain.AgentId)
+                && Time.time >= _thinkAt)
+            {
+                _voteWoken = true;
+                BeginChain("[Voting is now open. Cast your vote with the vote command (target = player id, or 253 to skip).]");
                 return;
             }
 
@@ -97,10 +113,14 @@ namespace AMG.AI.Services.ChatService.Llm
             _started = true;
             var profile = Profiles[Active];
 
+            Dbg($"chain start [{Active}] wake: {wakeNote ?? "meeting start"}");
             _reasoning = LlmApiRouter.BeginReasoning(LlmConsumer.ChatService, $"llm-{Active}", profile.MaxSteps);
             _cts = new CancellationTokenSource(TimeSpan.FromSeconds(profile.DeadlineSeconds));
 
-            if (_convo.Count == 0) _convo.Add(new LlmMessage(LlmRole.User, string.Empty));
+            // Reset per-chain conversation so stale assistant turns from previous chains
+            // don't cause the LLM to distrust the freshly rebuilt initial prompt.
+            _convo.Clear();
+            _convo.Add(new LlmMessage(LlmRole.User, string.Empty));
             if (wakeNote != null) AppendUser(wakeNote);
 
             SendStep();
@@ -139,6 +159,7 @@ namespace AMG.AI.Services.ChatService.Llm
                            : task.IsCanceled ? "cancelled"
                            : task.Result.Error;
                 LogManager.LogWarning($"[LLM] meeting step failed: {why}");
+                ChatDbg($"<color=#ff5555>step failed:</color> {Clean(Trunc(why, 200))}");
 
                 Finish(false);
                 _thinkAt = Time.time + 5f;
@@ -149,6 +170,7 @@ namespace AMG.AI.Services.ChatService.Llm
             _convo.Add(new LlmMessage(LlmRole.Assistant, res.RawText));
 
             var commands = res.Response?.Commands;
+            DebugTurn(res.Response?.Reasoning, commands, res.RawText);
             if (commands == null || commands.Count == 0) { Finish(true); return; }
 
             var results = new StringBuilder();
@@ -178,6 +200,8 @@ namespace AMG.AI.Services.ChatService.Llm
             }
 
             int left = Profiles[Active].MaxSteps - _reasoning.Steps;
+            var resultText = results.ToString().TrimEnd();
+            Dbg($"results:\n{resultText}", $"<color=#aaaaaa>results:</color>\n{Clean(Trunc(resultText, 400))}");
             AppendUser($"{results}[steps left: {left}]");
 
             if (terminal || !needsAnotherStep || left <= 0) { Finish(true); return; }
@@ -262,16 +286,84 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             if (_outbox.Count == 0 || Time.time < _sendAt) return;
 
-            string text = _outbox.Dequeue();
+            string text = _outbox.Peek();
             var check = CheckSay(text);
-            if (check == ChatRpcEnums.SUCCESS) Say(text);
-            else AppendUser($"[notice] your message \"{text}\" was not sent: {check}");
+            if (check == ChatRpcEnums.ERROR_InCooldown)   // game chat cooldown (3 s): keep it queued
+            {
+                _sendAt = Time.time + 0.5f;
+                return;
+            }
+            _outbox.Dequeue();
+            if (check == ChatRpcEnums.SUCCESS)
+            {
+                Say(text);
+                Dbg($"sent: \"{text}\"");
+            }
+            else
+            {
+                AppendUser($"[notice] your message \"{text}\" was not sent: {check}");
+                Dbg($"DROPPED \"{text}\": {check}", $"<color=#ff5555>message dropped:</color> {check}");
+            }
 
             _sendAt = Time.time + 1.5f + text.Length / 8f;
         }
 
+        private void TryPendingVote()
+        {
+            if (_pendingVote == null || !Utils.IsMeetingVoting) return;
+
+            var r = Vote(_pendingVote);
+            _pendingVote = null;
+            Dbg($"scheduled vote -> {r}", $"scheduled vote: {r}");
+            if (r != VoteRpcEnums.SUCCESS) AppendUser($"[notice] your scheduled vote failed: {r}");
+        }
+
+        private void Dbg(string log, string chat = null)
+        {
+            LogManager.LogDebug($"[LLM {_brain.BaseName}] {log}");
+            if (chat != null) ChatDbg(chat);
+        }
+
+        private void ChatDbg(string chat)
+        {
+            if (ChatMode.ChatDebug)
+                Utils.AddChatPrivate(chat, $"<color=#ffaa00><b>(LLM {_brain.BaseName})</b></color>");
+        }
+
+        private static string Trunc(string s, int max) =>
+            string.IsNullOrEmpty(s) || s.Length <= max ? s : s[..max] + "…";
+
+        private static string FmtCommand(LlmCommand c)
+        {
+            if (c == null) return "null";
+            var sb = new StringBuilder(c.Name ?? "?");
+            if (c.Target != null) sb.Append(" target=").Append(c.Target);
+            if (!string.IsNullOrEmpty(c.Text)) sb.Append(" \"").Append(c.Text).Append('"');
+            return sb.ToString();
+        }
+
+        private void DebugTurn(string reasoning, List<LlmCommand> commands, string raw)
+        {
+            if (commands == null || commands.Count == 0)
+            {
+                Dbg($"NO COMMANDS. raw: {raw}",
+                    $"<color=#ff5555>no commands</color> raw: {Clean(Trunc(raw, 300))}");
+                return;
+            }
+
+            var log = new StringBuilder($"think: {reasoning}");
+            var chat = new StringBuilder($"<color=#aaaaaa>think:</color> {Clean(Trunc(reasoning, 300))}");
+            foreach (var c in commands)
+            {
+                log.Append("\n  > ").Append(FmtCommand(c));
+                chat.Append("\n<color=#55ff55>→</color> ").Append(Clean(Trunc(FmtCommand(c), 160)));
+            }
+            Dbg(log.ToString(), chat.ToString());
+        }
+
         private void Finish(bool ok)
         {
+            Dbg($"chain end ok={ok}");
             _reasoning?.Complete(ok);
             _reasoning = null;
             _cts?.Dispose(); _cts = null;
@@ -289,6 +381,8 @@ namespace AMG.AI.Services.ChatService.Llm
             _meetingNotes.Clear();
             _nextMeetingNoteId = 1;
             _started = false;
+            _pendingVote = null;
+            _voteWoken = false;
             _promptCount = _lastCount = 0;
             _thinkAt = _sendAt = 0;
         }
