@@ -23,6 +23,10 @@ namespace AMG.AI.LLM
     //      with other keys available: MultiKeyCooldown (10 min);
     //      as the only key: 1 min after the 3rd error, +1 min for each further error.
     //  - One success clears the key's failure count.
+    //  - SpreadAcrossKeys (config.cfg: SPREAD_KEYS = true): instead of always starting at the top key, the
+    //    requests are shared in rounds, still by priority. The top key answers (keys + 1) requests, the 2nd key 2,
+    //    every other key 1, then the round restarts. Ex.: Claude + Gemini = 3 Claude, 2 Gemini; with 3 keys = 4, 2, 1.
+    //    A chosen key that fails still falls back to the others, top first. Keys cooling down are left out of the round.
     // Health lives in memory only: restarting the game clears it.
     public static class LlmApiRouter
     {
@@ -31,6 +35,11 @@ namespace AMG.AI.LLM
         public static readonly TimeSpan MultiKeyCooldown = TimeSpan.FromMinutes(10);
         public static readonly TimeSpan SingleKeyCooldownStep = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan SingleKeyMaxCooldown = TimeSpan.FromMinutes(30);
+
+        // false: always start at the top key (default). true: share the requests between the keys, see above.
+        public static bool SpreadAcrossKeys { get; set; }
+
+        private static long _rotation;
 
         internal static Func<DateTime> UtcNow { get; set; } = () => DateTime.UtcNow;
 
@@ -130,6 +139,10 @@ namespace AMG.AI.LLM
                 return (Fail<T>("NoKeysConfigured", "No API key loaded. Add one to PrivateConfig/config.cfg.", watch.Elapsed.TotalSeconds, 0), report);
 
             bool singleKey = clients.Length == 1;
+
+            if (SpreadAcrossKeys)
+                clients = OrderForSpread(clients);
+
             var errors = new List<string>();
             TimeSpan? soonest = null;
             int coolingDown = 0;
@@ -164,7 +177,7 @@ namespace AMG.AI.LLM
                     RegisterSuccess(client.ClientId);
 
                     if (report.KeysTried.Count > 1)
-                        LogManager.LogInfo($"[LLM] {client.ClientId} answered after {report.KeysTried.Count - 1} higher-priority key(s) failed.");
+                        LogManager.LogInfo($"[LLM] {client.ClientId} answered after {report.KeysTried.Count - 1} other key(s) failed.");
 
                     return (response, report);
                 }
@@ -193,6 +206,61 @@ namespace AMG.AI.LLM
             return (Fail<T>("AllKeysFailed",
                 "All API keys failed: " + string.Join("; ", errors) + suffix,
                 watch.Elapsed.TotalSeconds, report.HttpAttempts), report);
+        }
+
+        // Top key = keys + 1 requests per round (2 keys: 3, 3 keys: 4...), 2nd key = 2, the others = 1.
+        // Change only this method to change the proportion.
+        internal static int WeightOf(int position, int keyCount)
+            => position == 0 ? keyCount + 1 : Math.Max(1, 3 - position);
+
+        // Puts the key that owns this request's turn first; the others follow in priority order as fallback.
+        private static ILLMClient[] OrderForSpread(ILLMClient[] clients)
+        {
+            var available = new List<ILLMClient>(clients.Length);
+
+            foreach (var client in clients)
+            {
+                if (TryAcquire(client.ClientId, out _))
+                    available.Add(client);
+            }
+
+            int count = available.Count;
+
+            if (count < 2)
+                return clients;
+
+            int total = 0;
+
+            for (int i = 0; i < count; i++)
+                total += WeightOf(i, count);
+
+            int slot = (int)((Interlocked.Increment(ref _rotation) - 1) % total);
+            ILLMClient chosen = available[count - 1];
+
+            for (int i = 0; i < count; i++)
+            {
+                int weight = WeightOf(i, count);
+
+                if (slot < weight)
+                {
+                    chosen = available[i];
+                    break;
+                }
+
+                slot -= weight;
+            }
+
+            var ordered = new ILLMClient[clients.Length];
+            ordered[0] = chosen;
+            int next = 1;
+
+            foreach (var client in clients)
+            {
+                if (!ReferenceEquals(client, chosen))
+                    ordered[next++] = client;
+            }
+
+            return ordered;
         }
 
         private static FailureKind Classify(string code, string message)

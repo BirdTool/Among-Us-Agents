@@ -47,6 +47,24 @@ namespace AMG.AI.LLM
             return null;
         }
 
+        // config.cfg line: SPREAD_KEYS = true
+        private static bool? GetSpreadSettingFromLine(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+                return null;
+
+            var match = Regex.Match(line.Trim(), @"^SPREAD_KEYS\s*=\s*(\w+)\s*$", RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                return null;
+
+            string value = match.Groups[1].Value;
+
+            return value.Equals("true", StringComparison.OrdinalIgnoreCase)
+                || value.Equals("1", StringComparison.Ordinal)
+                || value.Equals("on", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static void LoadKeys()
         {
             if (!File.Exists(FilePath))
@@ -59,6 +77,13 @@ namespace AMG.AI.LLM
 
             foreach (var line in lines)
             {
+                if (GetSpreadSettingFromLine(line) is bool spread)
+                {
+                    LlmApiRouter.SpreadAcrossKeys = spread;
+                    LogManager.LogInfo($"[LLM] SPREAD_KEYS = {spread}.");
+                    continue;
+                }
+
                 var parsedData = GetApiKeyFromLine(line);
                 if (parsedData.HasValue)
                 {
