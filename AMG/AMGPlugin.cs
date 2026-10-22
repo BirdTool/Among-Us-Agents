@@ -1,4 +1,9 @@
+using System.Text;
 using AMG.AI.LLM;
+using AMG.AI.Mind.StructuredAgentBrain;
+using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.AI.Services.MessagesService;
 using AMG.Utilities;
 using AMG.Utilities.KeyDown;
 using BepInEx;
@@ -68,5 +73,28 @@ public partial class AMGPlugin : BasePlugin
         LogManager.TransferLogsToAllLogs();
         ModPaths.Initialize();
         LlmApiKeyLoader.LoadKeys();
+        MessageServiceClass.StartListening();
+        MessageServiceClass.OnReceive += OnMessageReceived;
+    }
+
+    private void OnMessageReceived(PrivateMessageModel message)
+    {
+        LogManager.LogInfo($"[Messages] Received new message: {message.Content}");
+
+        var self = Utils.Players.LocalPlayer;
+        var selfBrain = self.GetComponent<StructuredAgentBrain>();
+        if (selfBrain != null)
+        {
+            if (selfBrain.LlmMeeting != null && ChatMode.IsLlm)
+            {
+                var str = $"You've received an important message from the developer, obey if it's an order: {message.Content}";
+                selfBrain.LlmMeeting.AppendUser(str);
+            }
+        }
+        else
+        {
+            LogManager.LogError($"[Messages] Received new message: {message.Content}");
+            Utils.AddChatPrivate($"Message from the AI: {message.Content}");
+        }
     }
 }

@@ -208,7 +208,7 @@ namespace AMG.AI.Services.ChatService.Llm
             SendStep();
         }
 
-        private void AppendUser(string text)
+        public void AppendUser(string text)
         {
             if (_convo.Count > 0 && _convo[^1].Role == LlmRole.User)
                 _convo[^1] = _convo[^1] with { Content = _convo[^1].Content + "\n" + text };
