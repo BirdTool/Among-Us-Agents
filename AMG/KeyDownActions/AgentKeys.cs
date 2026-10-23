@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
+using AMG.AI.Mind.MapTrackerBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Modules.AutoPlay;
@@ -33,12 +34,12 @@ namespace AMG.KeyDownActions
 
             foreach (var agent in AgentManager.Agents)
             {
-                var brain = agent.Control.GetComponent<StructuredAgentBrain>();
-                if (brain == null) continue;
+                var controller = agent.Control.GetComponent<AgentController>();
+                if (controller == null) continue;
 
                 Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
                 List<Waypoint> path = Pathfinder.FindPath(start, target, out _);
-                brain.CommandGoToPath(path);
+                controller.CommandGoToPath(path);
             }
         }
     }
