@@ -3,6 +3,8 @@ using AMG.Data;
 using System;
 using AMG.UI.Elements;
 using AMG.UI.UIActions;
+using AMG.Enums.ChatServiceEnums;
+using AMG.AI.Services.ChatService;
 
 namespace AMG.UI.Tabs;
 
@@ -27,17 +29,30 @@ public class AgentsTab : TabBase
             AgentsController.ImpostorCount = (int)value;
         });
 
-        new MenuSubText("My identity (private messages)");
-
         new MenuButton("Spawn Agents", () => 
         {
             AgentsController.SpawnAgents();
         });
+
+        new MenuSubText("My identity (private messages)");
 
         new MenuTextSlider(
             Enum.GetNames(typeof(PrivateMessageSenderEnum)),
             (int)GlobalVariables.MyIdentity,
             (index) => GlobalVariables.MyIdentity = (PrivateMessageSenderEnum)index,
             () => (int)GlobalVariables.MyIdentity);
+
+        new MenuSubText("Set Chat Mode");
+
+        new MenuTextSlider(
+            Enum.GetNames(typeof(ChatModeEnum)),
+            (int)ChatMode.Current,
+            (index) => ChatMode.Current = (ChatModeEnum)index,
+            () => (int)ChatMode.Current);
+
+        new MenuButton("Chat Debug", () => 
+        {
+            ChatMode.ChatDebug = !ChatMode.ChatDebug;
+        });
     }
 }
