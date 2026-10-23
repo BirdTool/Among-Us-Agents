@@ -27,7 +27,7 @@ namespace AMG.AI.Services.ChatService.Llm
         ];
 
         private static readonly string[] AllCommands = [
-            "send_message", "vote", "wait",
+            "private_message", "send_message", "vote", "wait",
             "get_role_info", "get_player_info", "get_meeting_observations",
             "get_notes", "add_notes", "remove_notes",
             "get_persistent_note", "add_persistent_note", "remove_persistent_note",
@@ -38,10 +38,10 @@ namespace AMG.AI.Services.ChatService.Llm
 
         private static readonly System.Collections.Generic.Dictionary<LlmTier, TierProfile> Profiles = new()
         {
-            [LlmTier.Lobby] = new(2, 15f, ["send_message", "wait"], MaxTokens: 200, MinInterval: 12f, MaxChatLines: 15, Lobby: true),
-            [LlmTier.Low] = new(3, 20f, ["send_message", "vote", "wait"]),
+            [LlmTier.Lobby] = new(2, 15f, ["send_message", "wait", "private_message"], MaxTokens: 200, MinInterval: 12f, MaxChatLines: 15, Lobby: true),
+            [LlmTier.Low] = new(3, 20f, ["send_message", "vote", "wait", "private_message"]),
             [LlmTier.Medium] = new(6, 40f, [
-                "send_message", "vote", "wait",
+                "send_message", "vote", "wait", "private_message",
                 "get_role_info", "get_player_info", "get_meeting_observations",
                 "get_persistent_note", "add_persistent_note", "remove_persistent_note",
                 "change_suspicious", "set_suspicious", "change_trust", "set_trust",
@@ -53,6 +53,8 @@ namespace AMG.AI.Services.ChatService.Llm
 
         private static readonly Dictionary<string, string> CommandDocs = new()
         {
+            ["private_message"] = "private_message {text}: send a private message to the developer (they wont receive if they're not playing the same match).",
+
             ["send_message"] = "send_message {text}: say something in the meeting chat (max 100 characters).",
             ["vote"] = "vote {target}: vote for a player id, or 253 to skip. Not allowed during discussion; one vote only.",
             ["wait"] = "wait: do nothing until new chat messages arrive. Use it when you have nothing to add.",

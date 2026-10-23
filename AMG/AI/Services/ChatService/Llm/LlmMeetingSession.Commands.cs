@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using AMG.AI.Mind.StructuredAgentBrain;
+using AMG.AI.Services.MessagesService;
 using AMG.Enums.SafeRpcEnums;
 using AMG.Utilities;
 using UnityEngine;
@@ -33,6 +34,13 @@ namespace AMG.AI.Services.ChatService.Llm
 
             switch (cmdName)
             {
+                case "private_message":
+                {
+                    if (string.IsNullOrWhiteSpace(cmd.Text)) { failed = true; return "error: text is empty."; }
+                    MessageServiceClass.WriteMessage(cmd.Text, PrivateMessageSenderEnum.LLM);
+                    return "ok: message sent to developer.";
+                }
+
                 case "send_message":
                 {
                     if (string.IsNullOrWhiteSpace(cmd.Text)) { failed = true; return "error: text is empty."; }
