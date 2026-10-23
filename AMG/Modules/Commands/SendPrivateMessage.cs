@@ -1,3 +1,4 @@
+using System;
 using AMG.AI.Services.MessagesService;
 using AMG.Data;
 using HarmonyLib;
@@ -18,10 +19,14 @@ namespace AMG.Modules.Commands
         {
             string text = __instance.freeChatField.textArea.text;
 
-            if (text.StartsWith(CommandPrefix + CommandName))
+            string command = CommandPrefix + CommandName;
+
+            if (text.Equals(command, StringComparison.Ordinal) || text.StartsWith(command + " ", StringComparison.Ordinal))
             {
-                string content = text[(CommandPrefix.Length + CommandName.Length)..];
-                Send(content);
+                string content = text[command.Length..].Trim();
+                if (content.Length > 0)
+                    Send(content);
+
                 __instance.freeChatField.Clear();
                 return false;
             }

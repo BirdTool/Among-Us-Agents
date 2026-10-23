@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AMG.AI.Services.MessagesService;
 using AMG.UI.Tabs;
 using AMG.Utilities.KeyDown;
 using UnityEngine;
@@ -33,6 +34,8 @@ public class MenuUI(IntPtr ptr) : MonoBehaviour(ptr)
 
     private void Update()
     {
+        MessageServiceClass.Pump();
+
         if (InputFocusUtils.IsTypingInInputField()) return;
 
         KeyCode toggleKey = KeyCode.Insert;

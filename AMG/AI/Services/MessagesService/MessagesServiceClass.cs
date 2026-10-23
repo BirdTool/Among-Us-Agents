@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,7 +28,10 @@ namespace AMG.AI.Services.MessagesService
             Converters = { new JsonStringEnumConverter() }
         };
 
+        // Raised on the Unity MAIN thread (see Pump), so handlers can safely use Unity objects.
         public static event Action<PrivateMessageModel> OnReceive;
+
+        private static readonly ConcurrentQueue<PrivateMessageModel> Inbox = new();
 
         private static readonly Mutex FileMutex = new(false, "AMG_PrivateMessages");
         private static readonly object ProcessLock = new();
@@ -81,16 +85,24 @@ namespace AMG.AI.Services.MessagesService
                 {
                     _lastWriteUtc = File.GetLastWriteTimeUtc(MessagesPath);
 
+                    // Background thread: only queue here. OnReceive is raised by Pump on the main thread.
                     foreach (var message in GetNewMessages(GlobalVariables.MyIdentity))
-                    {
-                        try { OnReceive?.Invoke(message); }
-                        catch (Exception e) { LogManager.LogError($"[Messages] OnReceive handler failed: {e}"); }
-                    }
+                        Inbox.Enqueue(message);
                 }
                 catch (Exception e)
                 {
                     LogManager.LogError($"[Messages] Failed to process new messages: {e}");
                 }
+            }
+        }
+
+        // Call it every frame from the Unity main thread (MenuUI.Update). Cheap when the queue is empty.
+        public static void Pump()
+        {
+            while (Inbox.TryDequeue(out var message))
+            {
+                try { OnReceive?.Invoke(message); }
+                catch (Exception e) { LogManager.LogError($"[Messages] OnReceive handler failed: {e}"); }
             }
         }
 

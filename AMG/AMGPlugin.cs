@@ -34,7 +34,8 @@ public partial class AMGPlugin : BasePlugin
 
     public override void Load()
     {
-        ModPaths.Initialize(); // first thing: must run on the main thread (Application.dataPath)
+        ModPaths.Initialize();
+        LogManager.TransferLogsToAllLogs();
 
         Log = base.Log;
         Plugin = this;
@@ -70,8 +71,6 @@ public partial class AMGPlugin : BasePlugin
 
         Harmony.PatchAll();
 
-        LogManager.TransferLogsToAllLogs();
-        ModPaths.Initialize();
         LlmApiKeyLoader.LoadKeys();
         MessageServiceClass.StartListening();
         MessageServiceClass.OnReceive += OnMessageReceived;
@@ -79,10 +78,10 @@ public partial class AMGPlugin : BasePlugin
 
     private void OnMessageReceived(PrivateMessageModel message)
     {
-        LogManager.LogInfo($"[Messages] Received new message: {message.Content}");
+        LogManager.LogInfo($"[Messages] Received new message from {message.Sender}: {message.Content}");
 
         var self = Utils.Players.LocalPlayer;
-        var selfBrain = self.GetComponent<StructuredAgentBrain>();
+        var selfBrain = self?.GetComponent<StructuredAgentBrain>();
         if (selfBrain != null)
         {
             if (selfBrain.LlmMeeting != null && ChatMode.IsLlm)
@@ -90,10 +89,13 @@ public partial class AMGPlugin : BasePlugin
                 var str = $"You've received an important message from the developer, obey if it's an order: {message.Content}";
                 selfBrain.LlmMeeting.AppendUser(str);
             }
+            else
+            {
+                LogManager.LogWarning("[Messages] Message not delivered: the local agent is not in LLM mode.");
+            }
         }
         else
         {
-            LogManager.LogError($"[Messages] Received new message: {message.Content}");
             Utils.AddChatPrivate($"Message from the AI: {message.Content}");
         }
     }
