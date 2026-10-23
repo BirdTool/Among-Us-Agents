@@ -1,11 +1,12 @@
+using System.Collections.Generic;
+using System.Linq;
 using AMG.AI.Mind;
+using AMG.AI.Mind.MapTrackerBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using AmongUs.GameOptions;
 using InnerNet;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace AMG.AI.Control
@@ -256,6 +257,52 @@ namespace AMG.AI.Control
             }
 
             return "";
+        }
+
+        public static void CreateTrackerAgent()
+        {
+            if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
+
+            PlayerControl agentComponent = null;
+
+            if (RecycleDummies)
+            {
+                foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+                {
+                    if (!player.isDummy) continue;
+
+                    if (Agents.Any(a => a.Control == player)) continue;
+
+                    agentComponent = player;
+                    break;
+                }
+            }
+
+            bool isRecycled = agentComponent != null;
+            if (!isRecycled)
+            {
+                agentComponent = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
+                agentComponent.PlayerId = (byte)(100 + Agents.Count);
+                agentComponent.NetId = (uint)(100 + Agents.Count);
+
+                ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
+                if (localClient != null)
+                    GameData.Instance.AddPlayer(agentComponent, localClient);
+            }
+
+            if (PlayerControl.LocalPlayer != null)
+            {
+                Vector3 currentPos = PlayerControl.LocalPlayer.transform.position;
+                agentComponent.transform.position = currentPos;
+                agentComponent.NetTransform?.SnapTo(currentPos);
+            }
+
+            agentComponent.isDummy = false;
+            agentComponent.gameObject.AddComponent<MapTrackerBrain>();
+
+            AgentData agentData = new() { Name = "AI Tracker" };
+
+            AddAgent(agentComponent, agentData);
         }
     }
 
