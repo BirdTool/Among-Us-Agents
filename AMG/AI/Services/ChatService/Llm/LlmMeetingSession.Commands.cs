@@ -44,10 +44,22 @@ namespace AMG.AI.Services.ChatService.Llm
                 case "send_message":
                 {
                     if (string.IsNullOrWhiteSpace(cmd.Text)) { failed = true; return "error: text is empty."; }
+
+                    var profile = Profiles[Active];
+                    if (!profile.Lobby && !profile.TrustChat)
+                    {
+                        if (_outbox.Count > 0)
+                            return "skipped: you already have a message waiting to be sent. One at a time; use wait.";
+                        if (_sentThisMeeting >= MaxMessagesPerMeeting)
+                            return $"skipped: you already used your {MaxMessagesPerMeeting} messages for this meeting. Use wait, or vote when voting opens.";
+                        if (IsRepeat(cmd.Text))
+                            return "skipped: that is too similar to something you already said. Say something new or use wait.";
+                    }
+
                     var check = CheckSay(cmd.Text);
                     // cooldown is not an error here: PumpOutbox keeps the message queued until it can go out
                     if (check != ChatRpcEnums.SUCCESS && check != ChatRpcEnums.ERROR_InCooldown) { failed = true; return $"error: {check}"; }
-                    _outbox.Enqueue(cmd.Text);
+                    _outbox.Enqueue(new OutboxItem(cmd.Text, Time.time));
                     return "ok: queued, it will appear in the chat in a few seconds.";
                 }
 

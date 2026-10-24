@@ -39,15 +39,15 @@ namespace AMG.AI.Services.ChatService.Llm
         private static readonly System.Collections.Generic.Dictionary<LlmTier, TierProfile> Profiles = new()
         {
             [LlmTier.Lobby] = new(2, 15f, ["send_message", "wait", "private_message"], MaxTokens: 200, MinInterval: 12f, MaxChatLines: 15, Lobby: true),
-            [LlmTier.Low] = new(3, 20f, ["send_message", "vote", "wait", "private_message"]),
+            [LlmTier.Low] = new(3, 20f, ["send_message", "vote", "wait", "private_message"], MinInterval: 8f),
             [LlmTier.Medium] = new(6, 40f, [
                 "send_message", "vote", "wait", "private_message",
                 "get_role_info", "get_player_info", "get_meeting_observations",
                 "get_persistent_note", "add_persistent_note", "remove_persistent_note",
                 "change_suspicious", "set_suspicious", "change_trust", "set_trust",
                 "intention_avoid_players"
-            ]),
-            [LlmTier.High] = new(12, 90f, AllCommands),
+            ], MinInterval: 8f),
+            [LlmTier.High] = new(12, 90f, AllCommands, MinInterval: 8f),
             [LlmTier.Laboratory] = new(15, 120f, AllCommands, MaxTokens: 2048, MinInterval: 1f, TrustChat: true),
         };
 

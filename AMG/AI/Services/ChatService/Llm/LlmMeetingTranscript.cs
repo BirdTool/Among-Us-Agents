@@ -18,6 +18,9 @@ namespace AMG.AI.Services.ChatService.Llm
 
         public static IReadOnlyList<LlmTranscriptEntry> All => _entries;
 
+        // 1 = first meeting of the match. Lets directives say in which meeting they were received.
+        public static int MeetingNumber { get; private set; }
+
         public static void Add(PlayerControl sender, string text)
         {
             if (sender == null || sender.Data == null || string.IsNullOrWhiteSpace(text)) return;
@@ -36,6 +39,16 @@ namespace AMG.AI.Services.ChatService.Llm
         public static List<LlmTranscriptEntry> Since(int lastSeenIndex) =>
             _entries.FindAll(e => e.Index > lastSeenIndex);
 
-        public static void Reset() => _entries.Clear();
+        public static void Reset()
+        {
+            _entries.Clear();
+            MeetingNumber++;
+        }
+
+        public static void NewMatch()
+        {
+            _entries.Clear();
+            MeetingNumber = 0;
+        }
     }
 }

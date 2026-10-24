@@ -1,6 +1,3 @@
-using AMG.AI.Control;
-using AMG.AI.Mind;
-using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.AI.Services.ChatService;
 using AMG.AI.Services.ChatService.Llm;
@@ -35,6 +32,16 @@ namespace AMG.Patches.RoundPatches
                 ChatRoster.Reset();
                 ChatParser.RememberPlayers();
             }
+        }
+
+        // developer directives only live for the match they were given in
+        [HarmonyPatch(typeof(EndGameManager), nameof(EndGameManager.Start))]
+        [HarmonyPostfix]
+        public static void EndGameManager_Start_Postfix()
+        {
+            foreach (var brain in Utils.GetAllStructuredAgentBrain())
+                brain.LlmMeeting?.ClearDirectives();
+            LlmMeetingTranscript.NewMatch();
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]

@@ -86,8 +86,7 @@ public partial class AMGPlugin : BasePlugin
         {
             if (selfBrain.LlmMeeting != null && ChatMode.IsLlm)
             {
-                var str = $"You've received an important message from the developer, obey if it's an order: {message.Content}";
-                selfBrain.LlmMeeting.AppendUser(str);
+                selfBrain.LlmMeeting.AddDirective(message.Content);
             }
             else
             {

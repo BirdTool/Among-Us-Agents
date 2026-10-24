@@ -107,6 +107,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         void Update()
         {
             if (Agent == null || Agent.MyPhysics?.body == null) return;
+            if (Utils.IsLobby) return; // Keep the agent of calculating on lobby
 
             if (UpVentCheck()) return;
             if (UpUpdateAction()) return;

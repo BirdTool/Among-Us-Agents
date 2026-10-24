@@ -45,7 +45,7 @@ namespace AMG.AI.Services.ChatService.Llm
         private Task<ILLMResponse<string, LlmTurn>> _pending;
 
         private readonly List<LlmMessage> _convo = [];
-        private readonly Queue<string> _outbox = [];
+        private readonly Queue<OutboxItem> _outbox = new();
 
         private bool _started;
         private int _promptCount;
@@ -70,33 +70,73 @@ namespace AMG.AI.Services.ChatService.Llm
                 return;
             }
 
-            if (!_started)
+            // The developer wrote to the agent: react right away, ignoring every pacing rule.
+            if (_directiveWake)
             {
-                if (_thinkAt <= 0f) _thinkAt = Time.time + 1f + UnityEngine.Random.value;
-                if (Time.time >= _thinkAt) BeginChain(null);
-                return;
-            }
-
-            // Voting opened: wake the agent once, even if nobody wrote in the chat
-            if (!_voteWoken && Utils.IsMeetingVoting && _pendingVote == null
-                && MeetingHud.Instance != null && !MeetingHud.Instance.DidVote(_brain.AgentId)
-                && Time.time >= _thinkAt)
-            {
-                _voteWoken = true;
-                BeginChain("[Voting is now open. Cast your vote with the vote command (target = player id, or 253 to skip).]");
-                return;
+                _directiveWake = false;
+                if (_started)
+                {
+                    BeginChain("[The developer just sent you a new message: see <developer> in the prompt and follow it now.]");
+                    return;
+                }
             }
 
             int count = LlmMeetingTranscript.All.Count;
             if (count != _lastCount)
             {
                 _lastCount = count;
-                _thinkAt = Time.time + Debounce + UnityEngine.Random.value;
+                _lastChatAt = Time.time;
+                _debounceAt = Time.time + Debounce + UnityEngine.Random.value;
             }
 
             int fresh = NewFromOthers();   // the agent's own messages never wake it up
-            if (fresh > 0 && Time.time >= _thinkAt)
-                BeginChain($"[{fresh} new chat message(s). The chat in the first message is updated.]");
+
+            if (!_started)
+            {
+                if (_thinkAt <= 0f)
+                {
+                    _thinkAt = Time.time + 1f + UnityEngine.Random.value;
+
+                    // Emergency button: do not ask why it was pressed right away, let people explain first.
+                    bool grace = LlmMeetingContext.IsEmergency && !Profiles[Active].Lobby;
+                    _graceUntil = grace ? Time.time + EmergencyGrace + UnityEngine.Random.value * 3f : 0f;
+                }
+
+                bool waiting = _graceUntil > 0f && fresh == 0 && Time.time < _graceUntil;
+                if (!waiting && Time.time >= _thinkAt && (fresh == 0 || Time.time >= _debounceAt))
+                {
+                    bool nobodySpoke = _graceUntil > 0f && fresh == 0;
+                    BeginChain(nobodySpoke
+                        ? "[Nobody has explained the emergency meeting yet. You may ask once, briefly, why it was called.]"
+                        : null);
+                }
+                return;
+            }
+
+            // Voting opened: wake the agent once, even if nobody wrote in the chat
+            if (!_voteWoken && Utils.IsMeetingVoting && _pendingVote == null
+                && MeetingHud.Instance != null && !MeetingHud.Instance.DidVote(_brain.AgentId)
+                && Time.time >= _lastChainEnd + AddressedGap)
+            {
+                _voteWoken = true;
+                BeginChain(VoteOpenNote());
+                return;
+            }
+
+            if (TimeAlert()) return;
+
+            if (fresh > 0 && Time.time >= _debounceAt)
+            {
+                // Not every message deserves a reply: answer quickly when someone talks to the agent,
+                // otherwise wait for the chat to calm down (or for the agent to have been silent a long time).
+                bool addressed = Profiles[Active].TrustChat || AddressedToMe();
+                bool quiet = Time.time - _lastChatAt >= QuietWindow;
+                bool overdue = Time.time - _lastChainEnd >= MaxSilence;
+                float floor = addressed ? Mathf.Min(_thinkAt, _lastChainEnd + AddressedGap) : _thinkAt;
+
+                if (Time.time >= floor && (addressed || quiet || overdue))
+                    BeginChain($"[{fresh} new chat message(s). The chat in the first message is updated.]");
+            }
         }
 
         private int NewFromOthers()
@@ -130,6 +170,7 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             _convo[0] = new LlmMessage(LlmRole.User, BuildInitialPrompt());
             _promptCount = LlmMeetingTranscript.All.Count;
+            _epochAtSend = _directiveEpoch;
 
             var request = new LlmRequest<LlmTurn>
             {
@@ -163,6 +204,14 @@ namespace AMG.AI.Services.ChatService.Llm
 
                 Finish(false);
                 _thinkAt = Time.time + 5f;
+                return;
+            }
+
+            // The developer wrote while the model was thinking: this answer was decided without that order.
+            if (_epochAtSend != _directiveEpoch)
+            {
+                Dbg("answer discarded: the developer wrote while the agent was thinking.");
+                Finish(true);
                 return;
             }
 
@@ -254,6 +303,9 @@ namespace AMG.AI.Services.ChatService.Llm
                 sb.AppendLine();
             }
 
+            AppendClock(sb, profile);
+            AppendDirectives(sb, profile);
+
             sb.AppendLine($"Commands. You may send up to {MaxCommandsPerStep} per reply; they run in order:");
             foreach (var name in profile.Commands) sb.AppendLine("- " + CommandDocs[name]);
             sb.AppendLine("vote and wait end your turn: commands after them are skipped.");
@@ -286,7 +338,15 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             if (_outbox.Count == 0 || Time.time < _sendAt) return;
 
-            string text = _outbox.Peek();
+            var item = _outbox.Peek();
+            if (Time.time - item.At > StaleOutboxSeconds)
+            {
+                _outbox.Dequeue();
+                Dbg($"dropped stale message: \"{item.Text}\"");
+                return;
+            }
+
+            string text = item.Text;
             var check = CheckSay(text);
             if (check == ChatRpcEnums.ERROR_InCooldown)   // game chat cooldown (3 s): keep it queued
             {
@@ -297,6 +357,7 @@ namespace AMG.AI.Services.ChatService.Llm
             if (check == ChatRpcEnums.SUCCESS)
             {
                 Say(text);
+                RememberSent(text);
                 Dbg($"sent: \"{text}\"");
             }
             else
@@ -305,7 +366,8 @@ namespace AMG.AI.Services.ChatService.Llm
                 Dbg($"DROPPED \"{text}\": {check}", $"<color=#ff5555>message dropped:</color> {check}");
             }
 
-            _sendAt = Time.time + 1.5f + text.Length / 8f;
+            float typing = 1.5f + text.Length / 8f;
+            _sendAt = Time.time + (Profiles[Active].TrustChat ? typing : Mathf.Max(MinSendGap, typing));
         }
 
         private void TryPendingVote()
@@ -367,6 +429,7 @@ namespace AMG.AI.Services.ChatService.Llm
             _reasoning?.Complete(ok);
             _reasoning = null;
             _cts?.Dispose(); _cts = null;
+            _lastChainEnd = Time.time;
             _thinkAt = Mathf.Max(_thinkAt, Time.time + Profiles[Active].MinInterval);
         }
 
@@ -385,6 +448,11 @@ namespace AMG.AI.Services.ChatService.Llm
             _voteWoken = false;
             _promptCount = _lastCount = 0;
             _thinkAt = _sendAt = 0;
+            _debounceAt = _lastChatAt = _lastChainEnd = _graceUntil = 0;
+            _directiveWake = false;   // the directives themselves stay: they are in the prompt
+            _hurryWoken = _discussionAlertWoken = false;
+            _sentThisMeeting = 0;
+            _recentSent.Clear();
         }
     }
 }
