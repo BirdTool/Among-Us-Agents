@@ -17,10 +17,9 @@ namespace AMG.Modules.AutoPlay
         private static float _nextTry;
         private static float _giveUpAt;
 
-        // --- campos novos (junto dos outros) ---
-        private const string ContinueButtonKeyword = "Continue";   // trecho do nome do GameObject do botão
-        private const float ContinueRetryAfter = 2f;                // se o Play Again não aparecer, clica de novo depois disso
-        private const float DumpButtonsAfter = 5f;                  // sem achar nada, lista os botões ativos no log (1 vez)
+        private const string ContinueButtonKeyword = "Continue";
+        private const float ContinueRetryAfter = 2f;
+        private const float DumpButtonsAfter = 5f;
 
         private static float _nextContinueTry;
         private static bool _dumpedButtons;

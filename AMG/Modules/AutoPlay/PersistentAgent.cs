@@ -13,6 +13,7 @@ namespace AMG.Modules.AutoPlay
     {
         private const float CheckInterval = 0.5f;
         private const float RetryAfterError = 5f;
+        private const float AttachDelay = 2f;
 
         private static bool FirstCalculate = false;
         private const float CalculatingAfter = 20f;
@@ -21,6 +22,7 @@ namespace AMG.Modules.AutoPlay
         public static bool Enabled { get; private set; }
 
         private static float _nextCheck;
+        private static float _attachTime = 0f;
         private static StructuredAgentBrain _mappedBrain;
         private static float _mappedShip = -1f;
 
@@ -37,10 +39,8 @@ namespace AMG.Modules.AutoPlay
             }
 
             Enabled = true;
+            _attachTime = 0f;
             LogManager.LogInfo("[Persistent] Brain ON: it will come back by itself after every match. Press N again to turn it off.");
-
-            if (me != null && me.Data != null)
-                Attach(me);
         }
 
         private static void Disable(PlayerControl me)
@@ -60,6 +60,7 @@ namespace AMG.Modules.AutoPlay
             AgentController.AgentControlsRealPlayer = false;
             _mappedBrain = null;
             FirstCalculate = false;
+            _attachTime = 0f;
             LogManager.LogInfo("[Persistent] Brain OFF.");
         }
 
@@ -77,12 +78,26 @@ namespace AMG.Modules.AutoPlay
             // Only in a lobby or a match: not on the end screen and not in the menus.
             var state = client.GameState;
             bool inMatch = state == InnerNetClient.GameStates.Started;
-            if (!inMatch && state != InnerNetClient.GameStates.Joined) return;
+            if (!inMatch && state != InnerNetClient.GameStates.Joined)
+            {
+                _attachTime = 0f;
+                return;
+            }
 
             var brain = me.GetComponent<StructuredAgentBrain>();
             if (brain == null)
             {
+                if (_attachTime == 0f)
+                {
+                    _attachTime = Time.unscaledTime + AttachDelay;
+                    return;
+                }
+
+                if (Time.unscaledTime < _attachTime) return;
+
                 brain = Attach(me);
+                _attachTime = 0f; 
+                
                 if (brain == null) return;
             }
 

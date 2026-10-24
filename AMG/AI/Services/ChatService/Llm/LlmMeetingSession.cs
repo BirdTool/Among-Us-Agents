@@ -383,7 +383,7 @@ namespace AMG.AI.Services.ChatService.Llm
 
         private void Dbg(string log, string chat = null)
         {
-            LogManager.LogDebug($"[LLM {_brain.BaseName}] {log}");
+            LogManager.LogInfo($"[LLM {_brain.BaseName}] {log}");
             if (chat != null) ChatDbg(chat);
         }
 
