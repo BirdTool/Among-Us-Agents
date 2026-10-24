@@ -10,14 +10,14 @@ namespace AMG.AI.Services.ChatService.Llm
         public static void Capture(PlayerControl reporter, NetworkedPlayerInfo target)
         {
             string who = reporter?.Data != null
-                ? $"{reporter.Data.PlayerName} (ID {reporter.PlayerId}, {reporter.Data.ColorName})"
+                ? $"{LlmMeetingSession.Colour(reporter)} (ID {reporter.PlayerId})"
                 : "an unknown player";
 
             IsEmergency = target == null;
 
             Description = target == null
                 ? $"Emergency meeting: {who} pressed the emergency button. NO body was reported."
-                : $"Body report: {who} reported the body of {target.PlayerName} (ID {target.PlayerId}). Where the body was is only known by whoever saw it.";
+                : $"Body report: {who} reported the body of {LlmMeetingSession.Colour(target)} (ID {target.PlayerId}). Where the body was is only known by whoever saw it.";
         }
     }
 }

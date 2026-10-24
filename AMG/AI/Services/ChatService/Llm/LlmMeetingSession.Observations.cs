@@ -21,7 +21,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 {
                     var rep = Utils.Players.GetPlayerByPlayerId(reporterId);
                     string repName = rep != null
-                        ? $"{rep.name} (Colour: {rep.Data?.ColorName ?? "Unknown"})"
+                        ? Colour(rep)
                         : $"Player {reporterId}";
                     sb.AppendLine($"Called by: {repName} (ID: {reporterId})");
                 }
@@ -46,7 +46,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 {
                     var victim = Utils.Players.GetPlayerByPlayerId(body.PlayerId);
                     string victimName = victim != null
-                        ? $"{victim.name} (Colour: {victim.Data?.ColorName ?? "Unknown"})"
+                        ? Colour(victim)
                         : $"Player {body.PlayerId}";
                     var room = AgentVision.GetRoomAtPosition(body.Position);
                     sb.AppendLine($"  - {victimName} (ID: {body.PlayerId}), Room: {room}, ~{body.TimeSinceDeath:0.#}s ago");
@@ -61,12 +61,12 @@ namespace AMG.AI.Services.ChatService.Llm
             {
                 if (m.PlayerId == brain.AgentId) continue;
                 var pl = Utils.Players.GetPlayerByPlayerId(m.PlayerId);
-                string plName = pl != null ? $"{pl.name} (ID: {m.PlayerId})" : $"Player {m.PlayerId}";
+                string plName = pl != null ? $"{Colour(pl)} (ID: {m.PlayerId})" : $"Player {m.PlayerId}";
 
                 if (m.SawKilling)
                 {
                     string victim = m.LastVictimSeenKilled.HasValue
-                        ? Utils.Players.GetPlayerByPlayerId(m.LastVictimSeenKilled.Value)?.name ?? $"ID {m.LastVictimSeenKilled.Value}"
+                        ? ColourOf(m.LastVictimSeenKilled.Value)
                         : "Unknown";
                     crimes.Add($"[CRITICAL] KILL: {plName} killed {victim} in {m.KillRoom} at {m.TimeOfKillWitnessed:0.#}s!");
                 }

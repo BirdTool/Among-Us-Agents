@@ -82,6 +82,9 @@ namespace AMG.AI.Services.ChatService.Llm
                     terminal = true;
                     return "ok: waiting for new messages.";
 
+                case "get_player_names":
+                    return GetPlayerNames();
+
                 case "get_role_info":
                     return GetRoleDescription(cmd.Text);
 
@@ -124,7 +127,7 @@ namespace AMG.AI.Services.ChatService.Llm
                     if (cmd.Target.HasValue)
                     {
                         var pl = Utils.Players.GetPlayerByPlayerId(cmd.Target.Value);
-                        string name = pl != null ? $"{pl.name} (ID {cmd.Target.Value})" : $"Player {cmd.Target.Value}";
+                        string name = pl != null ? $"{Colour(pl)} (ID {cmd.Target.Value})" : $"Player {cmd.Target.Value}";
                         return $"ok: persistent note #{note.Id} added for {name}.";
                     }
                     return $"ok: persistent note #{note.Id} added.";
@@ -152,7 +155,7 @@ namespace AMG.AI.Services.ChatService.Llm
                     foreach (var note in list)
                     {
                         string tag = note.TargetPlayerId.HasValue
-                            ? $" (Player {note.TargetPlayerId.Value}{(Utils.Players.GetPlayerByPlayerId(note.TargetPlayerId.Value) is { } pl ? $" - {pl.name}" : "")})"
+                            ? $" (Player {note.TargetPlayerId.Value}{(Utils.Players.GetPlayerByPlayerId(note.TargetPlayerId.Value) is { } pl ? $" - {Colour(pl)}" : "")})"
                             : " (General)";
                         sb.AppendLine($"  - [#{note.Id}]{tag} {note.Text}");
                     }
@@ -171,7 +174,7 @@ namespace AMG.AI.Services.ChatService.Llm
                         var mem = brain.GetOrCreateMemory(player.PlayerId);
                         if (delta >= 0) mem.IncreaseSuspiciusPercentage(delta);
                         else            mem.DecreaseSuspiciusPercentage(-delta);
-                        return $"ok: {player.name} suspiciousness changed by {delta:+0.#;-0.#}% → now {mem.SuspiciusPercentage:0.#}%.";
+                        return $"ok: {Colour(player)} suspiciousness changed by {delta:+0.#;-0.#}% → now {mem.SuspiciusPercentage:0.#}%.";
                     }
                     failed = true; return "error: brain not available.";
                 }
@@ -187,7 +190,7 @@ namespace AMG.AI.Services.ChatService.Llm
                     {
                         var mem = brain.GetOrCreateMemory(player.PlayerId);
                         mem.SetSuspiciusPercentage(val);
-                        return $"ok: {player.name} suspiciousness set to {mem.SuspiciusPercentage:0.#}%.";
+                        return $"ok: {Colour(player)} suspiciousness set to {mem.SuspiciusPercentage:0.#}%.";
                     }
                     failed = true; return "error: brain not available.";
                 }
@@ -204,7 +207,7 @@ namespace AMG.AI.Services.ChatService.Llm
                         var mem = brain.GetOrCreateMemory(player.PlayerId);
                         if (delta >= 0) mem.IncreaseTrust(delta);
                         else            mem.DecreaseTrust(-delta);
-                        return $"ok: {player.name} trust changed by {delta:+0.#;-0.#} → now {mem.Trust:+0.#;-0.#;0} (0=neutral).";
+                        return $"ok: {Colour(player)} trust changed by {delta:+0.#;-0.#} → now {mem.Trust:+0.#;-0.#;0} (0=neutral).";
                     }
                     failed = true; return "error: brain not available.";
                 }
@@ -220,7 +223,7 @@ namespace AMG.AI.Services.ChatService.Llm
                     {
                         var mem = brain.GetOrCreateMemory(player.PlayerId);
                         mem.SetTrust(val);
-                        return $"ok: {player.name} trust set to {mem.Trust:+0.#;-0.#;0} (0=neutral).";
+                        return $"ok: {Colour(player)} trust set to {mem.Trust:+0.#;-0.#;0} (0=neutral).";
                     }
                     failed = true; return "error: brain not available.";
                 }

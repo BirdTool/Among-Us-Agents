@@ -27,7 +27,7 @@ namespace AMG.AI.Services.ChatService.Llm
         ];
 
         private static readonly string[] AllCommands = [
-            "private_message", "send_message", "vote", "wait",
+            "private_message", "send_message", "vote", "wait", "get_player_names",
             "get_role_info", "get_player_info", "get_meeting_observations",
             "get_notes", "add_notes", "remove_notes",
             "get_persistent_note", "add_persistent_note", "remove_persistent_note",
@@ -38,10 +38,10 @@ namespace AMG.AI.Services.ChatService.Llm
 
         private static readonly System.Collections.Generic.Dictionary<LlmTier, TierProfile> Profiles = new()
         {
-            [LlmTier.Lobby] = new(2, 15f, ["send_message", "wait", "private_message"], MaxTokens: 200, MinInterval: 12f, MaxChatLines: 15, Lobby: true),
-            [LlmTier.Low] = new(3, 20f, ["send_message", "vote", "wait", "private_message"], MinInterval: 8f),
+            [LlmTier.Lobby] = new(2, 15f, ["send_message", "wait", "private_message", "get_player_names"], MaxTokens: 200, MinInterval: 12f, MaxChatLines: 15, Lobby: true),
+            [LlmTier.Low] = new(3, 20f, ["send_message", "vote", "wait", "private_message", "get_player_names"], MinInterval: 8f),
             [LlmTier.Medium] = new(6, 40f, [
-                "send_message", "vote", "wait", "private_message",
+                "send_message", "vote", "wait", "private_message", "get_player_names",
                 "get_role_info", "get_player_info", "get_meeting_observations",
                 "get_persistent_note", "add_persistent_note", "remove_persistent_note",
                 "change_suspicious", "set_suspicious", "change_trust", "set_trust",
@@ -58,6 +58,7 @@ namespace AMG.AI.Services.ChatService.Llm
             ["send_message"] = "send_message {text}: say something in the meeting chat (max 100 characters).",
             ["vote"] = "vote {target}: vote for a player id, or 253 to skip. Not allowed during discussion; one vote only.",
             ["wait"] = "wait: do nothing until new chat messages arrive. Use it when you have nothing to add.",
+            ["get_player_names"] = "get_player_names: the real name of every player next to their colour and id. Use it when someone writes a name in the chat and you do not know which colour it is.",
             ["get_role_info"] = "get_role_info {text}: rules and abilities of a role, e.g. \"Judge\", \"Scientist\", or empty for your own role.",
             ["get_player_info"] = "get_player_info {target}: all known data on a player (memories, position, crimes, trust, suspicion).",
             ["get_meeting_observations"] = "get_meeting_observations: what you personally witnessed this round (bodies, crimes, reporter, etc.).",
@@ -83,8 +84,8 @@ namespace AMG.AI.Services.ChatService.Llm
 
         private static readonly System.Collections.Generic.HashSet<string> InfoCommands =
         [
-            "get_observations", "get_role_info", "get_player_info", "get_meeting_observations",
-            "get_notes", "add_notes", "remove_notes",
+            "get_observations", "get_player_names", "get_role_info", "get_player_info", 
+            "get_meeting_observations", "get_notes", "add_notes", "remove_notes",
             "get_persistent_note", "add_persistent_note", "remove_persistent_note",
             "change_suspicious", "set_suspicious", "change_trust", "set_trust",
             "change_suspicion", "set_suspicion",

@@ -285,13 +285,13 @@ namespace AMG.AI.Services.ChatService.Llm
             else
                 sb.AppendLine("You are a player in an Among Us meeting. Play like a human; never say you are an AI.");
 
-            sb.AppendLine($"You: {(profile.Lobby ? $"Name: {_brain.BaseName}, Colour: {_brain.Agent.Data.ColorName}" : Identity())}");
+            sb.AppendLine($"You: {(profile.Lobby ? $"Colour: {Colour(_brain.Agent)}" : Identity())}");
             sb.AppendLine($"Personality: {Persona}");
             sb.AppendLine();
 
-            sb.AppendLine("Players (id, name, status):");
+            sb.AppendLine("Players (id, colour, status):");
             foreach (var p in GameData.Instance.AllPlayers)
-                sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU)" : "")} {p.PlayerId} {Clean(p.PlayerName)} (Colour: {p.ColorName}) {(p.IsDead ? "dead" : "alive")}");
+                sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU) " : "")}{p.PlayerId} {Colour(p)} {(p.IsDead ? "dead" : "alive")}");
             sb.AppendLine();
 
             if (!profile.Lobby)
@@ -303,6 +303,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 sb.AppendLine();
             }
 
+            AppendBehaviour(sb, profile);
             AppendClock(sb, profile);
             AppendDirectives(sb, profile);
 
@@ -323,14 +324,16 @@ namespace AMG.AI.Services.ChatService.Llm
             for (int i = profile.MaxChatLines > 0 ? Math.Max(0, chat.Count - profile.MaxChatLines) : 0; i < chat.Count; i++)
             {
                 var e = chat[i];
-                sb.AppendLine($"[{e.Index}] {Clean(e.SenderName)}{(e.SenderId == _brain.AgentId ? " (you)" : "")}: {Clean(e.Text)}");
+                string sender = ColourOf(e.SenderId);
+                if (sender.StartsWith("player ")) sender = Clean(e.SenderName);   // left the game: fall back to the name
+                sb.AppendLine($"[{e.Index}] {sender}{(e.SenderId == _brain.AgentId ? " (you)" : "")}: {Clean(e.Text)}");
             }
             sb.AppendLine("</chat>");
 
             return sb.ToString();
         }
 
-        private string Identity() => $"Name: {_brain.BaseName}, Colour: {_brain.Agent.Data.ColorName}, Role: {_brain.Agent.Data.Role.Role}";
+        private string Identity() => $"Colour: {Colour(_brain.Agent)}, Role: {_brain.Agent.Data.Role.Role}";
 
         internal static string Clean(string s) => (s ?? string.Empty).Replace('<', '‹').Replace('>', '›');
 

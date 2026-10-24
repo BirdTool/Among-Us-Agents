@@ -36,7 +36,7 @@ namespace AMG.AI.Services.ChatService.Llm
             var p = brain.GetOrCreateMemory(player.PlayerId);
 
             var sb = new StringBuilder();
-            sb.AppendLine($"=== Player Info: {player.name} (ID: {player.PlayerId}) ===");
+            sb.AppendLine($"=== Player Info: {Colour(player)} (ID: {player.PlayerId}) ===");
             sb.AppendLine($"Colour: {player.Data?.ColorName ?? "Unknown"}");
             sb.AppendLine($"Alive: {!(player.Data?.IsDead ?? false)}");
 
@@ -78,7 +78,7 @@ namespace AMG.AI.Services.ChatService.Llm
             if (p.SawKilling)
             {
                 string victimName = p.LastVictimSeenKilled.HasValue
-                    ? Utils.Players.GetPlayerByPlayerId(p.LastVictimSeenKilled.Value)?.name ?? $"ID {p.LastVictimSeenKilled.Value}"
+                    ? ColourOf(p.LastVictimSeenKilled.Value)
                     : "Unknown";
                 sb.AppendLine($"  - Victim: {victimName}");
                 sb.AppendLine($"  - Room: {p.KillRoom?.ToString() ?? "Unknown"}");
@@ -107,7 +107,7 @@ namespace AMG.AI.Services.ChatService.Llm
             {
                 string voteTarget = p.LastVoteTarget.Value == Utils.SkipVotePlayerId
                     ? "Skip"
-                    : Utils.Players.GetPlayerByPlayerId(p.LastVoteTarget.Value)?.name ?? $"ID {p.LastVoteTarget.Value}";
+                    : ColourOf(p.LastVoteTarget.Value);
                 sb.AppendLine($"LastVoteTarget: {voteTarget}");
             }
 
@@ -117,7 +117,7 @@ namespace AMG.AI.Services.ChatService.Llm
             {
                 IEnumerable<string> sightings = p.SeenTogetherWith.Select(s =>
                 {
-                    string otherName = Utils.Players.GetPlayerByPlayerId(s.playerId)?.name ?? $"ID {s.playerId}";
+                    string otherName = ColourOf(s.playerId);
                     return $"{otherName} (at {s.time:0.#}s)";
                 });
                 sb.AppendLine($"SeenTogetherWith: {string.Join(", ", sightings)}");
