@@ -107,6 +107,7 @@ namespace AMG.AI.Services.ChatService.Llm
         public byte? TargetPlayerId { get; set; }
         public string Text { get; set; }
         public float CreatedAt { get; set; }
+        public bool Auto { get; set; }   // written by code from what the agent witnessed, not by the model
     }
 
     public sealed class LlmTurn

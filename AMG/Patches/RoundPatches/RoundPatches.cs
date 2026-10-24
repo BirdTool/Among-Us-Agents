@@ -40,7 +40,10 @@ namespace AMG.Patches.RoundPatches
         public static void EndGameManager_Start_Postfix()
         {
             foreach (var brain in Utils.GetAllStructuredAgentBrain())
+            {
                 brain.LlmMeeting?.ClearDirectives();
+                brain.LlmMeeting?.ClearMemory();
+            }
             LlmMeetingTranscript.NewMatch();
         }
 

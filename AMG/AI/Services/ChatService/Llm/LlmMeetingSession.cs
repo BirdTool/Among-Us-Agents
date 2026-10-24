@@ -270,6 +270,8 @@ namespace AMG.AI.Services.ChatService.Llm
             var profile = Profiles[Active];
             var sb = new StringBuilder();
 
+            if (!profile.Lobby) RecordWitnessedFacts();
+
             if (profile.Lobby)
             {
                 sb.AppendLine("You are a player waiting in an Among Us lobby, before the match starts. Chat casually like a human; never say you are an AI.");
@@ -304,6 +306,7 @@ namespace AMG.AI.Services.ChatService.Llm
             }
 
             AppendBehaviour(sb, profile);
+            AppendNotes(sb, profile);
             AppendClock(sb, profile);
             AppendDirectives(sb, profile);
 
