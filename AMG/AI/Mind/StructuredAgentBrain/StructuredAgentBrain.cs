@@ -6,6 +6,7 @@ using AMG.AI.Navigation;
 using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.ChatService.Local;
 using AMG.AI.Tools;
+using AMG.Data;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
 using AMG.Models;
@@ -95,7 +96,10 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             Utils.OnSabotageEnded += HandleSabotageEnded;
 
             ChatService = new ChatServiceClass(new ChatTransport(this), Level, () => AgentId);
-            LlmMeeting = new LlmMeetingSession(this);
+            LlmMeeting = new LlmMeetingSession(this)
+            {
+                Tier = GlobalVariables.DefaultLlmTier
+            };
 
             ChangeRandomDirection();
         }

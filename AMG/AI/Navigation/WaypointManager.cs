@@ -111,6 +111,12 @@ namespace AMG.AI.Navigation
         {
             if (AllWaypoints.Count > 0) return;
 
+            if ((byte)CurrentMap == byte.MaxValue)
+            {
+                LogManager.LogWarning("[AI Nav] Mapa ainda desconhecido (255), waypoints não carregados. Será tentado de novo quando a nave iniciar.");
+                return;
+            }
+
             string jsonPath = GetJsonPath(CurrentMap);
 
             if (!File.Exists(jsonPath))

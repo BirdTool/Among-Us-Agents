@@ -5,6 +5,7 @@ using AMG.UI.Elements;
 using AMG.UI.UIActions;
 using AMG.Enums.ChatServiceEnums;
 using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
 
 namespace AMG.UI.Tabs;
 
@@ -49,6 +50,14 @@ public class AgentsTab : TabBase
             (int)ChatMode.Current,
             (index) => ChatMode.Current = (ChatModeEnum)index,
             () => (int)ChatMode.Current);
+
+        new MenuSubText("Set LLM Tier");
+
+        new MenuTextSlider(
+            Enum.GetNames(typeof(LlmTier)),
+            (int)GlobalVariables.DefaultLlmTier,
+            (index) => GlobalVariables.DefaultLlmTier = (LlmTier)index,
+            () => (int)GlobalVariables.DefaultLlmTier);
 
         new MenuButton("Chat Debug", () => 
         {

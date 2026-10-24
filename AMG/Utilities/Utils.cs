@@ -111,7 +111,26 @@ namespace AMG.Utilities
                 return (byte)AmongUsClient.Instance.TutorialMapId;
             }
 
-            // Works for local / online games
+            // The map that is actually loaded is the source of truth: a non-host client may not
+            // have the lobby's options synced yet (MapId invalid / 255) when this is first asked.
+            if (ShipStatus.Instance != null)
+            {
+                byte fromShip = ShipStatus.Instance.Type switch
+                {
+                    ShipStatus.MapType.Ship => (byte)MapNames.Skeld,
+                    ShipStatus.MapType.Hq => (byte)MapNames.MiraHQ,
+                    ShipStatus.MapType.Pb => (byte)MapNames.Polus,
+                    ShipStatus.MapType.Fungle => (byte)MapNames.Fungle,
+                    _ => byte.MaxValue
+                };
+
+                // Dleks uses the Skeld ShipStatus type, so trust the options when they say Dleks
+                byte fromOptions = GameOptionsManager.Instance?.currentGameOptions?.MapId ?? byte.MaxValue;
+                if (fromShip == (byte)MapNames.Skeld && fromOptions == (byte)MapNames.Dleks) return fromOptions;
+                if (fromShip != byte.MaxValue) return fromShip;
+            }
+
+            // Works for local / online games (only reliable for the host before the ship exists)
             if (GameOptionsManager.Instance?.currentGameOptions != null)
             {
                 return GameOptionsManager.Instance.currentGameOptions.MapId;

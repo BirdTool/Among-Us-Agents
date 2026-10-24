@@ -26,6 +26,7 @@ namespace AMG.Patches.RoundPatches
             Utils.Round.AddRound();
             TaskAssignment.SetCommonTask();
             ShipStartedAt = Time.time;
+            AMG.AI.Navigation.WaypointManager.LoadWaypoints();
             Pathfinder.Initialize();
 
             // new match: forget the previous one's players, then remember everybody who started this one
