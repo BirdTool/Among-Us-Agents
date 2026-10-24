@@ -17,6 +17,14 @@ namespace AMG.Modules.AutoPlay
         private static float _nextTry;
         private static float _giveUpAt;
 
+        // --- campos novos (junto dos outros) ---
+        private const string ContinueButtonKeyword = "Continue";   // trecho do nome do GameObject do botão
+        private const float ContinueRetryAfter = 2f;                // se o Play Again não aparecer, clica de novo depois disso
+        private const float DumpButtonsAfter = 5f;                  // sem achar nada, lista os botões ativos no log (1 vez)
+
+        private static float _nextContinueTry;
+        private static bool _dumpedButtons;
+
         [HarmonyPatch(typeof(EndGameManager), nameof(EndGameManager.Start))]
         [HarmonyPostfix]
         public static void EndGameManager_Start_Postfix()
@@ -26,6 +34,8 @@ namespace AMG.Modules.AutoPlay
             _pending = true;
             _nextTry = 0f;
             _giveUpAt = Time.unscaledTime + GiveUpAfter;
+            _nextContinueTry = 0f;
+            _dumpedButtons = false;
             LogManager.LogInfo("[AutoReturn] Match ended: waiting for the Play Again button.");
         }
 
@@ -55,27 +65,61 @@ namespace AMG.Modules.AutoPlay
                 return;
             }
 
-            if (TryClickPlayAgain())
+            if (TryAdvance())
                 _pending = false;
         }
 
-        private static bool TryClickPlayAgain()
+        private static bool TryAdvance()
         {
             try
             {
+                PassiveButton playAgain = null, next = null;
+
                 foreach (var button in UnityEngine.Object.FindObjectsOfType<PassiveButton>())
                 {
-                    if (button == null || button.gameObject.name != PlayAgainButtonName || !button.isActiveAndEnabled)
-                        continue;
+                    if (button == null || !button.isActiveAndEnabled) continue;
 
-                    button.OnClick.Invoke();
+                    string buttonName = button.gameObject.name;
+                    if (buttonName == PlayAgainButtonName)
+                        playAgain = button;
+                    else if (next == null && buttonName.IndexOf(ContinueButtonKeyword, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                        next = button;
+                }
+
+                if (playAgain != null)
+                {
+                    playAgain.OnClick.Invoke();
                     LogManager.LogInfo("[AutoReturn] Play Again pressed.");
                     return true;
+                }
+
+                float now = Time.unscaledTime;
+
+                if (next != null)
+                {
+                    if (now >= _nextContinueTry)
+                    {
+                        _nextContinueTry = now + ContinueRetryAfter;
+                        next.OnClick.Invoke();
+                        LogManager.LogInfo($"[AutoReturn] Continue pressed ({next.gameObject.name}).");
+                    }
+                    return false;
+                }
+
+                if (!_dumpedButtons && now > _giveUpAt - GiveUpAfter + DumpButtonsAfter)
+                {
+                    _dumpedButtons = true;
+                    var names = new System.Collections.Generic.List<string>();
+                    foreach (var button in UnityEngine.Object.FindObjectsOfType<PassiveButton>())
+                        if (button != null && button.isActiveAndEnabled)
+                            names.Add(button.gameObject.name);
+
+                    LogManager.LogWarning($"[AutoReturn] No Continue/Play Again yet. Active buttons: {string.Join(", ", names)}");
                 }
             }
             catch (System.Exception e)
             {
-                LogManager.LogError($"[AutoReturn] Could not press Play Again: {e.Message}");
+                LogManager.LogError($"[AutoReturn] Could not advance to the lobby: {e.Message}");
             }
 
             return false;
