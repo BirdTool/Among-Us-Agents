@@ -12,9 +12,17 @@ namespace AMG.AI.Services.ChatService.Llm
         public float At;           // Time.time when it arrived
     }
 
+    public sealed record LlmMeetingLog(int Meeting, List<LlmTranscriptEntry> Entries);
+
     public static class LlmMeetingTranscript
     {
+        private const int MaxMeetingsKept = 6;
+
         private static readonly List<LlmTranscriptEntry> _entries = [];
+        private static readonly List<LlmMeetingLog> _history = [];
+
+        // Chat of the meetings that already ended in this match, oldest first.
+        public static IReadOnlyList<LlmMeetingLog> History => _history;
 
         public static IReadOnlyList<LlmTranscriptEntry> All => _entries;
 
@@ -41,14 +49,21 @@ namespace AMG.AI.Services.ChatService.Llm
 
         public static void Reset()
         {
+            if (_entries.Count > 0)
+                _history.Add(new LlmMeetingLog(MeetingNumber, [.. _entries]));
+            while (_history.Count > MaxMeetingsKept) _history.RemoveAt(0);
+
             _entries.Clear();
             MeetingNumber++;
+            LlmMeetingContext.MeetingStarted();
         }
 
         public static void NewMatch()
         {
             _entries.Clear();
+            _history.Clear();
             MeetingNumber = 0;
+            LlmMeetingContext.Clear();
         }
     }
 }

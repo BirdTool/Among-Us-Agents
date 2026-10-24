@@ -259,7 +259,11 @@ namespace AMG.AI.Services.ChatService.Llm
             var profile = Profiles[Active];
             var sb = new StringBuilder();
 
-            if (!profile.Lobby) RecordWitnessedFacts();
+            if (!profile.Lobby)
+            {
+                RecordWitnessedFacts();
+                RecordClaims();
+            }
 
             if (profile.Lobby)
             {
@@ -296,6 +300,8 @@ namespace AMG.AI.Services.ChatService.Llm
 
             AppendBehaviour(sb, profile);
             AppendNotes(sb, profile);
+            AppendHistory(sb, profile);
+            AppendAllObservations(sb, profile);
             AppendClock(sb, profile);
             AppendDirectives(sb, profile);
 
@@ -447,6 +453,8 @@ namespace AMG.AI.Services.ChatService.Llm
             _hurryWoken = _reminderWoken = false;
             _sentThisMeeting = 0;
             _recentSent.Clear();
+            _askedWhere = false;
+            _lastAccusationAt = -100f;
         }
     }
 }

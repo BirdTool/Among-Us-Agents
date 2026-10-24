@@ -57,6 +57,9 @@ namespace AMG.AI.Services.ChatService.Llm
                             return $"skipped: you already used your {MaxMessagesPerMeeting} messages for this meeting. Use wait, or vote when voting opens.";
                         if (IsRepeat(text))
                             return "skipped: that is too similar to something you already said. Say something new or use wait.";
+
+                        string problem = ValidateOutgoing(text);
+                        if (problem != null) { failed = true; return problem; }
                     }
 
                     var check = CheckSay(text);

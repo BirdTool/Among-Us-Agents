@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Utilities;
@@ -17,6 +18,105 @@ namespace AMG.AI.Services.ChatService.Llm
         private const int MaxNoteLength = 160;
 
         private readonly HashSet<string> _autoNoteKeys = [];
+
+        private static readonly Regex RoleClaim = new(
+            @"\b(?:i['’]?m|im|i am)\s+(?:an?\s+|the\s+)?(?<role>eng(?:ineer)?|sci(?:entist)?|tracker|noisemaker|guardian angel|detective)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        private static string CanonicalRole(string role) => role.ToLowerInvariant() switch
+        {
+            "eng" or "engineer" => "Engineer",
+            "sci" or "scientist" => "Scientist",
+            "tracker" => "Tracker",
+            "noisemaker" => "Noisemaker",
+            "guardian angel" => "Guardian Angel",
+            "detective" => "Detective",
+            _ => role
+        };
+
+        private string SenderLabel(LlmTranscriptEntry e)
+        {
+            string sender = ColourOf(e.SenderId);
+            if (sender.StartsWith("player ")) sender = Clean(e.SenderName);   // left the game: fall back to the name
+            return e.SenderId == _brain.AgentId ? $"{sender} (you)" : sender;
+        }
+
+        // Role claims other players make in the chat ("im eng"): written down so they are not forgotten next meeting.
+        private void RecordClaims()
+        {
+            int meeting = LlmMeetingTranscript.MeetingNumber;
+            foreach (var e in LlmMeetingTranscript.All)
+            {
+                if (e.SenderId == _brain.AgentId) continue;
+
+                var match = RoleClaim.Match(e.Text ?? string.Empty);
+                if (!match.Success) continue;
+
+                string role = CanonicalRole(match.Groups["role"].Value);
+                AddAutoNote($"claim:{e.SenderId}:{role}", e.SenderId,
+                    $"[claim] Meeting #{meeting}: {ColourOf(e.SenderId)} said they are {role} (not verified).");
+            }
+        }
+
+        // The chat of the meetings that already ended: High remembers all of them, Medium only the last one.
+        private void AppendHistory(StringBuilder sb, TierProfile profile)
+        {
+            if (profile.Lobby || profile.TrustChat) return;
+
+            var past = LlmMeetingTranscript.History;
+            if (past.Count == 0) return;
+
+            bool high = Active == LlmTier.High;
+            int meetings = high ? past.Count : 1;
+            int maxLines = high ? 60 : 25;
+
+            var lines = new List<string>();
+            for (int i = past.Count - meetings; i < past.Count; i++)
+                foreach (var e in past[i].Entries)
+                    lines.Add($"#{past[i].Meeting} {SenderLabel(e)}: {Clean(Trunc(e.Text, 100))}");
+
+            if (lines.Count > maxLines) lines = lines.GetRange(lines.Count - maxLines, maxLines);
+
+            sb.AppendLine("Chat of the earlier meetings of this match, oldest first. Use it to remember who accused whom, who claimed a role and what you already said; do not repeat an accusation you already made unless you have something new:");
+            foreach (var line in lines) sb.AppendLine(line);
+            sb.AppendLine();
+        }
+
+        // High only: everything the agent has observed about every player, without having to ask for each one.
+        private void AppendAllObservations(StringBuilder sb, TierProfile profile)
+        {
+            if (Active != LlmTier.High || _brain is not StructuredAgentBrain brain) return;
+
+            var lines = new List<string>();
+            foreach (var pl in GameData.Instance.AllPlayers)
+            {
+                if (pl.PlayerId == brain.AgentId) continue;
+
+                var p = brain.GetOrCreateMemory(pl.PlayerId);
+                var facts = new List<string>();
+
+                if (p.SawKilling)
+                {
+                    string victim = p.LastVictimSeenKilled.HasValue ? ColourOf(p.LastVictimSeenKilled.Value) : "someone";
+                    facts.Add($"you saw them kill {victim} in {p.KillRoom?.ToString() ?? "an unknown room"}");
+                }
+                if (p.SawVenting) facts.Add($"you saw them use a vent in {p.VentRoom?.ToString() ?? "an unknown room"}");
+                if (p.SeenFakeTask) facts.Add("you saw them fake a task");
+                if (p.SeenVerifiedTask) facts.Add("you saw them do a real task");
+                if (p.SelfReportedBody) facts.Add("they reported a body themselves");
+                if (p.LastVoteTarget.HasValue)
+                    facts.Add("last vote: " + (p.LastVoteTarget.Value == Utils.SkipVotePlayerId ? "skip" : ColourOf(p.LastVoteTarget.Value)));
+
+                lines.Add($"- {Colour(pl)} (ID {pl.PlayerId}, {(pl.IsDead ? "dead" : "alive")}): suspicion {p.SuspiciusPercentage:0}%, trust {p.Trust:+0;-0;0}; "
+                    + (facts.Count > 0 ? string.Join("; ", facts) : "nothing notable seen"));
+            }
+
+            if (lines.Count == 0) return;
+
+            sb.AppendLine("Everything you have observed about each player so far (the same facts as get_player_info; only things you really saw):");
+            foreach (var line in lines) sb.AppendLine(line);
+            sb.AppendLine();
+        }
 
         // A new match starts from scratch.
         public void ClearMemory()

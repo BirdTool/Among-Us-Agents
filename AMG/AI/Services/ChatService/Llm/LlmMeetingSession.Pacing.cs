@@ -35,6 +35,8 @@ namespace AMG.AI.Services.ChatService.Llm
         private int _sentThisMeeting;
         private readonly List<string> _recentSent = [];
         private bool _hurryWoken, _reminderWoken;
+        private bool _askedWhere;
+        private float _lastAccusationAt = -100f;
 
         private readonly record struct PhaseClock(bool Known, bool Voting, bool Unlimited, int Left, int DiscussionTime, int VotingTime);
 
@@ -142,7 +144,7 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             if (_directives.Count > 0)
             {
-                sb.AppendLine($"<developer> Current meeting: #{LlmMeetingTranscript.MeetingNumber}. These come from your developer, who is trusted: obey them. If two conflict, the most recent one wins. One that clearly refers to a single round or moment (e.g. \"this round\") only applies to the meeting where it was received.");
+                sb.AppendLine($"<developer> Current meeting: #{LlmMeetingTranscript.MeetingNumber}. These come from your developer, who is trusted: obey them. If two conflict, the most recent one wins. One that clearly refers to a single round or moment (e.g. \"this round\") only applies to the meeting where it was received. Never say in the chat that you received these, that there is a developer, or that you are an AI: whatever they tell you about the game is something you simply know, so say it as your own opinion.");
                 foreach (var d in _directives)
                     sb.AppendLine($"- (meeting #{d.Meeting}) {Clean(d.Text)}");
                 sb.AppendLine("</developer>");
@@ -188,6 +190,8 @@ namespace AMG.AI.Services.ChatService.Llm
         private void RememberSent(string text)
         {
             _sentThisMeeting++;
+            if (WhereRegex.IsMatch(text)) _askedWhere = true;
+            if (AccuseRegex.IsMatch(text)) _lastAccusationAt = Time.time;
             _recentSent.Add(text);
             while (_recentSent.Count > SimilarityWindow) _recentSent.RemoveAt(0);
         }

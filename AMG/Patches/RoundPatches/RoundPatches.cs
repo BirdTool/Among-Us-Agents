@@ -23,6 +23,7 @@ namespace AMG.Patches.RoundPatches
             Utils.Round.AddRound();
             TaskAssignment.SetCommonTask();
             ShipStartedAt = Time.time;
+            AMG.Patches.Gameplay.Signals.VentSignals.Reset();
             AMG.AI.Navigation.WaypointManager.LoadWaypoints();
             Pathfinder.Initialize();
 
@@ -51,6 +52,7 @@ namespace AMG.Patches.RoundPatches
         [HarmonyPostfix]
         public static void MeetingHud_Start_Postfix()
         {
+            AMG.Patches.Gameplay.Signals.VentSignals.Reset();
             Utils.Round.AddRound();
             var allStructuredBrains = Utils.GetAllStructuredAgentBrain();
             foreach (var brain in allStructuredBrains)
@@ -65,6 +67,7 @@ namespace AMG.Patches.RoundPatches
         [HarmonyPostfix]
         public static void PlayerControl_ReportDeadBody_Postfix(PlayerControl __instance, NetworkedPlayerInfo target)
         {
+            AMG.Patches.Gameplay.Signals.VentSignals.Reset();
             LlmMeetingContext.Capture(__instance, target);
             if (target == null) return;   // emergency button: there is no body
 
