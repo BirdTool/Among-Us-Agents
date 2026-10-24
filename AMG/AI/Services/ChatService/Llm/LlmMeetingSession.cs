@@ -52,7 +52,6 @@ namespace AMG.AI.Services.ChatService.Llm
         private int _lastCount;
         private float _thinkAt, _sendAt;
         private byte? _pendingVote;   // vote ordered during discussion, cast when voting opens
-        private bool _voteWoken;      // already woke the agent for the voting phase
 
         public bool IsBusy => _pending != null;
 
@@ -110,16 +109,6 @@ namespace AMG.AI.Services.ChatService.Llm
                         ? "[Nobody has explained the emergency meeting yet. You may ask once, briefly, why it was called.]"
                         : null);
                 }
-                return;
-            }
-
-            // Voting opened: wake the agent once, even if nobody wrote in the chat
-            if (!_voteWoken && Utils.IsMeetingVoting && _pendingVote == null
-                && MeetingHud.Instance != null && !MeetingHud.Instance.DidVote(_brain.AgentId)
-                && Time.time >= _lastChainEnd + AddressedGap)
-            {
-                _voteWoken = true;
-                BeginChain(VoteOpenNote());
                 return;
             }
 
@@ -451,12 +440,11 @@ namespace AMG.AI.Services.ChatService.Llm
             _nextMeetingNoteId = 1;
             _started = false;
             _pendingVote = null;
-            _voteWoken = false;
             _promptCount = _lastCount = 0;
             _thinkAt = _sendAt = 0;
             _debounceAt = _lastChatAt = _lastChainEnd = _graceUntil = 0;
             _directiveWake = false;   // the directives themselves stay: they are in the prompt
-            _hurryWoken = _discussionAlertWoken = false;
+            _hurryWoken = _reminderWoken = false;
             _sentThisMeeting = 0;
             _recentSent.Clear();
         }

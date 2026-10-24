@@ -15,7 +15,7 @@ namespace AMG.Modules.AutoPlay
         private const float RetryAfterError = 5f;
 
         private static bool FirstCalculate = false;
-        private const float CalculatingAfter = 15f;
+        private const float CalculatingAfter = 20f;
         private static float NextCalculate;
 
         public static bool Enabled { get; private set; }

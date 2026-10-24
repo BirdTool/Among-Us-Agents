@@ -19,8 +19,8 @@ namespace AMG.AI.Services.ChatService.Llm
         private const float StaleOutboxSeconds = 15f;   // a message that waited longer than this is outdated: drop it
         private const int SimilarityWindow = 3;         // how many of its own last messages it may not repeat
         private const float SimilarityLimit = 0.6f;
-        private const int HurryAtSeconds = 12;            // voting: wake the agent if it still has not voted with this many seconds left
-        private const int DiscussionAlertAtSeconds = 10;  // discussion: wake the agent once, so it can already pick its vote
+        private const int VoteReminderAtSeconds = 20;     // voting: gentle reminder if it still has not voted with this many seconds left
+        private const int HurryAtSeconds = 10;            // voting: last call, vote now
         private const int MaxDirectives = 10;
         private const int MaxDirectiveLength = 300;
 
@@ -34,7 +34,7 @@ namespace AMG.AI.Services.ChatService.Llm
         private float _debounceAt, _lastChatAt, _lastChainEnd, _graceUntil;
         private int _sentThisMeeting;
         private readonly List<string> _recentSent = [];
-        private bool _hurryWoken, _discussionAlertWoken;
+        private bool _hurryWoken, _reminderWoken;
 
         private readonly record struct PhaseClock(bool Known, bool Voting, bool Unlimited, int Left, int DiscussionTime, int VotingTime);
 
@@ -61,13 +61,6 @@ namespace AMG.AI.Services.ChatService.Llm
             return new PhaseClock(true, true, false, Mathf.Max(0, Mathf.CeilToInt(left)), discussionTime, votingTime);
         }
 
-        private string VoteOpenNote()
-        {
-            var c = ReadClock();
-            string time = c.Known && !c.Unlimited ? $" and ends in {c.Left}s" : string.Empty;
-            return $"[Voting is now open{time}. Cast your vote with the vote command (target = player id, or 253 to skip).]";
-        }
-
         private void AppendClock(StringBuilder sb, TierProfile profile)
         {
             if (profile.Lobby) return;
@@ -78,7 +71,7 @@ namespace AMG.AI.Services.ChatService.Llm
             string votingLength = c.VotingTime > 0 ? $"{c.VotingTime}s" : "no time limit";
             if (!c.Voting)
             {
-                sb.AppendLine($"Time (read just now): discussion ends in {c.Left}s, then voting stays open for {votingLength}. If you do not vote before voting ends, your vote is lost. Each of your replies takes several seconds to arrive, so do not wait for the last moment; a skip (253) is better than no vote.");
+                sb.AppendLine($"Time (read just now): discussion ends in {c.Left}s, then voting stays open for {votingLength}. The chat stays open while voting is open: you can keep talking and vote at any moment of it, so there is no need to decide early. If you do not vote before voting ends, your vote is lost (a skip (253) is better than no vote).");
             }
             else if (c.Unlimited)
             {
@@ -86,7 +79,7 @@ namespace AMG.AI.Services.ChatService.Llm
             }
             else
             {
-                sb.AppendLine($"Time (read just now): VOTING IS OPEN and ends in {c.Left}s. If you do not vote before it ends, your vote is lost. Your replies take several seconds to arrive, so vote now unless you really need one more piece of information. A skip (253) is better than no vote.");
+                sb.AppendLine($"Time (read just now): VOTING IS OPEN and ends in {c.Left}s. The chat is still open: keep listening to the others and vote when you are ready; there is no need to rush while there is plenty of time. If you do not vote before it ends, your vote is lost, and a reply of yours takes several seconds to arrive, so do not leave it for the very last seconds. A skip (253) is better than no vote.");
                 if (c.Left <= HurryAtSeconds)
                     sb.AppendLine("VERY LITTLE TIME LEFT: vote immediately and do not send any chat message first.");
             }
@@ -101,22 +94,26 @@ namespace AMG.AI.Services.ChatService.Llm
             var c = ReadClock();
             if (!c.Known || MeetingHud.Instance == null) return false;
 
-            if (c.Voting)
-            {
-                if (_hurryWoken || c.Unlimited || c.Left > HurryAtSeconds) return false;
-                if (MeetingHud.Instance.DidVote(_brain.AgentId)) return false;
+            // Nothing is asked of the agent during the discussion, and nothing when voting opens:
+            // it only gets reminded when the time to vote is really running out.
+            if (!c.Voting || c.Unlimited || c.Left > VoteReminderAtSeconds) return false;
+            if (MeetingHud.Instance.DidVote(_brain.AgentId)) return false;
 
+            if (c.Left <= HurryAtSeconds && !_hurryWoken)
+            {
                 _hurryWoken = true;
                 BeginChain($"[HURRY: voting ends in {c.Left}s and you have not voted. Vote NOW with the vote command (target = player id, or 253 to skip).]");
                 return true;
             }
 
-            if (_discussionAlertWoken || c.DiscussionTime <= 0 || c.Left > DiscussionAlertAtSeconds) return false;
+            if (c.Left > HurryAtSeconds && !_reminderWoken)
+            {
+                _reminderWoken = true;
+                BeginChain($"[Voting ends in {c.Left}s and you have not voted yet. Finish listening, then vote before it ends (target = player id, or 253 to skip).]");
+                return true;
+            }
 
-            _discussionAlertWoken = true;
-            string votingLength = c.VotingTime > 0 ? $"{c.VotingTime}s" : "no time limit";
-            BeginChain($"[Discussion ends in {c.Left}s, then voting stays open for {votingLength}. Decide now who to vote for: you can already use the vote command, it is cast automatically when voting opens.]");
-            return true;
+            return false;
         }
 
         // Called on the main thread when the developer sends a private message.
