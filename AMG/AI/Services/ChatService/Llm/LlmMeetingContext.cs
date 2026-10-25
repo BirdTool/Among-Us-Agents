@@ -22,6 +22,9 @@ namespace AMG.AI.Services.ChatService.Llm
         // true only when it is known that the meeting was called with the emergency button (no body reported)
         public static bool IsEmergency => Fresh && _target == null;
 
+        // true only when it is known that a body was reported in this meeting
+        public static bool IsBodyReport => Fresh && _target != null;
+
         public static void MeetingStarted() => _meetingStartedAt = Time.time;
 
         public static void Clear()

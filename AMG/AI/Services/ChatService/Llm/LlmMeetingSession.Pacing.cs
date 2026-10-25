@@ -36,7 +36,7 @@ namespace AMG.AI.Services.ChatService.Llm
         private readonly List<string> _recentSent = [];
         private bool _hurryWoken, _reminderWoken;
         private bool _askedWhere;
-        private float _lastAccusationAt = -100f;
+        private bool _accusedThisMeeting;
 
         private readonly record struct PhaseClock(bool Known, bool Voting, bool Unlimited, int Left, int DiscussionTime, int VotingTime);
 
@@ -191,7 +191,7 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             _sentThisMeeting++;
             if (WhereRegex.IsMatch(text)) _askedWhere = true;
-            if (AccuseRegex.IsMatch(text)) _lastAccusationAt = Time.time;
+            if (AccuseRegex.IsMatch(text)) _accusedThisMeeting = true;
             _recentSent.Add(text);
             while (_recentSent.Count > SimilarityWindow) _recentSent.RemoveAt(0);
         }

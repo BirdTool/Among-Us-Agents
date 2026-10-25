@@ -286,7 +286,7 @@ namespace AMG.AI.Services.ChatService.Llm
 
             sb.AppendLine("Players (id, colour, status):");
             foreach (var p in GameData.Instance.AllPlayers)
-                sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU) " : "")}{p.PlayerId} {Colour(p)} {(p.IsDead ? "dead" : "alive")}");
+                sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU) " : "")}{p.PlayerId} {Colour(p)} {(p.IsDead ? "dead (out of the game)" : "alive")}");
             sb.AppendLine();
 
             if (!profile.Lobby)
@@ -454,7 +454,7 @@ namespace AMG.AI.Services.ChatService.Llm
             _sentThisMeeting = 0;
             _recentSent.Clear();
             _askedWhere = false;
-            _lastAccusationAt = -100f;
+            _accusedThisMeeting = false;
         }
     }
 }

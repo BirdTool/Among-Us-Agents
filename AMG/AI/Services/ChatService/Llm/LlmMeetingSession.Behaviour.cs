@@ -31,11 +31,15 @@ namespace AMG.AI.Services.ChatService.Llm
         private const RegexOptions Flags = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
         private static readonly Regex RevealRegex = new(@"\b(?:developer|devs?|ai|a\.i\.|bots?|llm|language model|npc|chatgpt|gemini|claude|programmed)\b", Flags);
         private static readonly Regex VoteAnnounceRegex = new(@"\b(?:i|im|i['’]m|ill|i['’]ll|gonna|gotta)\b[^.?!]{0,12}\bvot(?:e|ing)\b|\bmy vote\b|\bvoting\s+(?:for\s+)?(?!is\b|time\b|phase\b|open\b|ends?\b|now\b|started\b)\w+", Flags);
-        private static readonly Regex WhereRegex = new(@"\bwh?ere\b|\bwhr\b|\bwher\b", Flags);
+        private static readonly Regex WhereRegex = new(@"\b(?:where|wher|whr)\b", Flags);
         private static readonly Regex AccuseRegex = new(@"\b(?:sus|vent(?:ed|ing|s)?|saw|seen|kill(?:ed|ing|s)?|liar|lying|lied|imp(?:ostor)?|fake(?:d|s)?|accus\w*)\b", Flags);
         private static readonly Regex FirstPersonSaw = new(@"\b(?:i|ive|i['’]ve)\s+(?:personally\s+|just\s+|actually\s+|also\s+|clearly\s+)?(?:saw|seen|watched|witnessed)\b|\bsaw it\b", Flags);
         private static readonly Regex VentWord = new(@"\bvent(?:s|ed|ing)?\b", Flags);
         private static readonly Regex KillWord = new(@"\b(?:kill(?:ed|ing|s)?|murder(?:ed)?|stab(?:bed)?)\b", Flags);
+
+        private static readonly Regex MetaRegex = new(@"\b(?:i should|i need to|my (?:notes?|observations?|suspicion|reasoning)|suspicion level|trust level|nothing new to add|no sightings|the chat|according to)\b", Flags);
+
+        private const string DeadAccuseWords = @"sus|suspicious|imp|impostors?|liar|lying|lied|vent(?:ed|ing|s)?|fake(?:d|s)?|killer|accus\w*";
 
         // Rules the model keeps breaking even when told: they are checked here, and a break sends the error
         // back to the model so it can say it differently. Returns null when the message is fine.
@@ -47,15 +51,54 @@ namespace AMG.AI.Services.ChatService.Llm
             if (VoteAnnounceRegex.IsMatch(text) && !text.Contains('?'))
                 return "error: do not announce your vote. Say your suspicion and the reason instead; cast the vote silently with the vote command.";
 
-            if (WhereRegex.IsMatch(text) && text.Contains('?'))
+            if (IsNarration(text) || MetaRegex.IsMatch(text))
+                return "error: do not narrate or summarize what other players said and do not write your reasoning or notes: everyone already reads the chat. Say only what a player would say: accuse with a reason, answer someone, or react briefly.";
+
+            if (WhereRegex.IsMatch(text))
             {
+                if (!LlmMeetingContext.IsBodyReport)
+                    return "error: do not ask 'where' in this meeting: there is no body to locate. Accuse with a reason instead.";
                 if (_askedWhere)
                     return "error: you already asked 'where' in this meeting. Drop it and do not ask it again.";
-                if (AccuseRegex.IsMatch(text) || Time.time - _lastAccusationAt < 30f)
-                    return "error: do not ask 'where' while or right after accusing someone. Either accuse or ask.";
+                if (_accusedThisMeeting || AccuseRegex.IsMatch(text))
+                    return "error: never ask 'where' when you accuse someone, before or after. Only accuse.";
             }
 
-            return FindUnseenClaim(text);
+            return FindAccusedDead(text) ?? FindUnseenClaim(text);
+        }
+
+        // "Blue says ...", "Gray cleared Rose": everybody already reads the chat.
+        private static bool IsNarration(string text)
+        {
+            var colours = GameData.Instance.AllPlayers.ToArray().Select(p => Regex.Escape(Colour(p)));
+            string names = string.Join("|", colours);
+            if (names.Length == 0) return false;
+
+            return Regex.IsMatch(text,
+                $@"\b(?:{names})\b(?:['’]s)?\s+(?:(?:is|was|just|also|already|keeps?)\s+)*(?:says?|said|saying|claims?|claimed|claiming|cleared|clears|accus(?:es|ed|ing)|asking|asks|asked|told|states?|stated|puts?|put|names?|named|pointed|points)\b",
+                Flags);
+        }
+
+        // Dead players (killed or ejected) are out of the game and their role is unknown: blaming them is noise.
+        private string FindAccusedDead(string text)
+        {
+            if (_brain is not StructuredAgentBrain brain) return null;
+
+            foreach (var pl in GameData.Instance.AllPlayers)
+            {
+                if (!pl.IsDead || pl.PlayerId == brain.AgentId) continue;
+
+                string colour = Regex.Escape(Colour(pl));
+                string pattern = $@"\b{colour}\b[^.!?]{{0,30}}\b(?:{DeadAccuseWords})\b|\b(?:{DeadAccuseWords})\b[^.!?]{{0,30}}\b{colour}\b";
+                if (!Regex.IsMatch(text, pattern, Flags)) continue;
+
+                var memory = brain.GetOrCreateMemory(pl.PlayerId);
+                if (memory.SawKilling || memory.SawVenting) continue;   // something she saw herself: a fact, not a guess
+
+                return $"error: {Colour(pl)} is dead, out of the game (killed or ejected), and you do not know their role. Do not accuse or suspect them; talk about the players who are still alive.";
+            }
+
+            return null;
         }
 
         // "I saw X vent / kill" is only allowed when the agent's own observations say so.
@@ -175,14 +218,16 @@ namespace AMG.AI.Services.ChatService.Llm
                 sb.AppendLine("- Stay calm and keep it short. Speak only when you have something new: a fact you saw, an answer to someone, a claim, or your opinion for the vote. Otherwise use wait. Talk only about the meeting (who died, who is suspicious, votes), never about anything else.");
                 sb.AppendLine("- Answer a question addressed to you before asking anything yourself.");
                 sb.AppendLine("- Ask at most ONE question per message, and never ask the same thing twice. If nobody answers your question, drop it: do not repeat it and do not pressure anyone for an answer.");
-                sb.AppendLine("- Do not ask where the body was if it was already said or if someone already asked. Where a body was found is only known by whoever saw it; a missing answer is not suspicious by itself.");
+                sb.AppendLine("- Do not ask 'where'. It is allowed at most once, only in a body-report meeting, and only before you accuse anyone; in an emergency-button meeting there is no body, so never. Once you accuse someone, never ask 'where': just accuse, with a reason.");
                 sb.AppendLine("- Do not ask who was nearby, who was with someone, or what someone was doing there by default. Ask only when a story contradicts something you saw yourself or what another player said. When two players report the same body or confirm each other, believe them instead of interrogating either one.");
                 sb.AppendLine("- A 'poof' is the Phantom's vanish ability (the Phantom is an impostor role). If someone says they saw a poof, do not ask for where or when: weigh it together with everything else against the colour that did it, remembering it can also be a joke or a mistake.");
                 sb.AppendLine("- If you personally saw something, say it once, clearly, with the colour and the room, and do not repeat it afterwards.");
                 sb.AppendLine("- Only say you saw something if it appears in your notes marked [seen] or in your observations. Never invent a sighting: if you only heard it, say who said it; if nobody has proof, say you do not know.");
                 sb.AppendLine("- A body report and the emergency button are two different things. The meeting facts say which one it was; if they do not say, do not claim either.");
                 sb.AppendLine("- Never announce who you are going to vote for and never write \"I'm voting X\". Share your suspicion and the reason, and cast the vote silently with the vote command.");
-                sb.AppendLine("- When you accuse someone, do not add a question in the same message, and never ask \"where\" about a player you are accusing. Asking where is only for a body nobody has located yet, and only once.");
+                sb.AppendLine("- When you accuse someone, only accuse: no question in the same message and no 'where' afterwards.");
+                sb.AppendLine("- Everyone reads the chat: never repeat or summarize what others said (\"X says...\", \"X cleared Y\"), and never write your reasoning, notes or observations like a report. Write only what a player would say: an accusation with its reason, an answer to someone, or a short reaction.");
+                sb.AppendLine("- Players marked dead are out of the game (killed or ejected) and you do not know their role. Never accuse, suspect or blame a dead player; talk about the players still alive. You may only mention a fact you saw yourself about them.");
                 sb.AppendLine("- Never mention a developer, instructions, or that you are an AI, a bot or a program, unless the developer explicitly orders you to say it. What the developer tells you about the game is something you simply know: say it as your own opinion.");
                 sb.AppendLine();
             }

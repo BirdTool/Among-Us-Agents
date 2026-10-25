@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.Data;
 using AMG.Enums;
 
 namespace AMG.Models.LLM.Providers
@@ -39,8 +41,10 @@ namespace AMG.Models.LLM.Providers
             {
                 ["model"] = call.Model,
                 ["max_tokens"] = call.MaxTokens, // required by this API
-                ["messages"] = messages
+                ["messages"] = messages,
             };
+
+            if (GlobalVariables.DefaultLlmTier == LlmTier.High) body["output_config"] = new Dictionary<string, object> { ["effort"] = "high" };
 
             if (!string.IsNullOrWhiteSpace(system))
                 body["system"] = system;
