@@ -35,7 +35,7 @@ namespace AMG.Utilities
             return steps.All(s => s.IsCompleted);
         }
 
-        public static ClientData? GetClient(this PlayerControl player)
+        public static ClientData GetClient(this PlayerControl player)
         {
             if (AmongUsClient.Instance == null || player == null)
                 return null;

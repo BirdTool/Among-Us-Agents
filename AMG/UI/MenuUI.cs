@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using AMG.AI.Services.MessagesService;
+using AMG.Modules.AutoPlay;
 using AMG.UI.Tabs;
 using AMG.Utilities.KeyDown;
 using UnityEngine;
@@ -33,9 +35,13 @@ public class MenuUI(IntPtr ptr) : MonoBehaviour(ptr)
 
     private void Update()
     {
+        MessageServiceClass.Pump();
+        PersistentAgent.Tick();
+        AutoReturnToLobby.Tick();
+
         if (InputFocusUtils.IsTypingInInputField()) return;
 
-        KeyCode toggleKey = KeyCode.Delete;
+        KeyCode toggleKey = KeyCode.Insert;
 
         if (AMGPlugin.MenuKeybind != null && !string.IsNullOrEmpty(AMGPlugin.MenuKeybind.Value))
         {

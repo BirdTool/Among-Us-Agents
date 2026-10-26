@@ -4,6 +4,7 @@ using AMG.Enums.SafeRpcEnums;
 using AMG.Models;
 using AMG.Models.Signals;
 using AMG.Utilities;
+using UnityEngine;
 
 namespace AMG.AI.Mind.StructuredAgentBrain
 {
@@ -18,9 +19,13 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             var target = killSignal.Target;
             var id = target.PlayerId;
 
+            var room = killSignal.Killer.transform.position.GetClosestNode().Room;
+        
             var murderMemory = GetOrCreateMemory(murder.PlayerId);
             murderMemory.IncreaseSuspiciusPercentage(100f);
-            murderMemory.SawKilling = true;
+            murderMemory.RegisterKillWitnessed(id, Time.time, room);
+
+            KnownBodyRoom = room;
 
             var reactionTimer = new CooldownTimer();
             reactionTimer.StartDelay(ReactionTime + RandomizerExtensions.GetSecureRandomFloat(0, 1.2f));

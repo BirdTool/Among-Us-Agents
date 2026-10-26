@@ -15,7 +15,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
 
         // Se o dono deste cérebro é inocente: o quanto ELE confia nesse jogador.
         // Se o dono deste cérebro é impostor: o quanto ele ACHA que esse jogador confia NELE
-        public float Trust { get; private set; } = 50f; // neutro
+        public float Trust { get; private set; } = 0f; // neutro (0 = neutral, -100 = full distrust, +100 = full trust)
 
         public Dictionary<RoleTypes, float> ProbablyRole = [];
 
@@ -29,6 +29,9 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
         public float TimeOfKillWitnessed = -1f;
 
         public bool SawVenting = false;
+
+        public SystemTypes? KillRoom;
+        public SystemTypes? VentRoom;
 
         public bool SeenVerifiedTask = false;
         public float LastVerifiedTaskTime = -1f;
@@ -141,7 +144,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
             };
 
             SuspiciusPercentage = Mathf.Lerp(SuspiciusPercentage, 0f, pullStrength);
-            Trust = Mathf.Lerp(Trust, 50f, pullStrength);
+            Trust = Mathf.Lerp(Trust, 0f, pullStrength);
         }
 
         public void IncreaseSuspiciusPercentage(float value)
@@ -154,14 +157,24 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
             SuspiciusPercentage = Mathf.Clamp(SuspiciusPercentage - value, 0f, 100f);
         }
 
+        public void SetSuspiciusPercentage(float value)
+        {
+            SuspiciusPercentage = Mathf.Clamp(value, 0f, 100f);
+        }
+
         public void IncreaseTrust(float value)
         {
-            Trust = Mathf.Clamp(Trust + value, 0f, 100f);
+            Trust = Mathf.Clamp(Trust + value, -100f, 100f);
         }
 
         public void DecreaseTrust(float value)
         {
-            Trust = Mathf.Clamp(Trust - value, 0f, 100f);
+            Trust = Mathf.Clamp(Trust - value, -100f, 100f);
+        }
+
+        public void SetTrust(float value)
+        {
+            Trust = Mathf.Clamp(value, -100f, 100f);
         }
 
         public void UpdateRoleProbability(RoleTypes role, float delta)
@@ -187,11 +200,12 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Memories
             ClaimedTaskTime = time;
         }
 
-        public void RegisterKillWitnessed(byte victimId, float time)
+        public void RegisterKillWitnessed(byte victimId, float time, SystemTypes room)
         {
             SawKilling = true;
             LastVictimSeenKilled = victimId;
             TimeOfKillWitnessed = time;
+            KillRoom = room;
         }
 
         public void RegisterVote(byte? targetId, bool againstConsensus)

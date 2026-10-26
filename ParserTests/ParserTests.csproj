@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests the PURE chat logic (parser, claim store, outbox) against the real source files, outside the game.
+       Run:  dotnet run in the ParserTests folder   (Stubs.cs fakes SystemTypes and the bits of UnityEngine used) -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>disable</Nullable>
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <UseAppHost>false</UseAppHost>
+    <AmgRoot Condition="'$(AmgRoot)' == ''">$(MSBuildThisFileDirectory)../AMG</AmgRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs;Stubs.cs" />
+    <Compile Include="$(AmgRoot)/Enums/ChatServiceEnums/*.cs" />
+    <Compile Include="$(AmgRoot)/Models/ChatService/ChatIntent.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/ChatLexicon.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/ChatOutbox.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/ClaimStore.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/ChatParser.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/ChatParser.Templates.cs" />
+    <Compile Include="$(AmgRoot)/Models/ChatService/PhraseBank.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/Corpus/ChatSafetyFilter.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/Corpus/ChatRedactor.cs" />
+    <Compile Include="$(AmgRoot)/AI/Services/ChatService/Local/Corpus/CorpusRecords.cs" />
+    <None Include="$(AmgRoot)/Data/ReferencesForAmongUsDataFile/PhraseBank.json" Link="PhraseBank.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

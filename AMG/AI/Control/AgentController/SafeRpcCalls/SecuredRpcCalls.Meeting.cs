@@ -10,10 +10,13 @@ namespace AMG.AI.Control.AgentController
     public partial class AgentController
     {
         protected float _lastMessage = 0;
-        protected const byte SkipVotePlayerId = 253;
 
-        public VoteRpcEnums SafeVoteNotExecute(byte playerId)
+        // A client only learns about its own vote when the host syncs it back, so DidVote can stay false for a moment.
+        private MeetingHud _voteSentFor;
+
+        public VoteRpcEnums SafeVoteNotExecute(byte? targetId)
         {
+            byte playerId = targetId ?? Utils.SkipVotePlayerId;
             if (IsDead) return VoteRpcEnums.ERROR_AgentIsDead;
             if (!Utils.IsMeeting) return VoteRpcEnums.ERROR_IsNotInMeeting;
             if (!Utils.IsMeetingVoting) return VoteRpcEnums.ERROR_IsNotInVoteTime;
@@ -29,11 +32,12 @@ namespace AMG.AI.Control.AgentController
             return VoteRpcEnums.SUCCESS;
         }
 
-        public VoteRpcEnums SafeVote(byte playerId)
+        public VoteRpcEnums SafeVote(byte? targetId)
         {
+            byte playerId = targetId ?? Utils.SkipVotePlayerId;
             bool isSkipVote = playerId == unchecked((byte)-1)
                 || playerId >= 250;
-            if (isSkipVote) playerId = SkipVotePlayerId;
+            if (isSkipVote) playerId = Utils.SkipVotePlayerId;
             var result = SafeVoteNotExecute(playerId);
             
             if (result != VoteRpcEnums.SUCCESS) 
@@ -41,16 +45,29 @@ namespace AMG.AI.Control.AgentController
                 return result;
             }
             
+            // Never send a second vote RPC for the same meeting.
+            if (_voteSentFor == MeetingHud.Instance) return VoteRpcEnums.ERROR_AlreadyVoted;
+
             IsAuthorizedToVote = true;
-            MeetingHud.Instance.CmdCastVote(AgentId, playerId);
-            try {
-                MeetingHud.Instance.CastVote(AgentId, playerId);
-            } catch (Exception ex) {
+            try
+            {
+                MeetingHud.Instance.CmdCastVote(AgentId, playerId);
+                _voteSentFor = MeetingHud.Instance;
+
+                // Dummies live on the host, which has to apply their votes by hand. A client that plays through its
+                // own game must only send the RPC, exactly like the voting buttons do.
+                if (AmongUsClient.Instance.AmHost)
+                    MeetingHud.Instance.CastVote(AgentId, playerId);
+            }
+            catch (Exception ex)
+            {
                 LogManager.LogError($"[Agente {AgentId}] Exceção ao votar (playerId={playerId}): {ex}");
-                IsAuthorizedToVote = false;
                 return VoteRpcEnums.FAILED_UnknownError;
             }
-            IsAuthorizedToVote = false;
+            finally
+            {
+                IsAuthorizedToVote = false;
+            }
 
             return result;
         }

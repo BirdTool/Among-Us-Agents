@@ -45,8 +45,12 @@ namespace AMG.Utilities
         public float TimeOfDeath { get; set; } = Time.time;
         public float? TimeOfReport { get; set; } = null;
         public Vector2 Position { get; set; }
+        public bool IsViper { get; set; } = false;
 
         public float TimeBetweenDeathAndReport => TimeOfReport.HasValue ? TimeOfReport.Value - TimeOfDeath : -1f;
         public float TimeSinceDeath => Time.time - TimeOfDeath;
+
+        public float TimeOfDissolve => GameOptionsManager.Instance.CurrentGameOptions.GetFloat(AmongUs.GameOptions.FloatOptionNames.ViperDissolveTime);
+        public bool IsDissolved => IsViper && TimeOfDeath + TimeOfDissolve <= Time.time;
     }
 }

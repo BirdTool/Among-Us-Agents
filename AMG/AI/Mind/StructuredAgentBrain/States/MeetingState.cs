@@ -1,151 +1,51 @@
-﻿using AMG.Enums.AgentEnums;
+﻿using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.AI.Services.ChatService.Local;
+using AMG.AI.Services.MeetingService.StructuredBrain;
+using AMG.Enums.AgentEnums;
 using AMG.Utilities;
-using AMG.AI.Tools;
-using AMG.Enums.SafeRpcEnums;
-using AMG.AI.Mind.StructuredAgentBrain.ChatDecisions;
 
 namespace AMG.AI.Mind.StructuredAgentBrain
 {
     public partial class StructuredAgentBrain
     {
-        private readonly CooldownTimer _chatTimer = new();
-        private ChatOutput _chatOutput;
-        private bool _isThinkingAboutChat = false; 
-        private bool _isDecidingToVote = false; 
-        private readonly CooldownTimer _votingTimer = new();
-        
-        private SendingMessageType? _pendingChatType;
-        private string _pendingChatText;
-        
-        private bool _hasVoted = false;
-
-        private readonly CooldownTimer _endMeetingTimer = new();
-        private bool _isDecidingToMove = false;
-
-        private bool _reachedVotingTime = false;
+        public MeetingServiceForStructuredBrain MeetingService { get; private set; }
+        public ChatServiceClass ChatService { get; private set; }
+        public LlmMeetingSession LlmMeeting { get; private set; }
 
         private void UpdateMeetingState()
         {
-            if (Agent.Data.IsDead) return;
+            if (IsDead) return;
 
-            if (Utils.IsMeeting || Utils.IsExiling)
+            if (Utils.IsMeeting)
             {
                 SetState(AgentState.OnMeeting);
-                if (updateAction != null && updateAction.DeleteOnMeeting) updateAction = null;
-                _chatOutput ??= new ChatOutput(this);
 
-                if (!_chatTimer.IsRunning && !_isThinkingAboutChat)
-                {
-                    _pendingChatType = _chatOutput.Evaluate();
+                if (MeetingService == null && ChatMode.IsLlm) LlmMeeting.Reset();
 
-                    if (_pendingChatType != null)
-                    {
-                        _pendingChatText = _chatOutput.GetMessage(_pendingChatType.Value);
-                        
-                        if (!string.IsNullOrEmpty(_pendingChatText))
-                        {
-                            float baseReaction = ReactionTime + RandomizerExtensions.GetSecureRandomFloat(0, 3f);
-                            float typingSpeed = (_pendingChatText.Length * 0.15f) + ReactionTime;
-                            
-                            _chatTimer.StartDelay(baseReaction + typingSpeed);
-                            _isThinkingAboutChat = true;
-                        }
-                    }
-                }
+                MeetingService ??= ChatMode.IsLlm
+                    ? new MeetingServiceForStructuredBrain(LlmMeeting, this)
+                    : new MeetingServiceForStructuredBrain(ChatService, this);
 
-                if (_isThinkingAboutChat)
-                {
-                    if (_chatTimer.Consume())
-                    {
-                        if (_pendingChatType != null && !string.IsNullOrEmpty(_pendingChatText))
-                        {
-                            var result = SafeSendChat(_pendingChatText);
-                            
-                            if (result == ChatRpcEnums.SUCCESS)
-                            {
-                                _chatOutput.MarkAsSent(_pendingChatType.Value);
-                            }
-                        }
-                        
-                        _isThinkingAboutChat = false; 
-                        _pendingChatType = null;
-                        _pendingChatText = null;
-                    }
-                }
+                MeetingService.Update();
 
-                if (Utils.IsMeetingVoting && !_hasVoted)
-                {
-                    if (!_reachedVotingTime)
-                    {
-                        _reachedVotingTime = true;
-                    }
-                    
-                    if (!_votingTimer.IsRunning && !_isDecidingToVote) 
-                    {
-                        float reactionTime = ReactionTime + RandomizerExtensions.GetSecureRandomFloat(0, 4);
-                        _votingTimer.StartDelay(reactionTime);
-                        _isDecidingToVote = true;
-                    }
+                if (ChatMode.IsLlm) LlmMeeting.Update();
+                else ChatService.Tick();
 
-                    if (_isDecidingToVote)
-                    {
-                        if (_votingTimer.Consume())
-                        {
-                            var memories = GetMemories();
-                            var playerIDWithHighestSuspiciousPercentage = byte.MaxValue;
-                            float highestSuspiciousPercentage = 0;
-                            
-                            foreach (var memory in memories)
-                            {
-                                if (memory.SuspiciusPercentage > highestSuspiciousPercentage)
-                                {
-                                    highestSuspiciousPercentage = memory.SuspiciusPercentage;
-                                    playerIDWithHighestSuspiciousPercentage = memory.PlayerId;
-                                }
-                            }
-
-                            var result = SafeVote(playerIDWithHighestSuspiciousPercentage);
-                            if (result == VoteRpcEnums.SUCCESS)
-                            {
-                                _hasVoted = true;
-                            }
-                            _isDecidingToVote = false; 
-                            _votingTimer.Stop();
-                        }
-                    }
-                }
+                return;
+            }
+            else if (Utils.IsExiling)
+            {
+                ChatService.Clear();
+                LlmMeeting.Reset();
+                KnownBodyRoom = null;
+                MeetingService = null;
                 return;
             }
             else
             {
-                bodiesSeenDead.Clear();
-                
-                _isThinkingAboutChat = false; 
-                _pendingChatType = null;
-                _pendingChatText = null;
-                _chatOutput = null; 
-
-                _isDecidingToVote = false; 
-                _votingTimer.Stop();
-                _hasVoted = false;
-
-                if (!_endMeetingTimer.IsRunning && !_isDecidingToMove)
-                {
-                    float baseReaction = ReactionTime;
-                    _endMeetingTimer.StartDelay(baseReaction);
-                    _isDecidingToMove = true;
-                }
-
-                if (_isDecidingToMove)
-                {
-                    if (_endMeetingTimer.Consume())
-                    {
-                        SetState(AgentState.Calculating);
-                        _isDecidingToMove = false;
-                        _endMeetingTimer.Stop();
-                    }
-                }
-                KillCooldownManager.StartCooldownOfEveryImpostor();
+                MeetingService = null;
+                SetState(AgentState.Calculating);
             }
         }
     }

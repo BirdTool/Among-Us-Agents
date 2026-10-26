@@ -32,7 +32,7 @@ namespace AMG.AI.Navigation
         public static void InvalidateCache()
         {
             _pathCache.Clear();
-            LogManager.LogDebug("[AI GPS] Cache de caminhos invalidado (estado de porta alterado).");
+            // LogManager.LogDebug("[AI GPS] Cache de caminhos invalidado (estado de porta alterado).");
         }
 
         public static Waypoint GetClosestNode(Vector2 pos)

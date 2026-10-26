@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
+using AMG.AI.Mind.MapTrackerBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
+using AMG.Modules.AutoPlay;
 using AMG.Utilities;
 using AMG.Utilities.KeyDown;
 using UnityEngine;
@@ -32,12 +34,12 @@ namespace AMG.KeyDownActions
 
             foreach (var agent in AgentManager.Agents)
             {
-                var brain = agent.Control.GetComponent<StructuredAgentBrain>();
-                if (brain == null) continue;
+                var controller = agent.Control.GetComponent<AgentController>();
+                if (controller == null) continue;
 
                 Waypoint start = Pathfinder.GetClosestNode(agent.Control.transform.position);
                 List<Waypoint> path = Pathfinder.FindPath(start, target, out _);
-                brain.CommandGoToPath(path);
+                controller.CommandGoToPath(path);
             }
         }
     }
@@ -78,27 +80,6 @@ namespace AMG.KeyDownActions
     [KeyPressManager.Register(KeyCode.N)]
     public static class SpawnRealPlayerAgentKey
     {
-        public static void Execute()
-        {
-            if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
-
-            if (Utils.Players.LocalPlayer.GetComponent<AgentController>() != null)
-            {
-                UnityEngine.Object.Destroy(Utils.Players.LocalPlayer.GetComponent<AgentController>());
-                UnityEngine.Object.Destroy(Utils.Players.LocalPlayer.gameObject.GetComponent<StructuredAgentBrain>());
-                return;
-            }
-
-            PlayerControl agentComponent = Utils.Players.LocalPlayer;
-            AgentData agentData = new() { Name = agentComponent.Data.PlayerName };
-            AgentManager.AddAgent(agentComponent, agentData);
-
-            agentComponent.gameObject.AddComponent<StructuredAgentBrain>();
-            var brain = agentComponent.gameObject.GetComponent<StructuredAgentBrain>();
-
-            AgentController.AgentControlsRealPlayer = true;
-            brain.MapArtificialTasks();
-            brain.MapGameTasksToAILogic();
-        }
+        public static void Execute() => PersistentAgent.Toggle();
     }
 }

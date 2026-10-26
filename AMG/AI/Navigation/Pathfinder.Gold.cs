@@ -61,7 +61,7 @@ namespace AMG.AI.Navigation
                         cameFrom, cameFromIsGold, gScore, realDistance, closedSet, openSet);
             }
 
-            LogManager.LogWarning("[AI GPS] FindGoldPath: não foi possível conectar esses dois pontos.");
+            // LogManager.LogWarning("[AI GPS] FindGoldPath: não foi possível conectar esses dois pontos.");
             return null;
         }
 

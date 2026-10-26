@@ -1,11 +1,12 @@
+using System.Collections.Generic;
+using System.Linq;
 using AMG.AI.Mind;
+using AMG.AI.Mind.MapTrackerBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using AmongUs.GameOptions;
 using InnerNet;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace AMG.AI.Control
@@ -16,20 +17,20 @@ namespace AMG.AI.Control
         public static bool RecycleDummies = true;
         public static bool WillBeImpostor = false;
 
-        private static readonly List<string> FirstNames = new()
-        {
+        private static readonly List<string> FirstNames =
+        [
             "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph",
             "Charles", "Thomas", "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth",
             "Barbara", "Susan", "Jessica", "Sarah", "Karen", "Crewmate", "Impostor",
             "Cristiano", "Luna", "Luar", "Lua", "Léo", "Leonardo", "Cassilhas"
-        };
+        ];
 
-        private static readonly List<string> Surnames = new()
-        {
+        private static readonly List<string> Surnames =
+        [
             "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
             "Rodriguez", "Martinez", "Carsion", "Doe", "Silva", "Santos", "Oliveira", "Toretto",
             "Santos", "Máfia", "Giuseppe", "Morteiro", "Besta", "Gigante", "Giant", "Sol"
-        };
+        ];
 
         public static void AddAgent(PlayerControl agent, AgentData data)
         {
@@ -123,7 +124,7 @@ namespace AMG.AI.Control
             if (WillBeImpostor)
                 agentComponent.RpcSetRole(RoleTypes.Impostor);
             else
-                agentComponent.RpcSetRole(RoleTypes.Engineer);
+                agentComponent.RpcSetRole(RoleTypes.Crewmate);
 
             var pInfo = GameData.Instance?.GetPlayerById(agentComponent.PlayerId);
             LogManager.LogDebug($"[AgentCreate] Bot PlayerId={agentComponent.PlayerId}, IsRecycled={isRecycled}, IsImpostor={pInfo?.Role?.IsImpostor}");
@@ -145,6 +146,7 @@ namespace AMG.AI.Control
             TaskAssignment.AssignTasks(agentComponent);
             brain.MapArtificialTasks();
             brain.MapGameTasksToAILogic();
+            brain.Level = 4;
 
             LogManager.Log($"[AI Agents] Agente '{name}' instanciado e pronto para a ação!");
             return (agentComponent, brain);
@@ -255,6 +257,52 @@ namespace AMG.AI.Control
             }
 
             return "";
+        }
+
+        public static void CreateTrackerAgent()
+        {
+            if (AmongUsClient.Instance == null || AmongUsClient.Instance.PlayerPrefab == null) return;
+
+            PlayerControl agentComponent = null;
+
+            if (RecycleDummies)
+            {
+                foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+                {
+                    if (!player.isDummy) continue;
+
+                    if (Agents.Any(a => a.Control == player)) continue;
+
+                    agentComponent = player;
+                    break;
+                }
+            }
+
+            bool isRecycled = agentComponent != null;
+            if (!isRecycled)
+            {
+                agentComponent = Object.Instantiate(AmongUsClient.Instance.PlayerPrefab);
+                agentComponent.PlayerId = (byte)(100 + Agents.Count);
+                agentComponent.NetId = (uint)(100 + Agents.Count);
+
+                ClientData localClient = AmongUsClient.Instance.GetClient(AmongUsClient.Instance.ClientId);
+                if (localClient != null)
+                    GameData.Instance.AddPlayer(agentComponent, localClient);
+            }
+
+            if (PlayerControl.LocalPlayer != null)
+            {
+                Vector3 currentPos = PlayerControl.LocalPlayer.transform.position;
+                agentComponent.transform.position = currentPos;
+                agentComponent.NetTransform?.SnapTo(currentPos);
+            }
+
+            agentComponent.isDummy = false;
+            agentComponent.gameObject.AddComponent<MapTrackerBrain>();
+
+            AgentData agentData = new() { Name = "AI Tracker" };
+
+            AddAgent(agentComponent, agentData);
         }
     }
 

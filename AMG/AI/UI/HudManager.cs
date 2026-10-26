@@ -1,15 +1,18 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using UnityEngine;
 using System;
 using AMG.Utilities;
 using AMG.AI.Mind.StructuredAgentBrain;
 using System.Linq;
+using AMG.AI.Services.ChatService;
 
 namespace AMG.AI.UI
 {
     [HarmonyPatch(typeof(HudManager), nameof(HudManager.Start))]
     public static class HudManagerStartPatch
     {
+        public static bool IsActive => Utils.IsFreePlay;
+
         public static void Postfix(HudManager __instance)
         {
             if (__instance.UseButton == null) return;
@@ -35,7 +38,12 @@ namespace AMG.AI.UI
                 {
                     LogManager.Log("[AI Agents] Botão visual clicado. Instanciando Agente...");
                     // Control.AgentManager.AddAgent(Control.AgentManager.GenerateUniqueRandomName());
+
                     var result = Control.AgentManager.GenerateRandomAgent();
+                    result.brain.LlmMeeting.Tier = Services.ChatService.Llm.LlmTier.Laboratory;
+                    ChatMode.Current = Enums.ChatServiceEnums.ChatModeEnum.Llm;
+
+                    // Control.AgentManager.CreateTrackerAgent();
                 }));
             }
 
@@ -45,7 +53,7 @@ namespace AMG.AI.UI
                 renderer.sprite = __instance.ReportButton.graphic.sprite;
             }
 
-            buttonObj.SetActive(true);
+            buttonObj.SetActive(IsActive);
         }
     }
 }

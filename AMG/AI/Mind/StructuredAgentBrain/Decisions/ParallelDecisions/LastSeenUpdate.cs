@@ -11,6 +11,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain.Decisions.ParallelDecisions
 
         public void Evaluate(StructuredAgentBrain brain)
         {
+            if (Utils.IsMeeting) return;
             var currentTime = Utils.SecondsSinceShipStart.Value;
             var lastUpdate = _lastUpdateTimes.GetValueOrDefault(brain.Agent.PlayerId, 0f);
             if (lastUpdate + _updateInterval > currentTime) return;

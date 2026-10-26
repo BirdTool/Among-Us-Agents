@@ -1,3 +1,9 @@
+using System.Text;
+using AMG.AI.LLM;
+using AMG.AI.Mind.StructuredAgentBrain;
+using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.AI.Services.MessagesService;
 using AMG.Utilities;
 using AMG.Utilities.KeyDown;
 using BepInEx;
@@ -28,6 +34,9 @@ public partial class AMGPlugin : BasePlugin
 
     public override void Load()
     {
+        ModPaths.Initialize();
+        LogManager.TransferLogsToAllLogs();
+
         Log = base.Log;
         Plugin = this;
 
@@ -42,7 +51,7 @@ public partial class AMGPlugin : BasePlugin
 
         MenuKeybind = Config.Bind("AMG.GUI",
                                "Keybind",
-                               "Delete",
+                               "Insert",
                                "The keyboard key used to toggle the GUI on and off. List of supported keycodes: https://docs.unity3d.com/Packages/com.unity.tiny@0.16/api/Unity.Tiny.Input.KeyCode.html");
 
         MenuHtmlColor = Config.Bind("AMG.GUI",
@@ -62,6 +71,31 @@ public partial class AMGPlugin : BasePlugin
 
         Harmony.PatchAll();
 
-        LogManager.TransferLogsToAllLogs();
+        LlmApiKeyLoader.LoadKeys();
+        MessageServiceClass.StartListening();
+        MessageServiceClass.OnReceive += OnMessageReceived;
+    }
+
+    private void OnMessageReceived(PrivateMessageModel message)
+    {
+        LogManager.LogInfo($"[Messages] Received new message from {message.Sender}: {message.Content}");
+
+        var self = Utils.Players.LocalPlayer;
+        var selfBrain = self?.GetComponent<StructuredAgentBrain>();
+        if (selfBrain != null)
+        {
+            if (selfBrain.LlmMeeting != null && ChatMode.IsLlm)
+            {
+                selfBrain.LlmMeeting.AddDirective(message.Content);
+            }
+            else
+            {
+                LogManager.LogWarning("[Messages] Message not delivered: the local agent is not in LLM mode.");
+            }
+        }
+        else
+        {
+            Utils.AddChatPrivate($"Message from the AI: {message.Content}");
+        }
     }
 }

@@ -6,8 +6,8 @@ namespace AMG.Utilities
 {
     public static class LogManager
     {
-        private static readonly string logFilePath = "AMG/logs/log.txt";
-        private static readonly string allLogFilePath = "AMG/logs/all-logs.txt";
+        private static readonly string logFilePath = ModPaths.Root("log.txt");
+        private static readonly string allLogFilePath = ModPaths.Root("all-logs.txt");
         private static readonly bool debugLogEnabled = true;
 
         private static readonly List<string> LogQueue = [];

@@ -348,3 +348,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# ParserTests build output
+ParserTests/bin/
+ParserTests/obj/

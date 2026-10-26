@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind.StructuredAgentBrain.Decisions;
 using AMG.AI.Navigation;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.AI.Services.ChatService.Local;
 using AMG.AI.Tools;
+using AMG.Data;
 using AMG.Enums.AgentEnums;
 using AMG.Interfaces;
 using AMG.Models;
@@ -92,12 +95,19 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             Utils.OnSabotageStarted += HandleSabotageStarted;
             Utils.OnSabotageEnded += HandleSabotageEnded;
 
+            ChatService = new ChatServiceClass(new ChatTransport(this), Level, () => AgentId);
+            LlmMeeting = new LlmMeetingSession(this)
+            {
+                Tier = GlobalVariables.DefaultLlmTier
+            };
+
             ChangeRandomDirection();
         }
 
         void Update()
         {
             if (Agent == null || Agent.MyPhysics?.body == null) return;
+            if (Utils.IsLobby) return; // Keep the agent of calculating on lobby
 
             if (UpVentCheck()) return;
             if (UpUpdateAction()) return;

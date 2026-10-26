@@ -42,6 +42,7 @@ namespace AMG.Utilities
         internal static bool IsAirshipMap => (MapNames)GetCurrentMapID() == MapNames.Airship;
         internal static bool IsFungleMap => (MapNames)GetCurrentMapID() == MapNames.Fungle;
         internal static ISabotage CurrentSabotage { get; set; } = null;
+        public const byte SkipVotePlayerId = 253;
 
         public static Action<ISabotage> OnSabotageStarted;
         public static Action OnSabotageEnded;
@@ -110,7 +111,26 @@ namespace AMG.Utilities
                 return (byte)AmongUsClient.Instance.TutorialMapId;
             }
 
-            // Works for local / online games
+            // The map that is actually loaded is the source of truth: a non-host client may not
+            // have the lobby's options synced yet (MapId invalid / 255) when this is first asked.
+            if (ShipStatus.Instance != null)
+            {
+                byte fromShip = ShipStatus.Instance.Type switch
+                {
+                    ShipStatus.MapType.Ship => (byte)MapNames.Skeld,
+                    ShipStatus.MapType.Hq => (byte)MapNames.MiraHQ,
+                    ShipStatus.MapType.Pb => (byte)MapNames.Polus,
+                    ShipStatus.MapType.Fungle => (byte)MapNames.Fungle,
+                    _ => byte.MaxValue
+                };
+
+                // Dleks uses the Skeld ShipStatus type, so trust the options when they say Dleks
+                byte fromOptions = GameOptionsManager.Instance?.currentGameOptions?.MapId ?? byte.MaxValue;
+                if (fromShip == (byte)MapNames.Skeld && fromOptions == (byte)MapNames.Dleks) return fromOptions;
+                if (fromShip != byte.MaxValue) return fromShip;
+            }
+
+            // Works for local / online games (only reliable for the host before the ship exists)
             if (GameOptionsManager.Instance?.currentGameOptions != null)
             {
                 return GameOptionsManager.Instance.currentGameOptions.MapId;
@@ -218,6 +238,16 @@ namespace AMG.Utilities
         public static int GetRandomInt(int min, int max)
         {
             return RandomizerExtensions.GetSecureRandomInt(min, max);
+        }
+
+        public static float GetRandomFloat(float min, float max)
+        {
+            return RandomizerExtensions.GetSecureRandomFloat(min, max);
+        }
+
+        public static double GetRandomDouble(double min, double max)
+        {
+            return RandomizerExtensions.GetSecureRandomDouble(min, max);
         }
 
         public static bool ExecuteProbability(double chance)
@@ -399,6 +429,62 @@ namespace AMG.Utilities
                     closest = h;
             }
             return closest;
+        }
+
+        public static void AddChatPrivate(string text, string overrideName = "", bool setRight = false)
+        {
+            if (!IsInGame)
+                return;
+
+            var chat = HudManager.Instance.Chat;
+            if (chat == null)
+                return;
+
+            var data = PlayerControl.LocalPlayer.Data;
+            if (data == null)
+                return;
+
+            var pooledBubble = chat.GetPooledBubble();
+            var messageName = $"<color=#ffffff><b>(<color=#00ff44>System Message</color>)</b>";
+
+            if (!string.IsNullOrEmpty(overrideName))
+                messageName = overrideName;
+
+            try
+            {
+                pooledBubble.transform.SetParent(chat.scroller.Inner);
+                pooledBubble.transform.localScale = Vector3.one;
+                pooledBubble.SetCosmetics(data);
+                pooledBubble.gameObject.transform.Find("PoolablePlayer").gameObject.SetActive(false);
+                pooledBubble.ColorBlindName.gameObject.SetActive(false);
+
+                if (!setRight)
+                {
+                    pooledBubble.SetLeft();
+                    pooledBubble.gameObject.transform.Find("NameText (TMP)").transform.localPosition += new Vector3(-0.7f, 0f);
+                    pooledBubble.gameObject.transform.Find("ChatText (TMP)").transform.localPosition += new Vector3(-0.7f, 0f);
+                }
+                else
+                {
+                    pooledBubble.SetRight();
+                }
+
+                chat.SetChatBubbleName(pooledBubble, data, false, false, PlayerNameColor.Get(data), null);
+                pooledBubble.SetText(text);
+                pooledBubble.AlignChildren();
+                chat.AlignAllBubbles();
+                pooledBubble.NameText.text = messageName;
+
+                if (!chat.IsOpenOrOpening && chat.notificationRoutine == null)
+                {
+                    chat.notificationRoutine = chat.StartCoroutine(chat.BounceDot());
+                }
+
+                SoundManager.Instance.PlaySound(chat.messageSound, false, 1f, null).pitch = 0.5f + data.PlayerId / 15f;
+            }
+            catch
+            {
+            }
         }
     }
 }

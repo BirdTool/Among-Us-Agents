@@ -26,12 +26,14 @@ namespace AMG.Utilities
         }
 
         // All players nearby
-        public static void SendSignalRadiusVector2(ISignalClass signal, Vector2 waypoint, float radius)
+        public static void SendSignalRadiusVector2(ISignalClass signal, Vector2 waypoint, float radius, PlayerControl excludePlayer = null)
         {
             var brains = Utils.GetAllStructuredAgentBrain();
             foreach (var brain in brains)
             {
                 var position = brain.Vector2Position;
+
+                if(brain.AgentId == excludePlayer?.PlayerId) continue;
 
                 var straightDistance = Pathfinder.GetStraightDistance(waypoint, position);
 
@@ -43,12 +45,14 @@ namespace AMG.Utilities
         }
 
         // All players that can see the target position
-        public static void SendSignalRadiusCanSee(ISignalClass signal, Vector2 position)
+        public static void SendSignalRadiusCanSee(ISignalClass signal, Vector2 position, PlayerControl excludePlayer = null)
         {
             var brains = Utils.GetAllStructuredAgentBrain();
             foreach (var brain in brains)
             {
                 var brainPosition = brain.Vector2Position;
+
+                if(brain.AgentId == excludePlayer?.PlayerId) continue;
 
                 var canSee = Utils.CanSeeTheTarget(brainPosition, position, 6f);
 

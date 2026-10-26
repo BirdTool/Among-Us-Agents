@@ -83,7 +83,7 @@ namespace AMG.AI.Navigation
             // Cache the null result too — prevents hammering a blocked graph
             _pathCache[cacheKey] = new CachedPath(null, 0f);
 
-            LogManager.LogWarning("[AI GPS] Não foi possível conectar esses dois pontos no grafo.");
+            // LogManager.LogWarning("[AI GPS] Não foi possível conectar esses dois pontos no grafo.");
             return null;
         }
     }
