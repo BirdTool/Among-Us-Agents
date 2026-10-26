@@ -216,6 +216,7 @@ namespace AMG.AI.Services.ChatService.Llm
             {
                 sb.AppendLine("How to behave in the meeting:");
                 sb.AppendLine("- Stay calm and keep it short. Speak only when you have something new: a fact you saw, an answer to someone, a claim, or your opinion for the vote. Otherwise use wait. Talk only about the meeting (who died, who is suspicious, votes), never about anything else.");
+                sb.AppendLine("- You may accuse, but not be annoying, listen is more important than accusing.");
                 sb.AppendLine("- Answer a question addressed to you before asking anything yourself.");
                 sb.AppendLine("- Ask at most ONE question per message, and never ask the same thing twice. If nobody answers your question, drop it: do not repeat it and do not pressure anyone for an answer.");
                 sb.AppendLine("- Do not ask 'where'. It is allowed at most once, only in a body-report meeting, and only before you accuse anyone; in an emergency-button meeting there is no body, so never. Once you accuse someone, never ask 'where': just accuse, with a reason.");

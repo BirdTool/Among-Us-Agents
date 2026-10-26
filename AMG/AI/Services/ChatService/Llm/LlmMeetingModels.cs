@@ -47,8 +47,8 @@ namespace AMG.AI.Services.ChatService.Llm
                 "change_suspicious", "set_suspicious", "change_trust", "set_trust",
                 "intention_avoid_players"
             ], MinInterval: 8f),
-            [LlmTier.High] = new(12, 90f, AllCommands, MinInterval: 8f, TrustChat: true),
-            [LlmTier.Laboratory] = new(15, 120f, AllCommands, MaxTokens: 2048, MinInterval: 1f, TrustChat: true),
+            [LlmTier.High] = new(12, 90f, AllCommands, MaxTokens: 2048, MinInterval: 8f, TrustChat: true),
+            [LlmTier.Laboratory] = new(15, 120f, AllCommands, MaxTokens: 4096, MinInterval: 1f, TrustChat: true),
         };
 
         private static readonly Dictionary<string, string> CommandDocs = new()
