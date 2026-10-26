@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AMG.AI.Mind.StructuredAgentBrain;
+using AMG.AI.Services.ChatService;
 using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.ChatService.Local;
 using AMG.AI.Services.ChatService.Local.History;
@@ -100,13 +101,16 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
             }
             else
             {
-                Emit(new ChatIntent
+                if (LlmMeetingContext.IsBodyReport)
                 {
-                    Type = ChatIntentEnum.Question,
-                    PhraseId = "Body_Location",
-                    Context = ChatContextEnum.MeetingStart,
-                    Urgency = 0.4f
-                });
+                    Emit(new ChatIntent
+                    {
+                        Type = ChatIntentEnum.Question,
+                        PhraseId = "Body_Location",
+                        Context = ChatContextEnum.MeetingStart,
+                        Urgency = 0.4f
+                    });
+                }
             }
         }
 
