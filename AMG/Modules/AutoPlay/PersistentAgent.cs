@@ -13,10 +13,10 @@ namespace AMG.Modules.AutoPlay
     {
         private const float CheckInterval = 0.5f;
         private const float RetryAfterError = 5f;
-        private const float AttachDelay = 2f;
+        private const float AttachDelay = 0f;
 
         private static bool FirstCalculate = false;
-        private const float CalculatingAfter = 20f;
+        private const float CalculatingAfter = 24f;
         private static float NextCalculate;
 
         public static bool Enabled { get; private set; }

@@ -44,7 +44,7 @@ namespace AMG.Models.LLM.Providers
                 ["messages"] = messages,
             };
 
-            if (GlobalVariables.DefaultLlmTier == LlmTier.High) body["output_config"] = new Dictionary<string, object> { ["effort"] = "high" };
+            // if (GlobalVariables.DefaultLlmTier == LlmTier.High) body["output_config"] = new Dictionary<string, object> { ["effort"] = "high" };
 
             if (!string.IsNullOrWhiteSpace(system))
                 body["system"] = system;

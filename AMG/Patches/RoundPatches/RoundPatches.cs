@@ -45,6 +45,7 @@ namespace AMG.Patches.RoundPatches
                 brain.LlmMeeting?.ClearDirectives();
                 brain.LlmMeeting?.ClearMemory();
             }
+            AMGPlayers.SetAllPlayers();
             LlmMeetingTranscript.NewMatch();
         }
 

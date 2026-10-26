@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AMG.AI.Navigation;
 using AMG.Enums.GameEnums;
 using AmongUs.GameOptions;
@@ -79,6 +80,7 @@ namespace AMG.Utilities
 
             foreach (var body in bodies)
             {
+                if (body.IsDissolved) continue;
                 if (body.ReportedByPlayerId.HasValue) continue;
 
                 Vector2 pos = body.Position;
@@ -199,6 +201,7 @@ namespace AMG.Utilities
 
             foreach (var body in bodies)
             {
+                if (body.IsDissolved) continue;
                 if (body.ReportedByPlayerId.HasValue) continue;
 
                 Vector2 pos = body.Position;

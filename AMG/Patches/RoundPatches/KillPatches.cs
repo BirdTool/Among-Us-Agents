@@ -11,11 +11,13 @@ namespace AMG.Patches.RoundPatches
         [HarmonyPostfix]
         private static void MurderPlayer_Postfix(PlayerControl __instance, PlayerControl target)
         {
+            var isViper = __instance.Data.Role.Role == AmongUs.GameOptions.RoleTypes.Viper;
             Utils.Round.AddDeadBody(new RoundDeadBody
             {
                 PlayerId = target.PlayerId,
                 TimeOfDeath = Time.time,
-                Position = target.transform.position
+                Position = target.transform.position,
+                IsViper = isViper
             });
         }
     }
