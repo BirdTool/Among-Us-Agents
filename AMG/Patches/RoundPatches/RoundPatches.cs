@@ -27,6 +27,9 @@ namespace AMG.Patches.RoundPatches
             AMG.AI.Navigation.WaypointManager.LoadWaypoints();
             Pathfinder.Initialize();
 
+            // roster of everybody who started this match (kept after they die / get ejected / leave)
+            AMGPlayers.SetAllPlayers();
+
             // new match: forget the previous one's players, then remember everybody who started this one
             if (!ChatMode.IsLlm)
             {
@@ -45,7 +48,6 @@ namespace AMG.Patches.RoundPatches
                 brain.LlmMeeting?.ClearDirectives();
                 brain.LlmMeeting?.ClearMemory();
             }
-            AMGPlayers.SetAllPlayers();
             LlmMeetingTranscript.NewMatch();
         }
 

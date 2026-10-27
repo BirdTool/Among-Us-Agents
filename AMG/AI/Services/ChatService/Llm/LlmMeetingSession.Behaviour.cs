@@ -23,6 +23,8 @@ namespace AMG.AI.Services.ChatService.Llm
         internal static string ColourOf(byte playerId)
         {
             string c = Colour(Utils.Players.GetPlayerByPlayerId(playerId));
+            // a player who left has no PlayerControl anymore: use the colour saved in the roster
+            if (c == "Unknown") c = AMGPlayers.GetPlayer(playerId)?.PlayerColour ?? "Unknown";
             return c == "Unknown" ? $"player {playerId}" : c;
         }
 

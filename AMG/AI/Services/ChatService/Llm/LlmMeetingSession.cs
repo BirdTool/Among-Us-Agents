@@ -285,9 +285,36 @@ namespace AMG.AI.Services.ChatService.Llm
             sb.AppendLine();
 
             sb.AppendLine("Players (id, colour, status):");
-            foreach (var p in GameData.Instance.AllPlayers)
-                sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU) " : "")}{p.PlayerId} {Colour(p)} {(p.IsDead ? "dead (out of the game)" : "alive")}");
+            if (AMGPlayers.AllPlayers.Count > 0)
+            {
+                foreach (var p in AMGPlayers.AllPlayers)
+                    sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU) " : "")}{p.PlayerId} {p.PlayerColour} {p.PublicStatus}");
+            }
+            else
+            {
+                // roster not available (e.g. joined late): fall back to the game's own data
+                foreach (var p in GameData.Instance.AllPlayers)
+                    sb.AppendLine($"- {(p.PlayerId == _brain.AgentId ? "(YOU) " : "")}{p.PlayerId} {Colour(p)} {(p.Disconnected ? "left the game" : p.IsDead ? "dead (out of the game)" : "alive")}");
+            }
             sb.AppendLine();
+
+            if (!profile.Lobby && AMGPlayers.Meetings.Count > 0)
+            {
+                sb.AppendLine("Previous meeting results (public information):");
+                foreach (var m in AMGPlayers.Meetings)
+                {
+                    string outcome = m.EjectedId is byte ejected
+                        ? $"{ColourOf(ejected)} was ejected" + (m.EjectedWasImpostor switch
+                        {
+                            true => " and WAS an Impostor.",
+                            false => " and was NOT an Impostor.",
+                            _ => "; their role was not revealed.",
+                        })
+                        : (m.Tie ? "tie, nobody was ejected." : "nobody was ejected (skip).");
+                    sb.AppendLine($"- Meeting #{m.Number}: {outcome}");
+                }
+                sb.AppendLine();
+            }
 
             if (!profile.Lobby)
             {

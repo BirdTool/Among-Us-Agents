@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using AMG.AI.Mind.StructuredAgentBrain;
-using AMG.AI.Navigation;
 using AMG.Utilities;
 using UnityEngine;
 
@@ -107,7 +106,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 if (p.LastVoteTarget.HasValue)
                     facts.Add("last vote: " + (p.LastVoteTarget.Value == Utils.SkipVotePlayerId ? "skip" : ColourOf(p.LastVoteTarget.Value)));
 
-                lines.Add($"- {Colour(pl)} (ID {pl.PlayerId}, {(pl.IsDead ? "dead" : "alive")}): suspicion {p.SuspiciusPercentage:0}%, trust {p.Trust:+0;-0;0}; "
+                lines.Add($"- {Colour(pl)} (ID {pl.PlayerId}, {(AMGPlayers.GetPlayer(pl.PlayerId)?.PublicStatus ?? (pl.Disconnected ? "left the game" : pl.IsDead ? "dead" : "alive"))}): suspicion {p.SuspiciusPercentage:0}%, trust {p.Trust:+0;-0;0}; "
                     + (facts.Count > 0 ? string.Join("; ", facts) : "nothing notable seen"));
             }
 

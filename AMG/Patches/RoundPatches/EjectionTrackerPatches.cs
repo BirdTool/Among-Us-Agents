@@ -1,4 +1,3 @@
-using System.Linq;
 using HarmonyLib;
 
 namespace AMG.Patches.RoundPatches
@@ -6,18 +5,18 @@ namespace AMG.Patches.RoundPatches
     [HarmonyPatch]
     public static class EjectionTrackerPatch
     {
-        [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.CheckForEndVoting))]
+        // VotingComplete is the RPC every client receives when the meeting's votes are counted
+        // (exiled == null or tie == true: nobody was ejected). CheckForEndVoting only runs the real logic on the host
+        // and its postfix also ran after every single vote, so it could mark someone as ejected too early.
+        [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.VotingComplete))]
         [HarmonyPostfix]
-        public static void CheckForEndVoting_Postfix(MeetingHud __instance)
+        public static void VotingComplete_Postfix(NetworkedPlayerInfo exiled, bool tie)
         {
-            var max = __instance.CalculateVotes().MaxPair(out var tie);
-            var exiled = GameData.Instance.AllPlayers.ToArray().FirstOrDefault(v => !tie && v.PlayerId == max.Key);
+            var result = AMG.Utilities.AMGPlayers.RecordMeetingResult(exiled, tie);
 
-            if (exiled != null)
-            {
-                AMG.Utilities.AMGPlayers.SetPlayerAsEjected(exiled.PlayerId);
-                AMG.Utilities.LogManager.LogDebug($"[EjectionTracker] The player {exiled.PlayerName} (ID: {exiled.PlayerId}) was ejected.");
-            }
+            AMG.Utilities.LogManager.LogDebug(result.EjectedId is byte id
+                ? $"[EjectionTracker] Meeting #{result.Number}: player {id} was ejected (confirmEjects={result.ConfirmEjects}, wasImpostor={(result.EjectedWasImpostor?.ToString() ?? "not revealed")})."
+                : $"[EjectionTracker] Meeting #{result.Number}: nobody was ejected (tie={tie}).");
         }
     }
 }
