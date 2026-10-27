@@ -57,6 +57,7 @@ namespace AMG.Patches.RoundPatches
         {
             AMG.Patches.Gameplay.Signals.VentSignals.Reset();
             Utils.Round.AddRound();
+            AMGPlayers.BeginMeeting();
             var allStructuredBrains = Utils.GetAllStructuredAgentBrain();
             foreach (var brain in allStructuredBrains)
             {

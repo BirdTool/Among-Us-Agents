@@ -8,6 +8,10 @@ namespace AMG.Utilities
     {
         private static List<AMGPlayerData> Players { get; set; } = [];
         private static readonly List<MeetingResult> _meetings = [];
+        private static int _meetingCounter;
+
+        // Called when a meeting starts, so its result gets the right number even if it is reported twice.
+        public static void BeginMeeting() => _meetingCounter++;
 
         public static IReadOnlyList<MeetingResult> Meetings => _meetings;
 
@@ -15,6 +19,7 @@ namespace AMG.Utilities
         {
             Players.Clear();
             _meetings.Clear();
+            _meetingCounter = 0;
             foreach (PlayerControl player in PlayerControl.AllPlayerControls)
             {
                 if (player != null && player.Data != null)
@@ -36,16 +41,33 @@ namespace AMG.Utilities
             => GameOptionsManager.Instance != null
                && GameOptionsManager.Instance.CurrentGameOptions.GetBool(BoolOptionNames.ConfirmImpostor);
 
-        public static MeetingResult RecordMeetingResult(NetworkedPlayerInfo exiled, bool tie)
+        public static MeetingResult RecordMeetingResult(NetworkedPlayerInfo exiled, bool tie, bool wasOverruled = false)
         {
+            // One result per meeting. If the game reports the same meeting twice (e.g. an overrule after the vote),
+            // the later report replaces the earlier one instead of counting as a new meeting.
+            int number = _meetingCounter > 0 ? _meetingCounter : _meetings.Count + 1;
+            var existing = _meetings.FirstOrDefault(m => m.Number == number);
+            if (existing != null)
+            {
+                _meetings.Remove(existing);
+                if (existing.EjectedId is byte oldId && GetPlayer(oldId) is { } old)
+                {
+                    old.HasBeenEjected = false;
+                    old.EjectedInMeeting = null;
+                    old.EjectedWasImpostor = null;
+                }
+            }
+
             bool confirm = ConfirmEjects;
             var result = new MeetingResult
             {
-                Number = _meetings.Count + 1,
+                Number = number,
+                Overruled = wasOverruled,
                 Tie = tie,
-                EjectedId = !tie && exiled != null ? exiled.PlayerId : null,
+                // a Judge ruling can eject someone even when the votes were tied
+                EjectedId = exiled != null && (wasOverruled || !tie) ? exiled.PlayerId : null,
                 ConfirmEjects = confirm,
-                EjectedWasImpostor = confirm && !tie && exiled != null && exiled.Role != null ? exiled.Role.IsImpostor : null,
+                EjectedWasImpostor = confirm && exiled != null && (wasOverruled || !tie) && exiled.Role != null ? exiled.Role.IsImpostor : null,
             };
             _meetings.Add(result);
 
@@ -75,6 +97,7 @@ namespace AMG.Utilities
     {
         public int Number { get; init; }
         public bool Tie { get; init; }
+        public bool Overruled { get; init; }
         public byte? EjectedId { get; init; }
         public bool ConfirmEjects { get; init; }
         public bool? EjectedWasImpostor { get; init; }

@@ -88,7 +88,7 @@ namespace AMG.AI.Services.ChatService.Llm
 
             foreach (var pl in GameData.Instance.AllPlayers)
             {
-                if (!pl.IsDead || pl.PlayerId == brain.AgentId) continue;
+                if (!(pl.IsDead || pl.Disconnected) || pl.PlayerId == brain.AgentId) continue;
 
                 string colour = Regex.Escape(Colour(pl));
                 string pattern = $@"\b{colour}\b[^.!?]{{0,30}}\b(?:{DeadAccuseWords})\b|\b(?:{DeadAccuseWords})\b[^.!?]{{0,30}}\b{colour}\b";
@@ -97,7 +97,9 @@ namespace AMG.AI.Services.ChatService.Llm
                 var memory = brain.GetOrCreateMemory(pl.PlayerId);
                 if (memory.SawKilling || memory.SawVenting) continue;   // something she saw herself: a fact, not a guess
 
-                return $"error: {Colour(pl)} is dead, out of the game (killed or ejected), and you do not know their role. Do not accuse or suspect them; talk about the players who are still alive.";
+                return pl.Disconnected && !pl.IsDead
+                    ? $"error: {Colour(pl)} left the game, so they are out of it and you do not know their role. Do not accuse or suspect them; talk about the players who are still in the game."
+                    : $"error: {Colour(pl)} is dead, out of the game (killed or ejected), and you do not know their role. Do not accuse or suspect them; talk about the players who are still alive.";
             }
 
             return null;

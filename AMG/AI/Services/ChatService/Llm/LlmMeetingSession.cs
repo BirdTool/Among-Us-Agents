@@ -311,7 +311,7 @@ namespace AMG.AI.Services.ChatService.Llm
                             _ => "; their role was not revealed.",
                         })
                         : (m.Tie ? "tie, nobody was ejected." : "nobody was ejected (skip).");
-                    sb.AppendLine($"- Meeting #{m.Number}: {outcome}");
+                    sb.AppendLine($"- Meeting #{m.Number}: {outcome}" + (m.Overruled ? " (the votes were overruled by a Judge's ruling)" : string.Empty));
                 }
                 sb.AppendLine();
             }
