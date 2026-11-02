@@ -15,10 +15,6 @@ namespace AMG.Modules.AutoPlay
         private const float RetryAfterError = 5f;
         private const float AttachDelay = 0f;
 
-        private static bool FirstCalculate = false;
-        private const float CalculatingAfter = 24f;
-        private static float NextCalculate;
-
         public static bool Enabled { get; private set; }
 
         private static float _nextCheck;
@@ -59,7 +55,6 @@ namespace AMG.Modules.AutoPlay
 
             AgentController.AgentControlsRealPlayer = false;
             _mappedBrain = null;
-            FirstCalculate = false;
             _attachTime = 0f;
             LogManager.LogInfo("[Persistent] Brain OFF.");
         }
@@ -99,17 +94,6 @@ namespace AMG.Modules.AutoPlay
                 _attachTime = 0f; 
                 
                 if (brain == null) return;
-            }
-
-            if (!FirstCalculate)
-            {
-                NextCalculate = Time.unscaledTime + CalculatingAfter;
-                FirstCalculate = true;
-            }
-            else if (NextCalculate > 0f && Time.unscaledTime >= NextCalculate)
-            {
-                brain.SetState(Enums.AgentEnums.AgentState.Calculating);
-                NextCalculate = 0f;
             }
 
             // Tasks only exist during a match and are handed out a moment after it starts.

@@ -98,6 +98,10 @@ namespace AMG.Utilities
 
         public static float? SecondsSinceShipStart => IsShip ? Time.time - RoundPatches.ShipStartedAt : null;
 
+        // The role reveal screen covers the first seconds after the ship starts: agents stand still until it ends.
+        public const float IntroSeconds = 15f;
+        public static bool IntroOver => !IsShip || SecondsSinceShipStart >= IntroSeconds;
+
         private static readonly int MovementMask =
             (1 << (int)LayersEnum.Ship) | (1 << (int)LayersEnum.Objects) | (1 << (int)LayersEnum.ShortObjects);
 

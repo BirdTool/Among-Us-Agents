@@ -108,6 +108,7 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         {
             if (Agent == null || Agent.MyPhysics?.body == null) return;
             if (Utils.IsLobby) return; // Keep the agent of calculating on lobby
+            if (HoldForIntro()) return;
 
             if (UpVentCheck()) return;
             if (UpUpdateAction()) return;
@@ -140,6 +141,32 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             }
 
             _updateActions[currentState]?.Invoke();
+        }
+
+        // The role reveal is still on screen (Utils.IntroSeconds after the ship starts): stand still, whatever the
+        // state was before the match, and start calculating the first route only when it ends.
+        private bool _holdingForIntro;
+
+        private bool HoldForIntro()
+        {
+            if (Utils.IsMeeting || Utils.IntroOver)
+            {
+                if (_holdingForIntro)
+                {
+                    _holdingForIntro = false;
+                    ResetPath();
+                    SetState(AgentState.Calculating);
+                }
+                return false;
+            }
+
+            if (!_holdingForIntro)
+            {
+                _holdingForIntro = true;
+                ResetPath();
+                SetState(AgentState.Calculating);   // the name tag says "Calculating" while it waits
+            }
+            return true;
         }
 
         private bool UpVentCheck()
