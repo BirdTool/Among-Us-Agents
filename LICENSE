@@ -1,0 +1,72 @@
+AMG Non-Commercial Attribution License, Version 1.0
+
+Copyright (c) 2026 BirdTool
+https://github.com/BirdTool/Among-Us-Agents
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated files (the "Software"), to use, copy, modify, and
+share the Software, subject to all of the conditions below. If you do not agree
+to these conditions, you are not allowed to use the Software.
+
+1. ATTRIBUTION
+   Any use, copy, modification or distribution of the Software, in whole or in
+   part, must give clear and visible credit to the original author ("BirdTool")
+   and link to the original repository
+   (https://github.com/BirdTool/Among-Us-Agents). This applies to forks,
+   derivative works, re-uploads, mods that include parts of the Software, and
+   videos, streams or posts that show the Software. For distributed copies and
+   derivative works the credit must appear in the project description or README
+   and in any credits or "about" section. For videos and streams, it must appear
+   in the description or in a pinned/visible place.
+   This copyright notice and this license must be included in all copies and in
+   all substantial portions of the Software.
+
+2. NON-COMMERCIAL USE ONLY
+   You may not sell, resell, rent, lease, sublicense or otherwise commercialize
+   the Software or any work derived from it. In particular, you may not:
+   a) charge money for the Software, a copy of it, or access to it;
+   b) place it behind a paywall, subscription, membership tier, "early access"
+      reward, donation wall or ad-gated download (such as link shorteners);
+   c) bundle it with, or use it in, any paid product or service;
+   d) use it as a feature of a service whose use is paid.
+
+3. REDISTRIBUTION
+   You may redistribute the Software, modified or not, only free of charge, only
+   with this license and the credits intact, and only in a way that makes clear
+   who the original author is. You may not present the Software or any
+   derivative work as your own original work, and you may not remove or hide the
+   copyright notice, the credits or this license.
+
+4. DERIVATIVE WORKS
+   Modified versions must clearly state that they were modified and must be
+   released under these same terms.
+
+5. CONTENT CREATION
+   Recording, streaming or posting videos or other content that shows the
+   Software in use is allowed, including on monetized channels and platforms,
+   as long as the credit required in section 1 is given. The content itself is
+   not considered a sale of the Software.
+
+6. THIRD-PARTY SERVICES AND TRADEMARKS
+   The Software can connect to third-party AI services (such as OpenAI, Google,
+   Anthropic and DeepSeek). You are solely responsible for the costs, API keys,
+   data and terms of use of those services. "Among Us" and its related assets
+   belong to Innersloth LLC; this project is unofficial and is not affiliated
+   with or endorsed by Innersloth.
+
+7. COMMERCIAL PERMISSION
+   If you want to use the Software commercially, contact the author. Any
+   commercial permission is only valid if granted in writing by the author.
+
+8. TERMINATION
+   If you violate any of these conditions, your rights under this license end
+   automatically and immediately. You must stop using and distributing the
+   Software and must remove any copies you published.
+
+9. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+   ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
