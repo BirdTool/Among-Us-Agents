@@ -37,6 +37,8 @@ namespace AMG.AI.Services.ChatService.Llm
                 case "private_message":
                 {
                     if (string.IsNullOrWhiteSpace(cmd.Text)) { failed = true; return "error: text is empty."; }
+                    if (LeakRegex.IsMatch(cmd.Text))
+                        return "skipped: never report command results or errors to anyone. Handle it silently and use wait.";
                     MessageServiceClass.WriteMessage(cmd.Text, PrivateMessageSenderEnum.LLM);
                     return "ok: message sent to developer.";
                 }
@@ -44,6 +46,15 @@ namespace AMG.AI.Services.ChatService.Llm
                 case "send_message":
                 {
                     if (string.IsNullOrWhiteSpace(cmd.Text)) { failed = true; return "error: text is empty."; }
+
+                    if (_quiet)
+                    {
+                        terminal = true;
+                        return "skipped: the developer asked you to stay quiet and has not lifted it. Send no chat messages; use wait (or vote when voting opens).";
+                    }
+
+                    if (LeakRegex.IsMatch(cmd.Text))
+                        return "skipped: never write command results or errors in the chat. Handle it silently and use wait.";
 
                     // A message over the game's limit is shortened instead of being refused (the model would lose its turn)
                     string text = FitToChat(cmd.Text.Trim(), out bool shortened);
@@ -74,16 +85,49 @@ namespace AMG.AI.Services.ChatService.Llm
                 case "vote":
                 {
                     if (cmd.Target == null) { failed = true; return "error: vote needs a target (player id, or 253 to skip)."; }
-                    var r = Vote(cmd.Target);
+
+                    // A vote is final: asking again is not an error, there is simply nothing left to do.
+                    if (HasVoted)
+                    {
+                        terminal = true;
+                        return _votedFor is byte done
+                            ? $"ok: you already voted ({DescribeVote(done)}) in this meeting. Votes are final: nothing to do, use wait."
+                            : "ok: you already voted in this meeting. Votes are final: nothing to do, use wait.";
+                    }
+
+                    byte wanted = cmd.Target.Value;
+                    if (wanted >= 250) wanted = Skip;
+
+                    if (_pendingVote == wanted)
+                    {
+                        terminal = true;
+                        return $"ok: your vote for {DescribeVote(wanted)} is already scheduled and will be cast when voting opens. Nothing to do, use wait.";
+                    }
+
+                    if (wanted < 250 && FellowImpostorIds().Contains(wanted) && !IsBusted(wanted))
+                    {
+                        failed = true;
+                        return $"error: {ColourOf(wanted)} is your fellow impostor. Never vote for a partner: vote for a crewmate or skip (253).";
+                    }
+
+                    var r = Vote(wanted);
                     if (r == VoteRpcEnums.ERROR_IsNotInVoteTime)
                     {
-                        _pendingVote = cmd.Target;   // cast automatically when voting opens
+                        _pendingVote = wanted;   // cast automatically when voting opens
+                        _voteProblem = null;
                         terminal = true;
-                        return "ok: voting is not open yet; your vote is scheduled and will be cast automatically when voting opens. (/vote again to change the target if you change your mind)";
+                        return $"ok: voting is not open yet; your vote for {DescribeVote(wanted)} is scheduled and will be cast automatically when voting opens. Do not send it again.";
+                    }
+                    if (r == VoteRpcEnums.ERROR_AlreadyVoted)
+                    {
+                        _votedFor ??= wanted;
+                        terminal = true;
+                        return "ok: you already voted in this meeting. Votes are final: nothing to do, use wait.";
                     }
                     if (r != VoteRpcEnums.SUCCESS) { failed = true; return $"error: {r}"; }
+                    _voteProblem = null;
                     terminal = true;
-                    return "ok: vote cast.";
+                    return "ok: vote cast. Votes are final.";
                 }
 
                 case "wait":

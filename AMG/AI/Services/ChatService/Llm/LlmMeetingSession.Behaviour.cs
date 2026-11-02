@@ -36,6 +36,9 @@ namespace AMG.AI.Services.ChatService.Llm
         private static readonly Regex WhereRegex = new(@"\b(?:where|wher|whr)\b", Flags);
         private static readonly Regex AccuseRegex = new(@"\b(?:sus|vent(?:ed|ing|s)?|saw|seen|kill(?:ed|ing|s)?|liar|lying|lied|imp(?:ostor)?|fake(?:d|s)?|accus\w*)\b", Flags);
         private static readonly Regex FirstPersonSaw = new(@"\b(?:i|ive|i['’]ve)\s+(?:personally\s+|just\s+|actually\s+|also\s+|clearly\s+)?(?:saw|seen|watched|witnessed)\b|\bsaw it\b", Flags);
+        // Command results and errors are for the agent only: they must never reach the chat or the developer.
+        private static readonly Regex LeakRegex = new(@"\bERROR_\w+|\bFAILED_\w+|\bvote (?:failed|error)\b|\b(?:command|tool) (?:failed|returned|error)\b", Flags);
+        private static readonly Regex WhoThereRegex = new(@"\bwho (?:else )?(?:was|were)\s+(?:there|near(?:by)?|around|with|in)\b|\banyone\s+(?:else\s+)?(?:near|nearby|around|there|saw|see)\b|\bwho(?:['’]s| is)\s+(?:near|around)\b", Flags);
         private static readonly Regex VentWord = new(@"\bvent(?:s|ed|ing)?\b", Flags);
         private static readonly Regex KillWord = new(@"\b(?:kill(?:ed|ing|s)?|murder(?:ed)?|stab(?:bed)?)\b", Flags);
 
@@ -56,6 +59,9 @@ namespace AMG.AI.Services.ChatService.Llm
             if (IsNarration(text) || MetaRegex.IsMatch(text))
                 return "error: do not narrate or summarize what other players said and do not write your reasoning or notes: everyone already reads the chat. Say only what a player would say: accuse with a reason, answer someone, or react briefly.";
 
+            if (WhoThereRegex.IsMatch(text) && _askedWhoThere)
+                return "error: you already asked who was there/nearby in this meeting. If nobody answered, nobody saw anything: drop it and move on.";
+
             if (WhereRegex.IsMatch(text))
             {
                 if (!LlmMeetingContext.IsBodyReport)
@@ -66,7 +72,7 @@ namespace AMG.AI.Services.ChatService.Llm
                     return "error: never ask 'where' when you accuse someone, before or after. Only accuse.";
             }
 
-            return FindAccusedDead(text) ?? FindUnseenClaim(text);
+            return FindAccusedPartner(text) ?? FindAccusedDead(text) ?? FindUnseenClaim(text);
         }
 
         // "Blue says ...", "Gray cleared Rose": everybody already reads the chat.
@@ -215,6 +221,8 @@ namespace AMG.AI.Services.ChatService.Llm
             if (profile.Lobby) return;
 
             sb.AppendLine("Players are identified by COLOUR. Always call, ask and accuse players by colour, never by their name. Names are not shown: if someone writes a name you do not know, use get_player_names (when you have it) to find the colour, and do not guess. Commands still use the player id.");
+
+            sb.AppendLine("Command results and errors are for you only: never write them (error codes, \"vote failed\", \"already voted\") in the chat or in a private message, and never tell anyone about them. A vote is final: once you have voted you are done voting.");
 
             if (!profile.TrustChat)
             {

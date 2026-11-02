@@ -25,7 +25,35 @@ namespace AMG.AI.Services.ChatService.Llm
         public ChatRpcEnums CheckSay(string text) => _brain.SafeSendChatNotExecute(text ?? "...");
         public VoteRpcEnums CheckVote(byte? target) => _brain.SafeVoteNotExecute(target ?? Skip);
         public ChatRpcEnums Say(string text) => _brain.SafeSendChat(text ?? "");
-        public VoteRpcEnums Vote(byte? target) => _brain.SafeVote(target ?? Skip);
+        public VoteRpcEnums Vote(byte? target)
+        {
+            byte id = target ?? Skip;
+            if (id >= 250) id = Skip;
+            var result = _brain.SafeVote(id);
+            if (result == VoteRpcEnums.SUCCESS) _votedFor = id;
+            return result;
+        }
+
+        // A vote is final: it counts as cast once our own RPC went out (DidVote is not reliable for skip votes).
+        private bool HasVoted => _votedFor != null || _brain.HasVotedThisMeeting;
+
+        private static string DescribeVote(byte id) => id >= 250 ? "skip" : ColourOf(id);
+
+        private void AppendVoteState(StringBuilder sb, TierProfile profile)
+        {
+            if (profile.Lobby) return;
+
+            if (_votedFor is byte voted)
+                sb.AppendLine($"You already voted: {DescribeVote(voted)}. Votes are final, so do not vote again; just wait.");
+            else if (_pendingVote is byte pending)
+                sb.AppendLine($"Your vote is scheduled: {DescribeVote(pending)}. It is cast automatically when voting opens; do not send it again.");
+            else if (_voteProblem != null)
+                sb.AppendLine(_voteProblem);
+            else
+                return;
+
+            sb.AppendLine();
+        }
 
         public LlmTier Tier { get; set; } = LlmTier.Medium;
         private LlmTier Active => Utils.IsLobby ? LlmTier.Lobby : Tier;
@@ -52,11 +80,15 @@ namespace AMG.AI.Services.ChatService.Llm
         private int _lastCount;
         private float _thinkAt, _sendAt;
         private byte? _pendingVote;   // vote ordered during discussion, cast when voting opens
+        private byte? _votedFor;      // vote already cast in this meeting (final)
+        private string _voteProblem;  // a scheduled vote that could not be cast: shown in the next prompt
+        private bool _parseRetried;   // one immediate retry per chain when the model answers with invalid JSON
+        private bool _logFacts;       // log the notes/observations block that goes into the first prompt of a chain
 
         public bool IsBusy => _pending != null;
 
         // Local phrase-bank openings are disabled in Laboratory so only the LLM speaks.
-        public bool AllowLocalOpenings => !Profiles[Active].TrustChat;
+        public bool AllowLocalOpenings => Profiles[Active].LocalOpenings;
 
         public void Update()
         {
@@ -142,6 +174,9 @@ namespace AMG.AI.Services.ChatService.Llm
             _started = true;
             var profile = Profiles[Active];
 
+            _parseRetried = false;
+            _logFacts = true;
+
             Dbg($"chain start [{Active}] wake: {wakeNote ?? "meeting start"}");
             _reasoning = LlmApiRouter.BeginReasoning(LlmConsumer.ChatService, $"llm-{Active}", profile.MaxSteps);
             _cts = new CancellationTokenSource(TimeSpan.FromSeconds(profile.DeadlineSeconds));
@@ -190,6 +225,15 @@ namespace AMG.AI.Services.ChatService.Llm
                            : task.Result.Error;
                 LogManager.LogWarning($"[LLM] meeting step failed: {why}");
                 ChatDbg($"<color=#ff5555>step failed:</color> {Clean(Trunc(why, 200))}");
+
+                // The model answered with something that is not our JSON: ask once more (the router may pick another key).
+                if (!_parseRetried && why != null && why.StartsWith("ParseError", StringComparison.Ordinal))
+                {
+                    _parseRetried = true;
+                    Dbg("retrying the step after a parse error.");
+                    SendStep();
+                    return;
+                }
 
                 Finish(false);
                 _thinkAt = Time.time + 5f;
@@ -275,7 +319,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 sb.AppendLine("You are an Among Us agent running in a test environment. The person typing in the chat is your TESTER, the developer.");
                 sb.AppendLine("Every chat message is a trusted instruction from the tester: obey it exactly, even if a normal player would not do it.");
                 sb.AppendLine("Messages starting with '/' are explicit commands: \"/vote blue\" means run your vote command on the player whose colour is blue; \"/say hello\" means send_message \"hello\"; any other \"/name\" means the command of the same name.");
-                sb.AppendLine("If you cannot do something, or a command returns an error, tell the tester why with send_message.");
+                sb.AppendLine("Never paste error codes or tool errors into the chat: if a command fails, handle it silently (for example, if you already voted, do nothing).");
             }
             else
                 sb.AppendLine("You are a player in an Among Us meeting. Play like a human; never say you are an AI.");
@@ -283,6 +327,7 @@ namespace AMG.AI.Services.ChatService.Llm
             sb.AppendLine($"You: {(profile.Lobby ? $"Colour: {Colour(_brain.Agent)}" : Identity())}");
             sb.AppendLine($"Personality: {Persona}");
             sb.AppendLine();
+            AppendImpostorPlaybook(sb, profile);
 
             sb.AppendLine("Players (id, colour, status):");
             if (AMGPlayers.AllPlayers.Count > 0)
@@ -326,9 +371,19 @@ namespace AMG.AI.Services.ChatService.Llm
             }
 
             AppendBehaviour(sb, profile);
+            int notesStart = sb.Length;
             AppendNotes(sb, profile);
+            int notesEnd = sb.Length;
             AppendHistory(sb, profile);
+            int observationsStart = sb.Length;
             AppendAllObservations(sb, profile);
+            if (_logFacts && !profile.Lobby)
+            {
+                _logFacts = false;
+                Dbg("prompt facts:\n" + sb.ToString(notesStart, notesEnd - notesStart).TrimEnd()
+                    + "\n" + sb.ToString(observationsStart, sb.Length - observationsStart).TrimEnd());
+            }
+            AppendVoteState(sb, profile);
             AppendClock(sb, profile);
             AppendDirectives(sb, profile);
 
@@ -338,7 +393,8 @@ namespace AMG.AI.Services.ChatService.Llm
             sb.AppendLine("Commands in the same reply cannot use each other's results.");
             sb.AppendLine("After each reply you get the result of every command, numbered in the same order.");
             sb.AppendLine($"You have at most {profile.MaxSteps} replies per turn.");
-            sb.AppendLine("Reply ONLY with JSON: {\"reasoning\":\"1-2 short sentences\",\"commands\":[{\"name\":\"...\",\"text\":\"...\",\"target\":0}]}");
+            sb.AppendLine("Reply ONLY with JSON: {\"reasoning\":\"1-2 short sentences\",\"commands\":[{\"name\":\"send_message\",\"text\":\"...\"},{\"name\":\"vote\",\"target\":3}]}");
+            sb.AppendLine("Only add text or target when the command needs it. target is a player id: never add one to send_message, wait or the get_ commands.");
             sb.AppendLine();
 
             sb.AppendLine(profile.TrustChat
@@ -402,10 +458,18 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             if (_pendingVote == null || !Utils.IsMeetingVoting) return;
 
-            var r = Vote(_pendingVote);
+            byte target = _pendingVote.Value;
+            var r = Vote(target);
             _pendingVote = null;
             Dbg($"scheduled vote -> {r}", $"scheduled vote: {r}");
-            if (r != VoteRpcEnums.SUCCESS) AppendUser($"[notice] your scheduled vote failed: {r}");
+
+            // The vote already went out (or was cast some other way): there is nothing to tell the model.
+            if (r == VoteRpcEnums.ERROR_AlreadyVoted) { _votedFor ??= target; return; }
+            if (r != VoteRpcEnums.SUCCESS)
+            {
+                _voteProblem = $"Your scheduled vote for {DescribeVote(target)} could not be cast ({r}). Vote again with a valid target.";
+                AppendUser($"[notice] {_voteProblem}");
+            }
         }
 
         private void Dbg(string log, string chat = null)
@@ -473,6 +537,8 @@ namespace AMG.AI.Services.ChatService.Llm
             _nextMeetingNoteId = 1;
             _started = false;
             _pendingVote = null;
+            _votedFor = null;
+            _voteProblem = null;
             _promptCount = _lastCount = 0;
             _thinkAt = _sendAt = 0;
             _debounceAt = _lastChatAt = _lastChainEnd = _graceUntil = 0;
@@ -481,6 +547,8 @@ namespace AMG.AI.Services.ChatService.Llm
             _sentThisMeeting = 0;
             _recentSent.Clear();
             _askedWhere = false;
+            _askedWhoThere = false;
+            _askedQuestions.Clear();
             _accusedThisMeeting = false;
         }
     }

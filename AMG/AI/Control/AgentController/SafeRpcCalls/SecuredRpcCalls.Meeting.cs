@@ -14,6 +14,9 @@ namespace AMG.AI.Control.AgentController
         // A client only learns about its own vote when the host syncs it back, so DidVote can stay false for a moment.
         private MeetingHud _voteSentFor;
 
+        // True once this agent sent its vote RPC in the current meeting (also for skip votes, which DidVote misses).
+        public bool HasVotedThisMeeting => MeetingHud.Instance != null && _voteSentFor == MeetingHud.Instance;
+
         public VoteRpcEnums SafeVoteNotExecute(byte? targetId)
         {
             byte playerId = targetId ?? Utils.SkipVotePlayerId;

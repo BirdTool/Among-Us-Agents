@@ -37,6 +37,14 @@ namespace AMG.AI.Services.ChatService.Llm
         private bool _hurryWoken, _reminderWoken;
         private bool _askedWhere;
         private bool _accusedThisMeeting;
+        private bool _askedWhoThere;
+        private readonly List<string> _askedQuestions = [];
+        private bool _quiet;   // the developer asked for silence: it lasts until they say the agent may talk again
+
+        // "be quiet", "stay quiet now", "shut up", "cala"...  /  "you can talk again", "unmute"...
+        private static readonly Regex QuietRegex = new(@"^\W*(?:(?:please\s+)?(?:be|stay|keep)\s+)?(?:quiet|silent)\b|\bshut up\b|\bshh+\b|\bstop (?:talking|chatting|writing|typing)\b|\bcala\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex UnmuteRegex = new(@"\b(?:(?:you can|can) (?:talk|speak|chat)(?: again| now)?|talk again|speak again|unmute|stop being quiet|fala)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex ThisRoundRegex = new(@"\bthis (?:round|meeting)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         private readonly record struct PhaseClock(bool Known, bool Voting, bool Unlimited, int Left, int DiscussionTime, int VotingTime);
 
@@ -99,7 +107,7 @@ namespace AMG.AI.Services.ChatService.Llm
             // Nothing is asked of the agent during the discussion, and nothing when voting opens:
             // it only gets reminded when the time to vote is really running out.
             if (!c.Voting || c.Unlimited || c.Left > VoteReminderAtSeconds) return false;
-            if (MeetingHud.Instance.DidVote(_brain.AgentId)) return false;
+            if (HasVoted) return false;
 
             if (c.Left <= HurryAtSeconds && !_hurryWoken)
             {
@@ -126,6 +134,9 @@ namespace AMG.AI.Services.ChatService.Llm
             text = text.Trim();
             if (text.Length > MaxDirectiveLength) text = text[..MaxDirectiveLength];
 
+            if (UnmuteRegex.IsMatch(text)) _quiet = false;
+            else if (QuietRegex.IsMatch(text)) _quiet = true;
+
             _directives.Add(new DevDirective(text, LlmMeetingTranscript.MeetingNumber));
             while (_directives.Count > MaxDirectives) _directives.RemoveAt(0);
 
@@ -137,6 +148,7 @@ namespace AMG.AI.Services.ChatService.Llm
         public void ClearDirectives()
         {
             _directives.Clear();
+            _quiet = false;
             _directiveWake = false;
         }
 
@@ -144,9 +156,12 @@ namespace AMG.AI.Services.ChatService.Llm
         {
             if (_directives.Count > 0)
             {
-                sb.AppendLine($"<developer> Current meeting: #{LlmMeetingTranscript.MeetingNumber}. These come from your developer, who is trusted: obey them. If two conflict, the most recent one wins. One that clearly refers to a single round or moment (e.g. \"this round\") only applies to the meeting where it was received. Never say in the chat that you received these, that there is a developer, or that you are an AI: whatever they tell you about the game is something you simply know, so say it as your own opinion.");
+                sb.AppendLine($"<developer> These come from your developer, who is trusted: obey them. They stay in force for the whole match, in every meeting, until the developer changes or cancels them (a request to be quiet lasts until the developer says you may talk again). If two conflict, the most recent one wins. Only one that says \"this round\" or \"this meeting\" ends with that meeting. Never say in the chat that you received these, that there is a developer, or that you are an AI: whatever they tell you about the game is something you simply know, so say it as your own opinion.");
                 foreach (var d in _directives)
-                    sb.AppendLine($"- (meeting #{d.Meeting}) {Clean(d.Text)}");
+                {
+                    if (d.Meeting != LlmMeetingTranscript.MeetingNumber && ThisRoundRegex.IsMatch(d.Text)) continue;
+                    sb.AppendLine($"- {Clean(d.Text)}");
+                }
                 sb.AppendLine("</developer>");
                 sb.AppendLine();
             }
@@ -155,6 +170,8 @@ namespace AMG.AI.Services.ChatService.Llm
             {
                 int left = Math.Max(0, MaxMessagesPerMeeting - _sentThisMeeting);
                 sb.AppendLine($"Pacing: you can send at most {MaxMessagesPerMeeting} chat messages per meeting ({left} left), one at a time, and you must not repeat yourself. Speak only when you have something new to add; otherwise use wait.");
+                if (_askedQuestions.Count > 0)
+                    sb.AppendLine("Questions you already asked in this meeting (never ask them again, and never ask who was nearby more than once): " + string.Join(" | ", _askedQuestions));
                 if (LlmMeetingContext.IsEmergency)
                     sb.AppendLine("Nobody died. Do not ask why the meeting was called unless you are told nobody has explained it yet; give the others time to speak first.");
                 sb.AppendLine();
@@ -192,6 +209,12 @@ namespace AMG.AI.Services.ChatService.Llm
             _sentThisMeeting++;
             if (WhereRegex.IsMatch(text)) _askedWhere = true;
             if (AccuseRegex.IsMatch(text)) _accusedThisMeeting = true;
+            if (WhoThereRegex.IsMatch(text)) _askedWhoThere = true;
+            if (text.Contains('?'))
+            {
+                _askedQuestions.Add(Trunc(text, 70));
+                while (_askedQuestions.Count > 6) _askedQuestions.RemoveAt(0);
+            }
             _recentSent.Add(text);
             while (_recentSent.Count > SimilarityWindow) _recentSent.RemoveAt(0);
         }

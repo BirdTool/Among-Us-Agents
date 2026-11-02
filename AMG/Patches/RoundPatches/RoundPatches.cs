@@ -29,6 +29,7 @@ namespace AMG.Patches.RoundPatches
 
             // roster of everybody who started this match (kept after they die / get ejected / leave)
             AMGPlayers.SetAllPlayers();
+            AMG.AI.Mind.StructuredAgentBrain.VentRoleCheck.Reset();
 
             // new match: forget the previous one's players, then remember everybody who started this one
             if (!ChatMode.IsLlm)

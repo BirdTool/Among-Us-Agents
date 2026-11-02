@@ -15,7 +15,8 @@ namespace AMG.AI.Services.ChatService.Llm
             float MinInterval = 2f,   // minimum pause between chains
             int MaxChatLines = 0,     // 0 = whole chat; otherwise only the last N lines
             bool TrustChat = false,   // chat = orders from the tester
-            bool Lobby = false);      // no role, no meeting
+            bool Lobby = false,       // no role, no meeting
+            bool LocalOpenings = true); // phrase-bank openings ("where?") may speak before the LLM does
 
         private static readonly string[] IntentionCommandsMedium = [
             "intention_avoid_players"
@@ -47,8 +48,8 @@ namespace AMG.AI.Services.ChatService.Llm
                 "change_suspicious", "set_suspicious", "change_trust", "set_trust",
                 "intention_avoid_players"
             ], MinInterval: 8f),
-            [LlmTier.High] = new(12, 90f, AllCommands, MaxTokens: 2048, MinInterval: 8f, TrustChat: true),
-            [LlmTier.Laboratory] = new(15, 120f, AllCommands, MaxTokens: 4096, MinInterval: 1f, TrustChat: true),
+            [LlmTier.High] = new(12, 90f, AllCommands, MaxTokens: 2048, MinInterval: 8f, LocalOpenings: false),
+            [LlmTier.Laboratory] = new(15, 120f, AllCommands, MaxTokens: 4096, MinInterval: 1f, TrustChat: true, LocalOpenings: false),
         };
 
         private static readonly Dictionary<string, string> CommandDocs = new()
