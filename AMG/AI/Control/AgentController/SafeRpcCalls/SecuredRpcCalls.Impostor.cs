@@ -57,7 +57,17 @@ namespace AMG.AI.Control.AgentController
 
             bool didKillSucceed = result == SafeKillRpcEnums.SUCCESS;
             
-            Agent.RpcMurderPlayer(Utils.Players.GetPlayerByPlayerId(targetId), didKillSucceed);
+            var target = Utils.Players.GetPlayerByPlayerId(targetId);
+
+            if (Utils.IsHost)
+            {
+                Agent.RpcMurderPlayer(target, didKillSucceed);
+            }
+            else
+            {
+                LogManager.LogDebug($"[Kill] not the host: asking the host to kill player {targetId}.");
+                Agent.CmdCheckMurder(target);
+            }
 
             if (didKillSucceed) KillCooldownManager.StartCooldown(AgentId);
             else if (result == SafeKillRpcEnums.FAILED_AngelProtected) KillCooldownManager.StartCooldownAsHalf(AgentId);
