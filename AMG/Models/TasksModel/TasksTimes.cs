@@ -19,8 +19,8 @@ namespace AMG.Models.TasksModel
     {
         public AsteroidsTask()
         {
-            RegularTimeToFinishTheStep = 1f;
-            TimeDisturb = 2.4f;
+            RegularTimeToFinishTheStep = 0.7f;
+            TimeDisturb = 1.2f;
             MaxSuspiciousDwellSeconds = 27.0f;
         }
     }
@@ -29,8 +29,8 @@ namespace AMG.Models.TasksModel
     {
         public ResetReactorTask()
         {
-            RegularTimeToFinishTheStep = 3f;
-            TimeDisturb = 4f;
+            RegularTimeToFinishTheStep = 1.5f;
+            TimeDisturb = 2.89f;
             MaxSuspiciousDwellSeconds = 35.0f;
         }
     }
@@ -49,8 +49,8 @@ namespace AMG.Models.TasksModel
     {
         public CleanO2Filter()
         {
-            RegularTimeToFinishTheStep = 1.3f;
-            TimeDisturb = 2.7f;
+            RegularTimeToFinishTheStep = 0.5f;
+            TimeDisturb = 1.5f;
             MaxSuspiciousDwellSeconds = 15.0f;
         }
     }
@@ -59,8 +59,8 @@ namespace AMG.Models.TasksModel
     {
         public FixWiringTask()
         {
-            RegularTimeToFinishTheStep = 6.7f;
-            TimeDisturb = 3.5f;
+            RegularTimeToFinishTheStep = 6f;
+            TimeDisturb = 3.6f;
             MaxSuspiciousDwellSeconds = 18f;
         }
     }
