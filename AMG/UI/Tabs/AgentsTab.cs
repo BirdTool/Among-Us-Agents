@@ -59,9 +59,9 @@ public class AgentsTab : TabBase
             (index) => GlobalVariables.DefaultLlmTier = (LlmTier)index,
             () => (int)GlobalVariables.DefaultLlmTier);
 
-        new MenuButton("Chat Debug", () => 
+        new MenuCheckButton("Chat Debug", false, (bool state) => 
         {
-            ChatMode.ChatDebug = !ChatMode.ChatDebug;
+            ChatMode.ChatDebug = state;
         });
     }
 }

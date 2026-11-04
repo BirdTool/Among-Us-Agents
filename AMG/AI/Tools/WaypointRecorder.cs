@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Debug;
+using AMG.AI.Mind.LLMAgentBrain;
 using AMG.AI.Mind.MapTrackerBrain;
 using AMG.AI.Mind.ReactiveAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
@@ -34,6 +35,7 @@ namespace AMG.AI.Tools
                 ClassInjector.RegisterTypeInIl2Cpp<ReactiveAgentBrain>();
                 ClassInjector.RegisterTypeInIl2Cpp<AgentVisionESP>();
                 ClassInjector.RegisterTypeInIl2Cpp<MapTrackerBrain>();
+                ClassInjector.RegisterTypeInIl2Cpp<LLMAgentBrain>();
                 _isRegistered = true;
                 LogManager.LogDebug("[AI GPS] Classes registradas com sucesso!");
             }

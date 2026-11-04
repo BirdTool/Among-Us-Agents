@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using AMG.AI.Navigation;
-using AMG.Enums.AgentEnums;
 using AMG.Utilities;
+using AmongUs.GameOptions;
 using UnityEngine;
 
 namespace AMG.AI.Control.AgentController
@@ -13,6 +13,7 @@ namespace AMG.AI.Control.AgentController
         public Vector2 Vector2Position => Agent.transform.position;
         public bool IsCrewmate => !Agent.Data.Role.IsImpostor;
         public bool IsImpostor => Agent.Data.Role.IsImpostor;
+        public RoleTypes CurrentRole => Agent.Data.Role.Role;
 
         // Cache for WaypointPosition — re-computed only when agent moves > 0.3 units
         protected Waypoint _cachedWaypointPosition;
