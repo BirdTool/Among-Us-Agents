@@ -1,6 +1,8 @@
+using AMG.AI.Mind.LLMAgentBrain;
+
 namespace AMG.Models.LLMAssistence.Crewmate
 {
-    public class EngineerAssistence : LLMDefaultAssistence
+    public class EngineerAssistence(LLMAgentBrain brain) : LLMDefaultAssistence(brain)
     {
         
     }

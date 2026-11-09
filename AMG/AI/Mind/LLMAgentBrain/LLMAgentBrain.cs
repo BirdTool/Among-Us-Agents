@@ -18,12 +18,12 @@ namespace AMG.AI.Mind.LLMAgentBrain
         {
             base.Awake();
 
-            Assistence = LLMDefaultAssistence.GetAssistenceByRole(CurrentRole);
+            Assistence = LLMDefaultAssistence.GetAssistenceByRole(this);
         }
 
         void Update()
         {
-            if (Assistence == null) Assistence = LLMDefaultAssistence.GetAssistenceByRole(CurrentRole);
+            Assistence ??= LLMDefaultAssistence.GetAssistenceByRole(this);
             CheckCurrentTask();
             if (HasPath && !_doingTask)
             {
