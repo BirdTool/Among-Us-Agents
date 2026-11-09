@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using AMG.AI.Services.ChatService.Llm;
-using AMG.Data;
 using AMG.Enums;
 
 namespace AMG.Models.LLM.Providers

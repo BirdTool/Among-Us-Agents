@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Services.ChatService;
-using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.ChatService.Local;
 using AMG.AI.Services.ChatService.Local.History;
 using AMG.Enums.ChatServiceEnums;
@@ -17,7 +16,6 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
     {
         private const float FollowUpAfter = 8f;
         private readonly ChatServiceClass _chat;
-        private readonly LlmMeetingSession _llm;
         private readonly StructuredAgentBrain _brain;
         private readonly float _startedAt = Time.time;
         private readonly List<(float dueAt, ChatIntent intent)> _delayed = [];
@@ -36,12 +34,6 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
         {
             _chat = chat;
             PlanOpening();
-        }
-
-        public MeetingServiceForStructuredBrain(LlmMeetingSession llm, StructuredAgentBrain brain) : this(brain)
-        {
-            _llm = llm;
-            if (llm.AllowLocalOpenings) PlanOpening();
         }
 
         private MeetingServiceForStructuredBrain(StructuredAgentBrain brain) => _brain = brain;
@@ -101,16 +93,6 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
             }
             else
             {
-                if (LlmMeetingContext.IsBodyReport)
-                {
-                    Emit(new ChatIntent
-                    {
-                        Type = ChatIntentEnum.Question,
-                        PhraseId = "Body_Location",
-                        Context = ChatContextEnum.MeetingStart,
-                        Urgency = 0.4f
-                    });
-                }
             }
         }
 
@@ -153,7 +135,6 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
             for (int i = _delayed.Count - 1; i >= 0; i--)
                 if (Time.time >= _delayed[i].dueAt) { Emit(_delayed[i].intent); _delayed.RemoveAt(i); }
 
-            if (_llm != null && _llm.AllowLocalOpenings) TickLlmOpenings();
         }
 
         private void TickLlmOpenings()
@@ -180,18 +161,6 @@ namespace AMG.AI.Services.MeetingService.StructuredBrain
             }
 
             if (Time.time < _llmSendAt) return;
-
-            switch (_llm.Say(_llmText))
-            {
-                case ChatRpcEnums.SUCCESS:
-                case ChatRpcEnums.ERROR_ContentIsEmpty:
-                case ChatRpcEnums.ERROR_ContentIsBiggerThan100:
-                    FinishLlmOpening();
-                    break;
-
-                default:
-                    break;
-            }
         }
 
         private void FinishLlmOpening()

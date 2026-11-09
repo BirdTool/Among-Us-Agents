@@ -1,8 +1,4 @@
-using System.Text;
 using AMG.AI.LLM;
-using AMG.AI.Mind.StructuredAgentBrain;
-using AMG.AI.Services.ChatService;
-using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.MessagesService;
 using AMG.Utilities;
 using AMG.Utilities.KeyDown;
@@ -73,9 +69,10 @@ public partial class AMGPlugin : BasePlugin
 
         LlmApiKeyLoader.LoadKeys();
         MessageServiceClass.StartListening();
-        MessageServiceClass.OnReceive += OnMessageReceived;
+        // MessageServiceClass.OnReceive += OnMessageReceived;
     }
 
+    /*
     private void OnMessageReceived(PrivateMessageModel message)
     {
         LogManager.LogInfo($"[Messages] Received new message from {message.Sender}: {message.Content}");
@@ -98,4 +95,5 @@ public partial class AMGPlugin : BasePlugin
             Utils.AddChatPrivate($"Message from the AI: {message.Content}");
         }
     }
+    */
 }

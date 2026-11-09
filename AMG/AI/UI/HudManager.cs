@@ -40,7 +40,7 @@ namespace AMG.AI.UI
                     // Control.AgentManager.AddAgent(Control.AgentManager.GenerateUniqueRandomName());
 
                     var result = Control.AgentManager.GenerateRandomAgent();
-                    result.brain.LlmMeeting.Tier = Services.ChatService.Llm.LlmTier.Laboratory;
+                    // result.brain.LlmMeeting.Tier = Services.ChatService.Llm.LlmTier.Laboratory;
                     ChatMode.Current = Enums.ChatServiceEnums.ChatModeEnum.Llm;
 
                     // Control.AgentManager.CreateTrackerAgent();

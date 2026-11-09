@@ -1,5 +1,4 @@
 using AMG.AI.Services.ChatService;
-using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.ChatService.Local;
 using AMG.Utilities;
 using HarmonyLib;
@@ -17,7 +16,7 @@ namespace AMG.Patches
 
             if (ChatMode.IsLlm)
             {
-                if (Utils.IsMeeting || Utils.IsLobby) LlmMeetingTranscript.Add(sourcePlayer, chatText);
+                // if (Utils.IsMeeting || Utils.IsLobby) LlmMeetingTranscript.Add(sourcePlayer, chatText);
                 return;
             }
 
