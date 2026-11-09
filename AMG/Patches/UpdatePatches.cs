@@ -1,5 +1,4 @@
 using HarmonyLib;
-using AMG.AI.Mind;
 using AMG.AI.Tools;
 
 namespace AMG.Patches

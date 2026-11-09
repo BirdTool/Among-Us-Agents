@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.Enums.AgentEnums;
-using AMG.Utilities;
 using HarmonyLib;
 
 namespace AMG.Patches.Gameplay

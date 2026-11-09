@@ -171,5 +171,19 @@ namespace AMG.Utilities
             c = c?.Trim().Trim('(', ')').Trim();
             return string.IsNullOrEmpty(c) ? "Unknown" : c;
         }
+
+        public readonly List<PlayerRoomTracker> PlayerRoomHistory = [];
+
+        public void AddRoomHistory()
+        {
+            PlayerRoomHistory.Add(new PlayerRoomTracker(Player.GetTruePosition().GetClosestNode().Room, Utils.Round.CurrentRound.Number));
+        }
+    }
+
+    public class PlayerRoomTracker(SystemTypes room, int round)
+    {
+        public SystemTypes Room = room;
+        public int Round = round;
+        public float Time = (float)Utils.SecondsSinceShipStart;
     }
 }

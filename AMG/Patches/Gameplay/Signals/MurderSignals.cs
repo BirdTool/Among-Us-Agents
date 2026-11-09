@@ -1,4 +1,3 @@
-using System;
 using AMG.Models.Signals;
 using AMG.Utilities;
 using HarmonyLib;
