@@ -1,6 +1,7 @@
 using AMG.AI.Navigation;
 using AMG.AI.Services.ChatService;
 using AMG.AI.Services.ChatService.Local;
+using AMG.AI.Services.MeetingService;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using HarmonyLib;
@@ -25,6 +26,7 @@ namespace AMG.Patches.RoundPatches
             AMG.Patches.Gameplay.Signals.VentSignals.Reset();
             AMG.AI.Navigation.WaypointManager.LoadWaypoints();
             Pathfinder.Initialize();
+            MeetingTranscriptService.Reset();
 
             // roster of everybody who started this match (kept after they die / get ejected / leave)
             AMGPlayers.SetAllPlayers();
@@ -67,6 +69,8 @@ namespace AMG.Patches.RoundPatches
                 brain.ResetPath();
                 brain.SetState(Enums.AgentEnums.AgentState.OnMeeting);
             }
+
+            MeetingTranscriptService.AddNewMeetingData();
         }
 
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.ReportDeadBody))]

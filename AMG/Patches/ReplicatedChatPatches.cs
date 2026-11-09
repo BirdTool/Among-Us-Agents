@@ -1,5 +1,6 @@
 using AMG.AI.Services.ChatService;
 using AMG.AI.Services.ChatService.Local;
+using AMG.AI.Services.MeetingService;
 using AMG.Utilities;
 using HarmonyLib;
 
@@ -23,6 +24,7 @@ namespace AMG.Patches
             if (!Utils.IsMeeting) return;
 
             ReplicatedChat.Enqueue(sourcePlayer, chatText);
+            MeetingTranscriptService.AddMessageToCurrentMeeting(sourcePlayer.PlayerId, chatText);
         }
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Update))]
         [HarmonyPostfix]
