@@ -1,4 +1,5 @@
 using AMG.AI.LLM;
+using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.MessagesService;
 using AMG.Utilities;
 using AMG.Utilities.KeyDown;
@@ -69,6 +70,7 @@ public partial class AMGPlugin : BasePlugin
 
         LlmApiKeyLoader.LoadKeys();
         MessageServiceClass.StartListening();
+        LlmCommandRegistry.RegisterAll(typeof(AMGPlugin).Assembly);
         // MessageServiceClass.OnReceive += OnMessageReceived;
     }
 
