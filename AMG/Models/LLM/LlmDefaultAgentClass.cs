@@ -7,7 +7,7 @@ using AMG.Utilities;
 
 namespace AMG.Models.LLM
 {
-    public class LlmDefaultAgentClass
+    public partial class LlmDefaultAgentClass
     {
         protected readonly List<LlmMessage> Messages = [];
         public virtual int MaxOutputTokens { get; } = 1024;
@@ -36,7 +36,7 @@ namespace AMG.Models.LLM
             sb.AppendLine(LlmPlayerInfo(ctx.Brain));
             sb.AppendLine(GetCommandsInfo(ctx.Service));
             sb.AppendLine(MeetingTranscriptService.GetCurrentMeetingTranscriptString());
-            
+
             return sb.ToString();
         }
     }
