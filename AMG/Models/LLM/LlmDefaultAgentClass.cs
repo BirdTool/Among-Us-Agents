@@ -10,6 +10,7 @@ namespace AMG.Models.LLM
     public class LlmDefaultAgentClass
     {
         protected readonly List<LlmMessage> Messages = [];
+        public virtual int MaxOutputTokens { get; } = 1024;
         protected string StartPrompt;
         protected virtual string LlmPlayerInfo(LLMAgentBrain brain) => $"You: Name: {brain.BaseName}, Colour: {Utils.Colours.ColourOf(brain.Agent)}, Role: {brain.Agent.Data.Role}";
         protected string Persona;
