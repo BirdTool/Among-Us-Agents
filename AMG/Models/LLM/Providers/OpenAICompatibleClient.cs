@@ -16,6 +16,10 @@ namespace AMG.Models.LLM.Providers
         // "max_tokens" for DeepSeek; OpenAI's current models require "max_completion_tokens".
         protected virtual string MaxTokensField => "max_tokens";
 
+        // Adds the provider's reasoning controls to the body. Returns true when reasoning is on
+        // (sampling params like temperature are then rejected or ignored, so they are not sent).
+        protected virtual bool ApplyReasoning(Dictionary<string, object> body, LlmCall call) => false;
+
         protected override HttpRequestMessage BuildHttpRequest(LlmCall call)
         {
             string system = call.SystemPrompt;
@@ -46,7 +50,9 @@ namespace AMG.Models.LLM.Providers
                 [MaxTokensField] = call.MaxTokens
             };
 
-            if (call.Temperature.HasValue)
+            bool reasoning = ApplyReasoning(body, call);
+
+            if (call.Temperature.HasValue && !reasoning)
                 body["temperature"] = call.Temperature.Value;
 
             if (call.JsonMode)

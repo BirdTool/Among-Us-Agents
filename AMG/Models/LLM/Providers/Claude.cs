@@ -15,6 +15,21 @@ namespace AMG.Models.LLM.Providers
 
         protected override string DefaultModel => "claude-haiku-5-5";
 
+        // Models without the effort parameter (it would be a 400). Conservative: Opus 4.5 needs a beta header, so it is left out too.
+        private static readonly string[] NoEffortModels =
+            ["claude-3", "haiku-4", "sonnet-4-0", "sonnet-4-2", "sonnet-4-5", "opus-4-0", "opus-4-1", "opus-4-2", "opus-4-5"];
+
+        private static bool SupportsEffort(string model)
+        {
+            foreach (string marker in NoEffortModels)
+            {
+                if (model.Contains(marker, System.StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            return true;
+        }
+
         protected override HttpRequestMessage BuildHttpRequest(LlmCall call)
         {
             string system = call.SystemPrompt;
@@ -42,7 +57,9 @@ namespace AMG.Models.LLM.Providers
                 ["messages"] = messages,
             };
 
-            // if (GlobalVariables.DefaultLlmTier == LlmTier.High) body["output_config"] = new Dictionary<string, object> { ["effort"] = "high" };
+            // Effort steers every output token, thinking included (adaptive thinking is on by default).
+            if (call.Effort.HasValue && SupportsEffort(call.Model))
+                body["output_config"] = new Dictionary<string, object> { ["effort"] = call.Effort.Value.ToString().ToLowerInvariant() };
 
             if (!string.IsNullOrWhiteSpace(system))
                 body["system"] = system;
@@ -92,6 +109,10 @@ namespace AMG.Models.LLM.Providers
 
             if (text.Length == 0)
             {
+                // max_tokens also covers the thinking tokens: higher effort can use it all before any text.
+                if (stopReason == "max_tokens")
+                    throw new LlmProviderException("Truncated", "MaxTokens reached before any text (thinking tokens count too); raise MaxTokens.");
+
                 if (stopReason == "refusal")
                     throw new LlmProviderException("Refused", "The model refused to answer.");
 

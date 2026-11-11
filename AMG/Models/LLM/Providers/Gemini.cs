@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AMG.Enums;
+using AMG.Enums.LLMEnums;
 
 namespace AMG.Models.LLM.Providers
 {
@@ -15,6 +17,13 @@ namespace AMG.Models.LLM.Providers
 
         // Note: on thinking models, MaxTokens (maxOutputTokens) also covers the thinking tokens.
         protected override string DefaultModel => "gemini-3.5-flash-lite";
+
+        // thinkingLevel exists from Gemini 3 on; 2.5 and older use thinkingBudget (and reject thinkingLevel).
+        private static bool SupportsThinkingLevel(string model)
+        {
+            var match = Regex.Match(model, @"^(?:models/)?gemini-(\d+)", RegexOptions.IgnoreCase);
+            return match.Success && int.Parse(match.Groups[1].Value) >= 3;
+        }
 
         protected override HttpRequestMessage BuildHttpRequest(LlmCall call)
         {
@@ -36,6 +45,14 @@ namespace AMG.Models.LLM.Providers
 
             if (call.JsonMode)
                 generationConfig["responseMimeType"] = "application/json";
+
+            if (call.Effort.HasValue && SupportsThinkingLevel(call.Model))
+            {
+                generationConfig["thinkingConfig"] = new Dictionary<string, object>
+                {
+                    ["thinkingLevel"] = call.Effort.Value.ToString().ToUpperInvariant() // LOW / MEDIUM / HIGH
+                };
+            }
 
             var body = new Dictionary<string, object>
             {

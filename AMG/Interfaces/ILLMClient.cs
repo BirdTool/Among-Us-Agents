@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AMG.Enums;
+using AMG.Enums.LLMEnums;
 using AMG.Models.LLM;
 
 namespace AMG.Interfaces
@@ -33,6 +34,10 @@ namespace AMG.Interfaces
         float? Temperature { get; }
 
         bool JsonMode { get; }
+
+        // How hard the model should think. null = the provider's own default.
+        // Each provider maps it to its native control (see the clients); sampling params are dropped when reasoning is on.
+        LlmEffortEnum? Effort { get; }
 
         LlmConsumer Consumer { get; }
     }
