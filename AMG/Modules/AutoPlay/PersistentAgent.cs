@@ -2,7 +2,7 @@ using System;
 using AMG.AI.Control;
 using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
-using AMG.AI.Mind.StructuredAgentBrain;
+using AMG.AI.Mind.LLMAgentBrain;
 using AMG.Utilities;
 using InnerNet;
 using UnityEngine;
@@ -19,7 +19,7 @@ namespace AMG.Modules.AutoPlay
 
         private static float _nextCheck;
         private static float _attachTime = 0f;
-        private static StructuredAgentBrain _mappedBrain;
+        private static LLMAgentBrain _mappedBrain;
         private static float _mappedShip = -1f;
 
         public static void Toggle()
@@ -49,7 +49,7 @@ namespace AMG.Modules.AutoPlay
                 var controller = me.GetComponent<AgentController>();
                 if (controller != null) UnityEngine.Object.Destroy(controller);
 
-                var brain = me.gameObject.GetComponent<StructuredAgentBrain>();
+                var brain = me.gameObject.GetComponent<LLMAgentBrain>();
                 if (brain != null) UnityEngine.Object.Destroy(brain);
             }
 
@@ -79,7 +79,7 @@ namespace AMG.Modules.AutoPlay
                 return;
             }
 
-            var brain = me.GetComponent<StructuredAgentBrain>();
+            var brain = me.GetComponent<LLMAgentBrain>();
             if (brain == null)
             {
                 if (_attachTime == 0f)
@@ -101,7 +101,7 @@ namespace AMG.Modules.AutoPlay
                 MapTasks(me, brain);
         }
 
-        private static StructuredAgentBrain Attach(PlayerControl me)
+        private static LLMAgentBrain Attach(PlayerControl me)
         {
             try
             {
@@ -109,8 +109,8 @@ namespace AMG.Modules.AutoPlay
                 AgentManager.Agents.RemoveAll(a => a.Control == null);
                 AgentManager.AddAgent(me, new AgentData { Name = me.Data.PlayerName });
 
-                me.gameObject.AddComponent<StructuredAgentBrain>();
-                var brain = me.gameObject.GetComponent<StructuredAgentBrain>();
+                me.gameObject.AddComponent<LLMAgentBrain>();
+                var brain = me.gameObject.GetComponent<LLMAgentBrain>();
 
                 AgentController.AgentControlsRealPlayer = true;
                 MapTasks(me, brain);
@@ -126,7 +126,7 @@ namespace AMG.Modules.AutoPlay
             }
         }
 
-        private static void MapTasks(PlayerControl me, StructuredAgentBrain brain)
+        private static void MapTasks(PlayerControl me, LLMAgentBrain brain)
         {
             if (me.myTasks == null || me.myTasks.Count == 0) return;
 

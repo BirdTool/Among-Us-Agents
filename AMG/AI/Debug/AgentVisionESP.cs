@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using AMG.AI.Control.AgentController;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.Enums.GameEnums;
 using AMG.Utilities;
@@ -195,7 +196,7 @@ namespace AMG.AI.Debug
             return 5f;
         }
 
-        private static Color GetSuspicionColor(StructuredAgentBrain brain, PlayerControl target)
+        private static Color GetSuspicionColor(AgentController brain, PlayerControl target)
         {
             return Color.red;
         }

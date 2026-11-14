@@ -3,6 +3,7 @@ using System.Linq;
 using AMG.AI.Control.AgentController;
 using AMG.Interfaces;
 using AMG.Models.LLMAssistence;
+using AMG.Utilities;
 using AMG.Utilities.MapUtils.TasksUtils;
 
 namespace AMG.AI.Mind.LLMAgentBrain
@@ -41,6 +42,10 @@ namespace AMG.AI.Mind.LLMAgentBrain
                     }
                 }
             }
+
+            if (_chatService == null) InstanceLlmChatService();
+
+            if (Utils.IsMeeting) _chatService.Update();
 
             Assistence?.Update();
         }

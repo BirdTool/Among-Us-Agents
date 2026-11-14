@@ -81,5 +81,10 @@ namespace AMG.AI.Services.ChatService.Llm
             if (ChatMode.ChatDebug)
                 Utils.AddChatPrivate(chat, $"<color=#ffaa00><b>(LLM {Brain.BaseName})</b></color>");
         }
+
+        public void Update()
+        {
+            
+        }
     }
 }
