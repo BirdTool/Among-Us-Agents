@@ -111,7 +111,7 @@ namespace AMG.Utilities
         {
             PlayerId = player.PlayerId;
             PlayerName = player.Data.PlayerName;
-            PlayerColour = CleanColour(player.Data.ColorName);
+            PlayerColour = Utils.Colours.ColourOf(player.Data.ColorName);
             ClientId = player.GetClientId();
             FirstRole = player.Data.Role != null ? player.Data.Role.Role : RoleTypes.Crewmate;
             _lastKnownRole = FirstRole;
@@ -164,12 +164,6 @@ namespace AMG.Utilities
                     _ => $"dead (ejected{meeting}, role not revealed)",
                 };
             }
-        }
-
-        private static string CleanColour(string c)
-        {
-            c = c?.Trim().Trim('(', ')').Trim();
-            return string.IsNullOrEmpty(c) ? "Unknown" : c;
         }
 
         public readonly List<PlayerRoomTracker> PlayerRoomHistory = [];

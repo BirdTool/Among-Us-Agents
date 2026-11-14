@@ -12,6 +12,7 @@ namespace AMG.Utilities
 
             public static GameRound CurrentRound => Rounds.Count > 0 ? Rounds.Last() : null;
             public static List<RoundDeadBody> CurrentRoundDeadBodies => CurrentRound?.Bodies;
+            public static int CurrentRoundNumber => CurrentRound?.Number ?? -1;
 
             public static void AddRound()
             {
