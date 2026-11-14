@@ -19,11 +19,21 @@ namespace AMG.AI.Mind.StructuredAgentBrain
             var target = killSignal.Target;
             var id = target.PlayerId;
 
-            var room = killSignal.Killer.transform.position.GetClosestNode().Room;
-        
-            var murderMemory = GetOrCreateMemory(murder.PlayerId);
-            murderMemory.IncreaseSuspiciusPercentage(100f);
-            murderMemory.RegisterKillWitnessed(id, Time.time, room);
+            // Killer can be the player a shapeshifted killer looks like, so the room is where the victim died.
+            var room = target.transform.position.GetClosestNode().Room;
+
+            if (killSignal.IsDisguised)
+            {
+                LogManager.LogInfo($"[KillSignal] {BaseName} saw #{murder.PlayerId} {murder.Data.PlayerName} kill #{id} {target.Data.PlayerName} (disguised killer; real killer: {(killSignal.RealKiller != null ? "#" + killSignal.RealKiller.PlayerId + " " + killSignal.RealKiller.Data.PlayerName : "not sent")})");
+            }
+
+            // Framed by a disguised killer that looks like this very agent: it knows it did not do it.
+            if (murder.PlayerId != AgentId)
+            {
+                var murderMemory = GetOrCreateMemory(murder.PlayerId);
+                murderMemory.IncreaseSuspiciusPercentage(100f);
+                murderMemory.RegisterKillWitnessed(id, Time.time, room);
+            }
 
             KnownBodyRoom = room;
 
