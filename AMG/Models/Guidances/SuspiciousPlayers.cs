@@ -2,7 +2,7 @@ using AMG.Interfaces;
 
 namespace AMG.Models.Guidances
 {
-    public class MeetingGuidance : IGuidance
+    public class SuspiciousPlayers : IGuidance
     {
         public string Evaluate()
         {

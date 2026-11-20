@@ -65,7 +65,7 @@ namespace AMG.AI.Services.ChatService.Llm
         private void StepAgent(AgentRun run)
         {
             var agent = run.Agent;
-            var ctx = new LlmCommandContext(this, Brain);
+            var ctx = new LlmCommandContext(this, Brain, agent);
 
             if (agent.IsBusy)
             {
@@ -85,11 +85,13 @@ namespace AMG.AI.Services.ChatService.Llm
             if (Time.time < _meetingStartedAt + agent.StartDelaySeconds || Time.time < run.NextWakeAt) return;
 
             int others = MessagesFromOthers();
-            if (run.WokeOnce && others <= run.SeenMessages) return;   // nothing new to react to
+            var mail = Mailbox.Unread(agent.AgentName);
+            if (run.WokeOnce && mail.Count == 0 && others <= run.SeenMessages) return;   // nothing new to react to
 
-            string note = run.WokeOnce
-                ? "New messages arrived in the chat since your last turn."
-                : "The meeting just started.";
+            string note = !run.WokeOnce ? "The meeting just started."
+                : mail.Count > 0 ? "New messages from your team arrived."
+                : "New messages arrived in the chat since your last turn.";
+            if (mail.Count > 0) note += "\n" + MailNote(mail);
 
             Dbg($"waking {agent.AgentName}: {note}");
             if (!agent.BeginChain(ctx, Profile.MaxSteps, Profile.DeadlineSeconds, note))
@@ -98,6 +100,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 return;
             }
 
+            if (mail.Count > 0) Mailbox.MarkRead(agent.AgentName, mail[^1]);
             run.SeenMessages = others;
             run.WokeOnce = true;
         }
@@ -125,7 +128,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 return;
             }
 
-            string results = RunCommands(agent, turn);
+            string results = RunCommands(ctx, turn);
             agent.AppendUser(results);
 
             if (result.StepsLeft <= 0)
@@ -134,6 +137,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 return;
             }
 
+            DeliverMail(agent);                        // team messages that arrived during this step
             run.SeenMessages = MessagesFromOthers();   // the next step's prompt includes them
             agent.ContinueChain();
         }
@@ -141,11 +145,40 @@ namespace AMG.AI.Services.ChatService.Llm
         private void EndTurnChain(AgentRun run)
         {
             run.Agent.EndChain();
-            run.NextWakeAt = Time.time + Profile.MinInterval;
+            run.NextWakeAt = Time.time + (run.Agent.RestSeconds >= 0f ? run.Agent.RestSeconds : Profile.MinInterval);
         }
 
-        private string RunCommands(LlmDefaultAgentClass agent, LlmTurn turn)
+        // Hands the agent's unread team messages to it, inside the chain it is in.
+        private void DeliverMail(LlmDefaultAgentClass agent)
         {
+            var mail = Mailbox.Unread(agent.AgentName);
+            if (mail.Count == 0) return;
+
+            agent.AppendUser(MailNote(mail));
+            Mailbox.MarkRead(agent.AgentName, mail[^1]);
+        }
+
+        private static string MailNote(List<AgentMailbox.Item> mail)
+        {
+            var sb = new StringBuilder("New messages from your team:");
+            foreach (var m in mail)
+                sb.Append($"\n- round {m.Round}, from {m.From} ({m.Kind}): {m.Text}");
+
+            return sb.ToString();
+        }
+
+        // Posts a message for another agent of this player. false = that agent is not running in this meeting (or is the sender).
+        public bool SendToAgent(LlmDefaultAgentClass from, string to, string kind, string text)
+        {
+            if (to == from.AgentName || !_runs.Any(r => r.Agent.AgentName == to)) return false;
+
+            Mailbox.Post(from.AgentName, to, kind, text, Utils.Round.CurrentRoundNumber);
+            return true;
+        }
+
+        private string RunCommands(LlmCommandContext ctx, LlmTurn turn)
+        {
+            var agent = ctx.Agent;
             var sb = new StringBuilder("Command results:\n");
             int number = 0;
 
@@ -169,7 +202,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 {
                     try
                     {
-                        outcome = TryExecute(name, command.GetArgs(), out var r) ? r.message : "error: command failed.";
+                        outcome = TryExecute(ctx, name, command.GetArgs(), out var r) ? r.message : "error: command failed.";
                     }
                     catch (Exception e)
                     {

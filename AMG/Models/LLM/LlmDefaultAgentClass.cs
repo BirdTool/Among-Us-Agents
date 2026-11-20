@@ -33,6 +33,9 @@ namespace AMG.Models.LLM
         // Seconds after the meeting starts before this agent is woken for the first time.
         public virtual float StartDelaySeconds => 0f;
 
+        // Seconds it rests after a turn with nothing to do, before it can be woken again. Negative = the profile's MinInterval.
+        public virtual float RestSeconds => -1f;
+
         // ===== PROMPT =====
 
         protected virtual string LlmPlayerInfo(LLMAgentBrain brain) => $"You: Name: {brain.BaseName}, Colour: {Utils.Colours.ColourOf(brain.Agent)}, Role: {brain.Agent.Data.Role}";

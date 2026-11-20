@@ -33,11 +33,11 @@ namespace AMG.AI.Services.ChatService.Llm
 
     public sealed partial class LlmChatService
     {
-        public bool TryExecute(string name, string[] args, out (bool success, string message) result)
+        public static bool TryExecute(LlmCommandContext ctx, string name, string[] args, out (bool success, string message) result)
         {
             result = (false, "Command not found");
             if (!LlmCommandRegistry.TryGet(name, out var cmd)) return false;
-                result = cmd.Execute(new LlmCommandContext(this, Brain), args);
+                result = cmd.Execute(ctx, args);
             return true;
         }
     }

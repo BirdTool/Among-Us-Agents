@@ -11,7 +11,7 @@ namespace AMG.AI.Mind.LLMAgentBrain
     public partial class LLMAgentBrain(IntPtr ptr) : AgentController(ptr)
     {
         private ArtificialTask CurrentTask;
-        private ILLMAssistence Assistence;
+        public ILLMAssistence Assistence { get; private set; }
 
         private bool _doingTask = false;
 

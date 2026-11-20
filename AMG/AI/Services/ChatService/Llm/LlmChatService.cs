@@ -9,6 +9,10 @@ namespace AMG.AI.Services.ChatService.Llm
     public sealed partial class LlmChatService(LLMAgentBrain brain)
     {
         public LLMAgentBrain Brain { get; } = brain;
+
+        // Messages between this player's agents (report, brief). Kept for the whole match.
+        public AgentMailbox Mailbox { get; } = new();
+
         private readonly record struct OutboxItem(string Text, float At);
         private readonly Queue<OutboxItem> _outbox = new();
 

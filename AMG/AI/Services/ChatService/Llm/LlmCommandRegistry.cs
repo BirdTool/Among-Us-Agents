@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AMG.AI.Mind.LLMAgentBrain;
+using AMG.Models.LLM;
 using AMG.Utilities;
 
 namespace AMG.AI.Services.ChatService.Llm
 {
-    public sealed class LlmCommandContext(LlmChatService service, LLMAgentBrain brain)
+    public sealed class LlmCommandContext(LlmChatService service, LLMAgentBrain brain, LlmDefaultAgentClass agent)
     {
         public LlmChatService Service { get; } = service;
         public LLMAgentBrain Brain { get; } = brain;
+
+        // The agent that runs the command (report/brief need it to say who is sending).
+        public LlmDefaultAgentClass Agent { get; } = agent;
     }
 
     public static class LlmCommandRegistry

@@ -14,11 +14,13 @@ namespace AMG.AI.Services.ChatService.Llm.Agents
         };
 
 
-        // Gives the communicator time to report the round before the detective starts.
-        public override float StartDelaySeconds => 5f;
+        // The detective is the one investigating, so it rests only briefly between turns (it wakes on chat and on team messages).
+        public override float RestSeconds => 2f;
 
         protected override string StartPrompt => """
-            TODO: you are the detective: you find out who the impostor is.
+            You are the detective of the crew: you find out who the impostor is. You do not write chat messages; the CommunicatorAgent speaks in chat for you.
+            To get something said, use brief with an intent and the facts. Never give the words to say.
+            Your team: the CommunicatorAgent sends you report messages about what happens in the chat. Team messages are not proof: weigh them against what players claim.
             """;
 
         protected override string Persona => string.Empty;
