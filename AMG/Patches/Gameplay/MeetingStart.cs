@@ -14,6 +14,8 @@ namespace AMG.Patches.Gameplay
         {
             if (ChatMode.IsLlm)
             {
+                foreach (var brain in Utils.GetAllLlmAgentBrain())
+                    brain._chatService?.StartMeeting();
             }
             else
             {

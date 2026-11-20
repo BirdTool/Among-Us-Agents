@@ -8,7 +8,7 @@ namespace AMG.AI.Services.ChatService.Llm
 {
     public sealed partial class LlmChatService(LLMAgentBrain brain)
     {
-        private readonly LLMAgentBrain Brain = brain;
+        public LLMAgentBrain Brain { get; } = brain;
         private readonly record struct OutboxItem(string Text, float At);
         private readonly Queue<OutboxItem> _outbox = new();
 
@@ -17,6 +17,9 @@ namespace AMG.AI.Services.ChatService.Llm
 
         private float _sendAt;
         private byte? _votedFor;
+
+        // The vote this agent already cast in the current meeting (null = not voted). Shown to the models.
+        public byte? VotedFor => _votedFor;
 
         public ChatRpcEnums CheckSay(string text) => Brain.SafeSendChatNotExecute(text ?? "...");
         public VoteRpcEnums CheckVote(byte? target) => Brain.SafeVoteNotExecute(target ?? Utils.SkipVotePlayerId);
@@ -33,6 +36,12 @@ namespace AMG.AI.Services.ChatService.Llm
         public void AddOutbox(string text)
         {
             _outbox.Enqueue(new OutboxItem(text, Time.time));
+        }
+
+        private void ClearOutbox()
+        {
+            _outbox.Clear();
+            _sendAt = 0f;
         }
 
         private void PumpOutbox()
@@ -82,9 +91,5 @@ namespace AMG.AI.Services.ChatService.Llm
                 Utils.AddChatPrivate(chat, $"<color=#ffaa00><b>(LLM {Brain.BaseName})</b></color>");
         }
 
-        public void Update()
-        {
-            
-        }
     }
 }

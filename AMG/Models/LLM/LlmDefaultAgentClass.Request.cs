@@ -12,7 +12,8 @@ namespace AMG.Models.LLM
 {
     public partial class LlmDefaultAgentClass
     {
-        public virtual LlmEffortEnum? Effort { get; set; }
+        // Reasoning effort sent to the provider. Starts as the effort the agent was created with; can be changed while the match runs.
+        public LlmEffortEnum? Effort { get; set; }
 
         public virtual string AgentName => GetType().Name;
 

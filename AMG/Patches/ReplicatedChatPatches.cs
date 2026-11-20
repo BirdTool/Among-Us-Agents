@@ -17,7 +17,8 @@ namespace AMG.Patches
 
             if (ChatMode.IsLlm)
             {
-                // if (Utils.IsMeeting || Utils.IsLobby) LlmMeetingTranscript.Add(sourcePlayer, chatText);
+                // The LLM reads the meeting through the transcript (own messages included, so it knows what it said).
+                if (Utils.IsMeeting) MeetingTranscriptService.AddMessageToCurrentMeeting(sourcePlayer.PlayerId, chatText);
                 return;
             }
 

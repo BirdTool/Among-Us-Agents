@@ -1,12 +1,14 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AMG.AI.Services.ChatService.Llm.Agents;
 using AMG.Enums.LLMEnums;
 using AMG.Enums.SafeRpcEnums;
 
 namespace AMG.AI.Services.ChatService.Llm.LlmCommands
 {
-    [LlmCommand.Create(Name = "sendChat", Explanation = "Send a message on chat within 0-100 characters, args: message", Type = LlmCommandTypeEnum.Public_Action)]
+    [LlmCommand.Create(Name = "sendChat", Explanation = "Send a message on chat within 0-100 characters, args: message", Type = LlmCommandTypeEnum.Public_Action,
+        AllowedModels = new[] { typeof(CommunicatorAgent), typeof(AllWorkAgent) })]
     public class SendChatCommand : CommandClass
     {
         private const int MaxChatLength = 100;

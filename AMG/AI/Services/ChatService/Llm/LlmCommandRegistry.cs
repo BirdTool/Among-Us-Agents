@@ -43,6 +43,7 @@ namespace AMG.AI.Services.ChatService.Llm
                 cmd.Name = attr.Name ?? type.Name;
                 cmd.Explanation = attr.Explanation ?? "";
                 cmd.LlmCommandTypeEnum = attr.Type;
+                cmd.AllowedModels = attr.AllowedModels ?? [];
 
                 if (!Commands.TryAdd(cmd.Name, cmd))
                     LogManager.LogWarning($"[LlmCommand] Nome duplicado: {cmd.Name}");

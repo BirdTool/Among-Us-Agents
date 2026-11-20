@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AMG.Enums.LLMEnums;
 
 namespace AMG.AI.Services.ChatService.Llm
@@ -11,6 +12,9 @@ namespace AMG.AI.Services.ChatService.Llm
             public string Name { get; set; }
             public string Explanation { get; set; }
             public LlmCommandTypeEnum Type { get; set; }
+
+            // Agent models (classes in Agents/) that may use this command. null or empty = every model.
+            public Type[] AllowedModels { get; set; }
         }
     }
 
@@ -19,6 +23,10 @@ namespace AMG.AI.Services.ChatService.Llm
         public string Name { get; internal set; }
         public string Explanation { get; internal set; }
         public LlmCommandTypeEnum LlmCommandTypeEnum { get; internal set; }
+        public Type[] AllowedModels { get; internal set; } = [];
+
+        public bool CanBeUsedBy(AMG.Models.LLM.LlmDefaultAgentClass agent)
+            => AllowedModels == null || AllowedModels.Length == 0 || AllowedModels.Any(t => t.IsInstanceOfType(agent));
  
         public abstract (bool success, string message) Execute(LlmCommandContext ctx, string[] args);
     }
