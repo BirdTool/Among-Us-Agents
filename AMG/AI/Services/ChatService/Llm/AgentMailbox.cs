@@ -15,6 +15,23 @@ namespace AMG.AI.Services.ChatService.Llm
         private readonly Dictionary<string, int> _readUpTo = [];
         private int _lastId;
 
+        public void Clear()
+        {
+            _items.Clear();
+            _readUpTo.Clear();
+            _lastId = 0;
+        }
+
+        // The last "count" items sent to or by "name", oldest first. IsNew: "name" has not been handed it yet.
+        public List<(Item Item, bool IsNew)> Recent(string name, int count)
+        {
+            int cursor = _readUpTo.TryGetValue(name, out var id) ? id : 0;
+            return [.. _items
+                .Where(i => i.To == name || i.From == name)
+                .TakeLast(count)
+                .Select(i => (i, i.To == name && i.Id > cursor))];
+        }
+
         public Item Post(string from, string to, string kind, string text, int round)
         {
             var item = new Item(++_lastId, from, to, kind, text, round);

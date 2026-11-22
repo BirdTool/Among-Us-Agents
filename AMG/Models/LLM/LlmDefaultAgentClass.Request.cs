@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AMG.AI.LLM;
+using AMG.AI.Services.ChatService;
 using AMG.AI.Services.ChatService.Llm;
 using AMG.Enums;
 using AMG.Enums.LLMEnums;
@@ -184,6 +186,13 @@ namespace AMG.Models.LLM
                 JsonMode = true,
                 Effort = Effort
             };
+
+            if (ChatMode.LlmDryRun)
+            {
+                LogManager.LogInfo($"[LLM {AgentName}] DRY RUN (no request sent). Prompt:\n{head}\n" + string.Join("\n", Messages.Select(m => $"[{m.Role}] {m.Content}")));
+                _pending = Task.FromResult<ILLMResponse<string, LlmTurn>>(new LlmResponse<LlmTurn> { Response = new LlmTurn { Reasoning = "dry run" }, RawText = "{}" });
+                return true;
+            }
 
             var reasoning = _reasoning;
             var ct = _cts.Token;

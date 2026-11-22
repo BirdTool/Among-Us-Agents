@@ -5,6 +5,8 @@ using AMG.UI.Elements;
 using AMG.UI.UIActions;
 using AMG.Enums.ChatServiceEnums;
 using AMG.AI.Services.ChatService;
+using AMG.AI.Services.ChatService.Llm;
+using AMG.Enums.LLMEnums;
 
 namespace AMG.UI.Tabs;
 
@@ -50,15 +52,18 @@ public class AgentsTab : TabBase
             (index) => ChatMode.Current = (ChatModeEnum)index,
             () => (int)ChatMode.Current);
 
-        new MenuSubText("Set LLM Tier");
+        new MenuSubText("Set LLM Effort (next meeting)");
 
-        /*
         new MenuTextSlider(
-            Enum.GetNames(typeof(LlmTier)),
-            (int)GlobalVariables.DefaultLlmTier,
-            (index) => GlobalVariables.DefaultLlmTier = (LlmTier)index,
-            () => (int)GlobalVariables.DefaultLlmTier);
-        */
+            Enum.GetNames(typeof(LlmEffortEnum)),
+            (int)LlmChatService.DefaultEffort,
+            (index) => LlmChatService.DefaultEffort = (LlmEffortEnum)index,
+            () => (int)LlmChatService.DefaultEffort);
+
+        new MenuCheckButton("LLM dry run (log prompts, send nothing)", false, (bool state) =>
+        {
+            ChatMode.LlmDryRun = state;
+        });
 
         new MenuCheckButton("Chat Debug", false, (bool state) => 
         {

@@ -28,6 +28,13 @@ namespace AMG.Patches.RoundPatches
             Pathfinder.Initialize();
             MeetingTranscriptService.Reset();
 
+            // the LLM agents forget the previous match (notes, team messages, what they saw)
+            foreach (var brain in Utils.GetAllLlmAgentBrain())
+            {
+                brain._chatService?.ResetMatch();
+                brain.ClearTimeline();
+            }
+
             // roster of everybody who started this match (kept after they die / get ejected / leave)
             AMGPlayers.SetAllPlayers();
             AMG.AI.Mind.StructuredAgentBrain.VentRoleCheck.Reset();

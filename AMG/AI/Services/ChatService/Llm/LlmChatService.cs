@@ -13,6 +13,20 @@ namespace AMG.AI.Services.ChatService.Llm
         // Messages between this player's agents (report, brief). Kept for the whole match.
         public AgentMailbox Mailbox { get; } = new();
 
+        // What each agent wrote in its "notes" (its memory for the whole match), by agent name.
+        private readonly Dictionary<string, string> _notes = [];
+        private const int MaxNotesLength = 1500;
+
+        public string GetNotes(string agent) => _notes.TryGetValue(agent, out var notes) ? notes : string.Empty;
+
+        private void SaveNotes(string agent, string notes)
+        {
+            if (string.IsNullOrWhiteSpace(notes)) return;
+
+            notes = notes.Trim();
+            _notes[agent] = notes.Length > MaxNotesLength ? notes[..MaxNotesLength] : notes;
+        }
+
         private readonly record struct OutboxItem(string Text, float At);
         private readonly Queue<OutboxItem> _outbox = new();
 

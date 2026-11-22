@@ -7,6 +7,10 @@ namespace AMG.Models.LLM
     public sealed class LlmTurn
     {
         public string Reasoning { get; set; }
+
+        // The agent's own memory: kept for the whole match and shown back to it. A new value replaces the old one; null keeps it.
+        public string Notes { get; set; }
+
         public List<LlmTurnCommand> Commands { get; set; } = [];
     }
 

@@ -10,14 +10,18 @@ namespace AMG.AI.Services.ChatService.Llm
     {
         public const int MaxCommandsPerStep = 5;
 
-        // Effort the meetings run with. Changes take effect at the next meeting.
-        public LlmEffortEnum EffortLevel = LlmEffortEnum.Medium;
+        // The effort new meetings start with (the menu in UI/Tabs/AgentsTab changes it).
+        public static LlmEffortEnum DefaultEffort { get; set; } = LlmEffortEnum.Medium;
+
+        // The effort of the current meeting: DefaultEffort as it was when the meeting started.
+        public LlmEffortEnum EffortLevel { get; private set; } = DefaultEffort;
 
         private sealed record EffortProfile(
             int MaxSteps,
             float DeadlineSeconds,
             float MinInterval = 2f,
-            List<Func<LlmDefaultAgentClass>> Agents = null
+            List<Func<LlmDefaultAgentClass>> Agents = null,
+            int MaxRequestsPerMeeting = 40   // per agent: when it is spent the agent stops waking (a last call to vote still goes)
         )
         {
             public List<Func<LlmDefaultAgentClass>> Agents { get; init; } = Agents ?? [];
