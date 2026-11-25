@@ -24,10 +24,6 @@ public partial class AMGPlugin : BasePlugin
 
     public ConfigEntry<string> ConfigName { get; private set; }
 
-    public static ConfigEntry<string> MenuKeybind;
-    public static ConfigEntry<string> MenuHtmlColor;
-    public static ConfigEntry<bool> MenuOpenOnMouse;
-    public static ConfigEntry<bool> MenuKeepSubwindowsOpen;
     public static ConfigEntry<string> LlmPersona;
 
     public override void Load()
@@ -44,28 +40,8 @@ public partial class AMGPlugin : BasePlugin
         Object.DontDestroyOnLoad(menuObject);
         menuObject.hideFlags = HideFlags.HideAndDontSave;
 
-        Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<AMG.UI.MenuUI>();
-        menuObject.AddComponent<AMG.UI.MenuUI>();
-
-        MenuKeybind = Config.Bind("AMG.GUI",
-                               "Keybind",
-                               "Insert",
-                               "The keyboard key used to toggle the GUI on and off. List of supported keycodes: https://docs.unity3d.com/Packages/com.unity.tiny@0.16/api/Unity.Tiny.Input.KeyCode.html");
-
-        MenuHtmlColor = Config.Bind("AMG.GUI",
-                                "Color",
-                                "",
-                                "A custom color for your AMG GUI. Supports html color codes");
-
-        MenuOpenOnMouse = Config.Bind("AMG.GUI",
-                                "OpenOnMouse",
-                                false,
-                                "When enabled, the AMG GUI will always be opened at the current mouse position");
-
-        MenuKeepSubwindowsOpen = Config.Bind("AMG.GUI",
-                                "KeepSubwindowsOpen",
-                                false,
-                                "When enabled, closing the AMG GUI will not automatically close its subwindows");
+        Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<AMG.UI.ModUpdater>();
+        menuObject.AddComponent<AMG.UI.ModUpdater>();
 
         LlmPersona = Config.Bind("AMG.LLM",
                                 "Persona",

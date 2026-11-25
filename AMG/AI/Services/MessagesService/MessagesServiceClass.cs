@@ -96,7 +96,6 @@ namespace AMG.AI.Services.MessagesService
             }
         }
 
-        // Call it every frame from the Unity main thread (MenuUI.Update). Cheap when the queue is empty.
         public static void Pump()
         {
             while (Inbox.TryDequeue(out var message))

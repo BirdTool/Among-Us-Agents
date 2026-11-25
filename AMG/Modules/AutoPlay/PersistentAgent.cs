@@ -59,7 +59,6 @@ namespace AMG.Modules.AutoPlay
             LogManager.LogInfo("[Persistent] Brain OFF.");
         }
 
-        // Call every frame from the Unity main thread (MenuUI.Update).
         public static void Tick()
         {
             if (!Enabled) return;
