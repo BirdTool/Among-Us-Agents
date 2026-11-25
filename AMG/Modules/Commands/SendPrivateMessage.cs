@@ -1,36 +1,26 @@
-using System;
 using AMG.AI.Services.MessagesService;
 using AMG.Data;
-using HarmonyLib;
+using AMG.Utilities;
 
 namespace AMG.Modules.Commands
 {
-    [HarmonyPatch]
-    public static class SendPrivateMessageCommand
+    public class SendPrivateMessageCommand : ChatCommand
     {
-        public static string CommandPrefix => ".";
-        public static string CommandName => "private";
+        public override string Name => "private";
+        public override string[] Aliases => ["p"];
 
         public static void Send(string content) => MessageServiceClass.WriteMessage(content, GlobalVariables.MyIdentity);
 
-        [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendChat))]
-        [HarmonyPrefix]
-        public static bool Prefix(ChatController __instance)
+        public override void Execute(string args)
         {
-            string text = __instance.freeChatField.textArea.text;
-
-            string command = CommandPrefix + CommandName;
-
-            if (text.Equals(command, StringComparison.Ordinal) || text.StartsWith(command + " ", StringComparison.Ordinal))
+            if (args.Length > 0)
             {
-                string content = text[command.Length..].Trim();
-                if (content.Length > 0)
-                    Send(content);
-
-                __instance.freeChatField.Clear();
-                return false;
+                Send(args);
+                if (Utils.IsFreePlay)
+                    PlayerControl.LocalPlayer.RpcSendChat("Sent");
+                else
+                    Utils.AddChatPrivate("Sent");
             }
-            return true;
         }
     }
 }

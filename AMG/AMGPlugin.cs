@@ -28,6 +28,7 @@ public partial class AMGPlugin : BasePlugin
     public static ConfigEntry<string> MenuHtmlColor;
     public static ConfigEntry<bool> MenuOpenOnMouse;
     public static ConfigEntry<bool> MenuKeepSubwindowsOpen;
+    public static ConfigEntry<string> LlmPersona;
 
     public override void Load()
     {
@@ -65,6 +66,12 @@ public partial class AMGPlugin : BasePlugin
                                 "KeepSubwindowsOpen",
                                 false,
                                 "When enabled, closing the AMG GUI will not automatically close its subwindows");
+
+        LlmPersona = Config.Bind("AMG.LLM",
+                                "Persona",
+                                "",
+                                "Extra persona for the LLM agents that speak in chat. Set it in game with .persona <text>.");
+        AMG.AI.Services.ChatService.Llm.LlmChatService.CustomPersona = LlmPersona.Value;
 
         Harmony.PatchAll();
 

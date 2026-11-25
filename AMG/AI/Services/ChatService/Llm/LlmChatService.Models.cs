@@ -10,6 +10,10 @@ namespace AMG.AI.Services.ChatService.Llm
     {
         public const int MaxCommandsPerStep = 5;
 
+        // Extra persona set in game with the .persona chat command (saved in the BepInEx config). It is added to the agents
+        // that speak in chat and is read on every step, so a change applies at once.
+        public static string CustomPersona { get; set; } = string.Empty;
+
         // The effort new meetings start with (the menu in UI/Tabs/AgentsTab changes it).
         public static LlmEffortEnum DefaultEffort { get; set; } = LlmEffortEnum.Medium;
 
