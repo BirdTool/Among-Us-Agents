@@ -11,7 +11,7 @@ namespace AMG.AI.Services.ChatService.Llm
 {
     public sealed partial class LlmChatService
     {
-        public const float EarlyVoteFraction = 0.5f;
+        public const float EarlyVoteFraction = 0.6f;
         public const float EarlyVoteUnlimitedSeconds = 30f;     // when the game has no voting time limit
         public const float LastCallSeconds = 20f;
         public const float SecondaryVoteWindowSeconds = 10f;

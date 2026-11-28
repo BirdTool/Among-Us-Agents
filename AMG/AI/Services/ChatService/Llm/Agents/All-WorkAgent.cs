@@ -14,13 +14,19 @@ namespace AMG.AI.Services.ChatService.Llm.Agents
         };
 
 
-        protected override string StartPrompt => """
-            You are a player in an Among Us meeting. Read the chat, talk when you have something useful to say, and vote when voting is open.
-            Refer to players by colour. Never say or hint that you are an AI.
+        protected override string StartPrompt => $"""
+            You are a player in an Among Us meeting, working alone: you investigate who the impostor is, you write in the chat (sendChat) and you cast the vote.
+
+            {AgentPrompts.Investigation}
+
+            {AgentPrompts.ChatBehaviour}
+
+            {AgentPrompts.Voting}
             """;
 
         protected override string Persona => """
-            Casual, short messages, lowercase, no emojis. Do not repeat yourself.
+            YOUR PERSONA
+            Friendly and calm. Casual, short messages, lowercase, no emojis.
             """;
     }
 }

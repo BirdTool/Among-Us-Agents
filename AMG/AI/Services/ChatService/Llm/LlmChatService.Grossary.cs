@@ -23,29 +23,40 @@ namespace AMG.AI.Services.ChatService.Llm
             ["viper"] = "(impostor role) when it kills, the body dissolves after a host-defined time (for example 10 seconds). Nobody is told.",
         };
 
+        private static string NormRole(string s) => s.Replace(" ", string.Empty).Replace("_", string.Empty);
+
+        private static bool TryFindRole(string text, out string description)
+        {
+            string q = NormRole(text.Trim());
+
+            foreach (var kv in RoleDescriptions)
+                if (NormRole(kv.Key).Equals(q, StringComparison.OrdinalIgnoreCase)) { description = kv.Value; return true; }
+
+            // partial / substring match ("eng" -> engineer)
+            if (q.Length >= 2)
+                foreach (var kv in RoleDescriptions)
+                {
+                    string key = NormRole(kv.Key);
+                    if (key.Contains(q, StringComparison.OrdinalIgnoreCase) || q.Contains(key, StringComparison.OrdinalIgnoreCase))
+                    { description = kv.Value; return true; }
+                }
+
+            description = null;
+            return false;
+        }
+
         public string GetRoleDescription(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
                 string myRole = Brain.Agent.Data?.Role?.Role.ToString() ?? "Crewmate";
-                if (RoleDescriptions.TryGetValue(myRole, out string desc))
-                    return $"Your Role ({myRole}): {desc}";
-                return $"Your Role is {myRole}.";
+                return TryFindRole(myRole, out string desc)
+                    ? $"Your Role ({myRole}): {desc}"
+                    : $"Your Role is {myRole}.";
             }
 
             string query = text.Trim();
-
-            // exact match
-            if (RoleDescriptions.TryGetValue(query, out string exactMatch))
-                return exactMatch;
-
-            // partial / substring match
-            foreach (var kv in RoleDescriptions)
-            {
-                if (kv.Key.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                    query.Contains(kv.Key, StringComparison.OrdinalIgnoreCase))
-                    return kv.Value;
-            }
+            if (TryFindRole(query, out string found)) return found;
 
             return $"Unknown role '{query}'. Known roles: {string.Join(", ", RoleDescriptions.Keys)}.";
         }

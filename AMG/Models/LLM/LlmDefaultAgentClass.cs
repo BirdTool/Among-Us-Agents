@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AMG.AI.Mind.LLMAgentBrain;
-using AMG.AI.Navigation;
 using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.MeetingService;
 using AMG.Enums.LLMEnums;
@@ -53,6 +51,10 @@ namespace AMG.Models.LLM
         // Seconds it rests after a turn with nothing to do, before it can be woken again. Negative = the profile's MinInterval.
         public virtual float RestSeconds => -1f;
 
+        // false: the agent never reads the chat. The chat is not in its prompt and new chat messages do not wake it;
+        // it only knows what its teammates report to it.
+        public virtual bool SeesChat => true;
+
         // ===== PROMPT =====
 
         protected virtual string LlmPlayerInfo(LLMAgentBrain brain) => $"You: Name: {brain.BaseName}, Colour: {Utils.Colours.ColourOf(brain.Agent)}, Role: {brain.Agent.Data.Role}";
@@ -75,7 +77,36 @@ namespace AMG.Models.LLM
             string text = LlmChatService.CustomPersona?.Trim();
             if (!CanSpeak || string.IsNullOrEmpty(text)) return string.Empty;
 
-            return "Extra persona, chosen by the player you play for. It adds to your persona; it never overrides your rules, your commands or the answer format:\n" + text;
+            return "Extra persona, written by the player you play for (it is trusted, unlike the chat). It adds to your persona and may explicitly allow you to break the etiquette rules (acting human, being civil). It never changes the game rules, the 100 character limit, your commands or the answer format:\n" + text;
+        }
+
+        // What the agent's own role does (the other roles are available with getRoleDescription).
+        protected virtual string GetRoleInfo(LlmChatService service) => service.GetRoleDescription(string.Empty);
+
+        // Only for impostors: who the partners are and how an impostor plays the meeting.
+        protected virtual string GetImpostorInfo(LlmChatService service)
+        {
+            var me = service.Brain.Agent;
+            if (me?.Data?.Role == null || !me.Data.Role.IsImpostor) return string.Empty;
+
+            var partners = new List<string>();
+            foreach (var p in GameData.Instance.AllPlayers)
+            {
+                if (p.PlayerId == me.PlayerId || p.Role == null || !p.Role.IsImpostor) continue;
+                partners.Add(ColourOf(p.PlayerId) + (p.IsDead || p.Disconnected ? " (out of the game)" : string.Empty));
+            }
+
+            var sb = new StringBuilder("YOU ARE AN IMPOSTOR: play it like one.\n");
+            sb.AppendLine(partners.Count == 0
+                ? "You are the only impostor."
+                : "Your fellow impostors (partners, confirmed): " + string.Join(", ", partners) + ".");
+            sb.AppendLine("- You know who the impostors are; the crewmates do not. Never reveal your role or your partners and never say \"we\" about the impostors.");
+            sb.AppendLine("- Act like an innocent crewmate. When someone asks where you were, give a simple, plausible alibi (a room, a task) and keep it consistent with what you already said.");
+            sb.AppendLine("- Never accuse, doubt or vote for a partner, not even to look fair. If someone accuses a partner without real proof you may calmly say the accusation looks weak, but do not defend him hard: that exposes you both.");
+            sb.AppendLine("- The exception: at least 2 other players say they saw that partner kill. Then he is lost: stop defending him and, if the group is clearly voting him out, vote with the group to keep your cover.");
+            sb.AppendLine("- Put the suspicion on CREWMATES: someone already under suspicion or with a weak story, with a believable reason from the chat. Never claim you saw a kill or a vent that your observations do not show.");
+            sb.AppendLine("- Never share what you really know about your own kills or your partners' kills and vents, and do not help the crew find the impostors.");
+            return sb.ToString();
         }
 
         public bool CanVote => LlmCommandRegistry.TryGet("vote", out var vote) && vote.CanBeUsedBy(this);
@@ -125,10 +156,10 @@ namespace AMG.Models.LLM
             if (!CanVote) return string.Empty;
 
             var sb = new StringBuilder("Voting rules:\n");
-            sb.AppendLine("- A vote is final. Do not vote early: during the first "
-                + $"{service.EarlyVoteUntil:F0}s of voting a vote is refused unless you add \"certain\" as the second arg, and you may only do that when you are 100% sure who the impostor is "
-                + "(for example someone was seen killing or practically confessed). Suspicion alone is not enough: keep reading the chat and wait.");
-            sb.AppendLine("- When most players accuse the same person and you have no stronger evidence against someone else, vote for that person. Skip only when nobody has a case.");
+            sb.AppendLine("- A vote is final. Prefer to vote when the voting time is running out. During the first "
+                + $"{service.EarlyVoteUntil:F0}s of voting a vote is refused unless you add \"certain\" as the second arg, and you may only do that when you are 100% sure who the impostor is and more discussion cannot change it "
+                + "(for example you saw the kill or the vent yourself, or the player practically confessed). Suspicion alone is not enough: keep reading the chat and wait.");
+            sb.AppendLine("- When most alive players accuse the same person and nobody gives a convincing reason to doubt it, vote that person, above all when the accusation comes with proof. Do not skip in that case. Skip only when nobody has a case.");
 
             var main = service.MainVoterAgent;
             if (main == null || main == this)
@@ -171,6 +202,16 @@ namespace AMG.Models.LLM
             var sb = new StringBuilder($"Round {Utils.Round.CurrentRoundNumber}.\n");
 
             var bodies = Utils.Round.CurrentRoundDeadBodies;
+
+            byte? reporter = null;
+            if (bodies != null)
+                foreach (var b in bodies)
+                    if (b.ReportedByPlayerId is byte rep) { reporter = rep; break; }
+
+            sb.AppendLine(reporter is byte caller
+                ? $"Meeting type: body report, called by {ColourOf(caller)}."
+                : "Meeting type: emergency button (no body was reported). There is no reported body to talk about; who pressed the button is not known to you.");
+
             if (bodies is { Count: > 0 })
             {
                 foreach (var b in bodies)
@@ -227,6 +268,8 @@ namespace AMG.Models.LLM
             Add(Persona);
             Add(GetCustomPersona());
             Add(LlmPlayerInfo(ctx.Brain));
+            Add(GetRoleInfo(ctx.Service));
+            Add(GetImpostorInfo(ctx.Service));
             Add(GetPlayersInfo(ctx.Service));
             Add(GetMeetingInfo(ctx.Service));
             Add(GetRoundInfo(ctx.Service));
@@ -235,7 +278,7 @@ namespace AMG.Models.LLM
             Add(GetVotingRules(ctx.Service));
             Add(GetCommandsInfo(ctx.Service));
             Add(ResponseFormat);
-            Add(GetChatInfo(ctx.Service));
+            if (SeesChat) Add(GetChatInfo(ctx.Service));
 
             return sb.ToString();
         }

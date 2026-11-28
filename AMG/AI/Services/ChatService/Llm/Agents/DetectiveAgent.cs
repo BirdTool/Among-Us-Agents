@@ -13,6 +13,7 @@ namespace AMG.AI.Services.ChatService.Llm.Agents
             _ => 4096
         };
 
+        public override bool SeesChat => false;
 
         // The detective is the one investigating, so it rests only briefly between turns (it wakes on chat and on team messages).
         public override float RestSeconds => 2f;
@@ -22,10 +23,14 @@ namespace AMG.AI.Services.ChatService.Llm.Agents
         // Nothing to investigate at second 0: it wakes with the first chat message or team message (or the last call to vote).
         public override bool WakesOnMeetingStart => false;
 
-        protected override string StartPrompt => """
-            You are the detective of the crew: you find out who the impostor is. You do not write chat messages; the CommunicatorAgent speaks in chat for you.
-            To get something said, use brief with an intent and the facts. Never give the words to say.
-            Your team: the CommunicatorAgent sends you report messages about what happens in the chat. Team messages are not proof: weigh them against what players claim.
+        protected override string StartPrompt => $"""
+            You are the DetectiveAgent: you find out who the impostor is in an Among Us meeting, and you decide the vote.
+
+            {AgentPrompts.Investigation}
+
+            {AgentPrompts.DetectiveTeamwork}
+
+            {AgentPrompts.Voting}
             """;
 
         protected override string Persona => string.Empty;

@@ -5,8 +5,7 @@ using AMG.Enums.LLMEnums;
 namespace AMG.AI.Services.ChatService.Llm.LlmCommands
 {
     [LlmCommand.Create(Name = "getRoleDescription", Type = LlmCommandTypeEnum.Private_Action,
-        Explanation = "Get the description of a role. args: [roleName]",
-        AllowedModels = new[] { typeof(CommunicatorAgent) })]
+        Explanation = "Get the description of a role. args: [roleName]")]
     public class GetRoleDescriptionCommand : CommandClass
     {
         public override (bool success, string message) Execute(LlmCommandContext ctx, string[] args)
@@ -22,8 +21,7 @@ namespace AMG.AI.Services.ChatService.Llm.LlmCommands
     }
 
     [LlmCommand.Create(Name = "getAllRolesDescription", Type = LlmCommandTypeEnum.Private_Action,
-        Explanation = "Get the description of all roles. args: []",
-        AllowedModels = new[] { typeof(CommunicatorAgent) })]
+        Explanation = "Get the description of all roles. args: []")]
     public class GetAllRolesDescription : CommandClass
     {
         public override (bool success, string message) Execute(LlmCommandContext ctx, string[] args)

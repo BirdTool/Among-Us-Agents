@@ -5,7 +5,7 @@ using AMG.Enums.LLMEnums;
 namespace AMG.AI.Services.ChatService.Llm.LlmCommands
 {
     [LlmCommand.Create(Name = "brief", Type = LlmCommandTypeEnum.Private_Action,
-        Explanation = "Tell the communicator what to get across in chat. args: [intent, facts]. intent: a short word for what you want it to do (for example question, accuse, defend, vouch, agree, deny, ask, report, greet, reply, or anything else that fits). facts: what you know, so it can say it. Never the words to say: the communicator chooses them.",
+        Explanation = "Tell the communicator what to get across in chat. args: [intent, facts]. intent: a short word for what you want it to do (for example question, accuse, defend, vouch, agree, deny, ask, report, greet, reply, or anything else that fits). Use clarify when you only need the communicator to check the chat and report back: it says nothing in the chat. facts: what you know, so it can say it. Never the words to say: the communicator chooses them.",
         AllowedModels = new[] { typeof(DetectiveAgent) })]
     public class BriefCommand : CommandClass
     {

@@ -34,8 +34,8 @@ namespace AMG.AI.Services.ChatService.Llm
         private static readonly Dictionary<LlmEffortEnum, EffortProfile> Profiles = new()
         {
             [LlmEffortEnum.Low] = new(8, 20f, MinInterval: 8f, Agents: [() => new AllWorkAgent(LlmEffortEnum.Medium)]),
-            [LlmEffortEnum.Medium] = new(6, 40f, MinInterval: 8f, Agents: [() => new CommunicatorAgent(LlmEffortEnum.Medium), () => new DetectiveAgent(LlmEffortEnum.Medium)]),
-            [LlmEffortEnum.High] = new(12, 90f, MinInterval: 8f, Agents: [() => new CommunicatorAgent(LlmEffortEnum.High), () => new DetectiveAgent(LlmEffortEnum.High)])
+            [LlmEffortEnum.Medium] = new(6, 40f, MinInterval: 8f, Agents: [() => new CommunicatorAgent(LlmEffortEnum.Low), () => new DetectiveAgent(LlmEffortEnum.Medium)]),
+            [LlmEffortEnum.High] = new(12, 90f, MinInterval: 8f, Agents: [() => new CommunicatorAgent(LlmEffortEnum.Low), () => new DetectiveAgent(LlmEffortEnum.High)])
         };
     }
 }

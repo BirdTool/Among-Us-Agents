@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AMG.AI.Services.MeetingService;
-using AMG.Enums.LLMEnums;
 using AMG.Models.LLM;
 using AMG.Utilities;
 using UnityEngine;
@@ -113,12 +112,12 @@ namespace AMG.AI.Services.ChatService.Llm
 
             int others = MessagesFromOthers();
             var mail = Mailbox.Unread(agent.AgentName);
-            bool chatNews = others > run.SeenMessages && ChatIsReady(agent, others - run.SeenMessages);
+            bool chatNews = agent.SeesChat && others > run.SeenMessages && ChatIsReady(agent, others - run.SeenMessages);
 
             bool wake = lastCall || mail.Count > 0 || chatNews || (!run.WokeOnce && agent.WakesOnMeetingStart);
             if (!wake) return;
 
-            string note = lastCall ? $"Voting is about to end ({VotingRemaining ?? 0f:F0}s left) and you have not voted. Cast your vote now: a player id, or 253 to skip if you really have no read."
+            string note = lastCall ? $"Voting is about to end ({VotingRemaining ?? 0f:F0}s left) and you have not voted. Cast your vote now. If most players accuse the same person, vote that person; use 253 (skip) only if nobody has a real case."
                 : !run.WokeOnce && agent.WakesOnMeetingStart ? "The meeting just started."
                 : mail.Count > 0 ? "New messages from your team arrived (see Team messages)."
                 : "New messages arrived in the chat since your last turn.";
