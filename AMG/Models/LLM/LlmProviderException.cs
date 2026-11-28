@@ -1,4 +1,5 @@
 using System;
+using AMG.Enums.LLMEnums;
 
 namespace AMG.Models.LLM
 {
@@ -17,6 +18,7 @@ namespace AMG.Models.LLM
         public int MaxTokens { get; init; }
         public float? Temperature { get; init; }
         public bool JsonMode { get; init; }
+        public LlmEffortEnum? Effort { get; init; }
     }
 
     public sealed class LlmProviderResult(string text, int? inputTokens, int? outputTokens, string finishReason)

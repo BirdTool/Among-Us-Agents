@@ -25,7 +25,7 @@ namespace AMG.AI.Services.ChatService.Local
 
                 // the colour id does not depend on the game's language; the displayed colour name does
                 string color = p.Data.DefaultOutfit != null ? ChatLexicon.ColorName(p.Data.DefaultOutfit.ColorId) : "";
-                if (color.Length == 0) color = Utils.Colours.GetPlayerColor(p)?.ToString() ?? "";
+                if (color.Length == 0) color = Utils.Colours.GetPlayerColour(p)?.ToString() ?? "";
 
                 current.Add(new ChatPlayer(p.PlayerId, p.Data.PlayerName ?? "", color, p.Data.ColorName));
             }

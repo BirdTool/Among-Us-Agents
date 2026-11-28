@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using AMG.AI.Control.AgentController;
 using AMG.AI.Mind;
+using AMG.AI.Mind.LLMAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
 using AMG.Interfaces;
@@ -12,34 +14,60 @@ namespace AMG.Utilities
         // Everyone
         public static void SendSignalEveryone(ISignalClass signal)
         {
-            var brains = Utils.GetAllStructuredAgentBrain();
-            foreach (var brain in brains)
+            var controllers = Utils.GetAllAgentController();
+            foreach (var controller in controllers)
             {
-                brain.SignalReceive(signal);
+                switch (controller)
+                {
+                    case StructuredAgentBrain brain:
+                        brain.SignalReceive(signal);
+                        break;
+                    case LLMAgentBrain brain:
+                        brain.SignalReceive(signal);
+                        break;
+                }
             }
         }
 
         // Specific player
         public static void SendSignalToAgent(ISignalClass signal, PlayerControl player)
         {
-            player.GetComponent<StructuredAgentBrain>()?.SignalReceive(signal);
+
+            var controller = player.GetComponent<AgentController>();
+            switch (controller)
+            {
+                case StructuredAgentBrain brain:
+                    brain.SignalReceive(signal);
+                    break;
+                case LLMAgentBrain brain:
+                    brain.SignalReceive(signal);
+                    break;
+            }
         }
 
         // All players nearby
         public static void SendSignalRadiusVector2(ISignalClass signal, Vector2 waypoint, float radius, PlayerControl excludePlayer = null)
         {
-            var brains = Utils.GetAllStructuredAgentBrain();
-            foreach (var brain in brains)
+            var controllers = Utils.GetAllAgentController();
+            foreach (var controller in controllers)
             {
-                var position = brain.Vector2Position;
+                var position = controller.Vector2Position;
 
-                if(brain.AgentId == excludePlayer?.PlayerId) continue;
+                if(controller.AgentId == excludePlayer?.PlayerId) continue;
 
                 var straightDistance = Pathfinder.GetStraightDistance(waypoint, position);
 
                 if (straightDistance <= radius)
                 {
-                    brain.SignalReceive(signal);
+                    switch (controller)
+                    {
+                        case StructuredAgentBrain brain:
+                            brain.SignalReceive(signal);
+                            break;
+                        case LLMAgentBrain brain:
+                            brain.SignalReceive(signal);
+                            break;
+                    }
                 }
             }
         }
@@ -47,18 +75,26 @@ namespace AMG.Utilities
         // All players that can see the target position
         public static void SendSignalRadiusCanSee(ISignalClass signal, Vector2 position, PlayerControl excludePlayer = null)
         {
-            var brains = Utils.GetAllStructuredAgentBrain();
-            foreach (var brain in brains)
+            var controllers = Utils.GetAllAgentController();
+            foreach (var controller in controllers)
             {
-                var brainPosition = brain.Vector2Position;
+                var brainPosition = controller.Vector2Position;
 
-                if(brain.AgentId == excludePlayer?.PlayerId) continue;
+                if(controller.AgentId == excludePlayer?.PlayerId) continue;
 
                 var canSee = Utils.CanSeeTheTarget(brainPosition, position, 6f);
 
                 if (canSee)
                 {
-                    brain.SignalReceive(signal);
+                    switch (controller)
+                    {
+                        case StructuredAgentBrain brain:
+                            brain.SignalReceive(signal);
+                            break;
+                        case LLMAgentBrain brain:
+                            brain.SignalReceive(signal);
+                            break;
+                    }
                 }
             }
         }

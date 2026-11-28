@@ -1,7 +1,4 @@
-using System.Text;
 using AMG.AI.LLM;
-using AMG.AI.Mind.StructuredAgentBrain;
-using AMG.AI.Services.ChatService;
 using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.MessagesService;
 using AMG.Utilities;
@@ -27,10 +24,7 @@ public partial class AMGPlugin : BasePlugin
 
     public ConfigEntry<string> ConfigName { get; private set; }
 
-    public static ConfigEntry<string> MenuKeybind;
-    public static ConfigEntry<string> MenuHtmlColor;
-    public static ConfigEntry<bool> MenuOpenOnMouse;
-    public static ConfigEntry<bool> MenuKeepSubwindowsOpen;
+    public static ConfigEntry<string> LlmPersona;
 
     public override void Load()
     {
@@ -46,36 +40,24 @@ public partial class AMGPlugin : BasePlugin
         Object.DontDestroyOnLoad(menuObject);
         menuObject.hideFlags = HideFlags.HideAndDontSave;
 
-        Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<AMG.UI.MenuUI>();
-        menuObject.AddComponent<AMG.UI.MenuUI>();
+        Il2CppInterop.Runtime.Injection.ClassInjector.RegisterTypeInIl2Cpp<AMG.UI.ModUpdater>();
+        menuObject.AddComponent<AMG.UI.ModUpdater>();
 
-        MenuKeybind = Config.Bind("AMG.GUI",
-                               "Keybind",
-                               "Insert",
-                               "The keyboard key used to toggle the GUI on and off. List of supported keycodes: https://docs.unity3d.com/Packages/com.unity.tiny@0.16/api/Unity.Tiny.Input.KeyCode.html");
-
-        MenuHtmlColor = Config.Bind("AMG.GUI",
-                                "Color",
+        LlmPersona = Config.Bind("AMG.LLM",
+                                "Persona",
                                 "",
-                                "A custom color for your AMG GUI. Supports html color codes");
-
-        MenuOpenOnMouse = Config.Bind("AMG.GUI",
-                                "OpenOnMouse",
-                                false,
-                                "When enabled, the AMG GUI will always be opened at the current mouse position");
-
-        MenuKeepSubwindowsOpen = Config.Bind("AMG.GUI",
-                                "KeepSubwindowsOpen",
-                                false,
-                                "When enabled, closing the AMG GUI will not automatically close its subwindows");
+                                "Extra persona for the LLM agents that speak in chat. Set it in game with .persona <text>.");
+        AMG.AI.Services.ChatService.Llm.LlmChatService.CustomPersona = LlmPersona.Value;
 
         Harmony.PatchAll();
 
         LlmApiKeyLoader.LoadKeys();
         MessageServiceClass.StartListening();
-        MessageServiceClass.OnReceive += OnMessageReceived;
+        LlmCommandRegistry.RegisterAll(typeof(AMGPlugin).Assembly);
+        // MessageServiceClass.OnReceive += OnMessageReceived;
     }
 
+    /*
     private void OnMessageReceived(PrivateMessageModel message)
     {
         LogManager.LogInfo($"[Messages] Received new message from {message.Sender}: {message.Content}");
@@ -98,4 +80,5 @@ public partial class AMGPlugin : BasePlugin
             Utils.AddChatPrivate($"Message from the AI: {message.Content}");
         }
     }
+    */
 }

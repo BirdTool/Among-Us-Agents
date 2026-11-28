@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using AMG.AI.Control;
-using AMG.AI.Mind;
 using System.Linq;
 using AMG.Utilities;
 

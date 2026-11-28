@@ -1,7 +1,7 @@
 using AMG.AI.Navigation;
 using AMG.AI.Services.ChatService;
-using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.ChatService.Local;
+using AMG.AI.Services.MeetingService;
 using AMG.AI.Tools;
 using AMG.Utilities;
 using HarmonyLib;
@@ -26,6 +26,14 @@ namespace AMG.Patches.RoundPatches
             AMG.Patches.Gameplay.Signals.VentSignals.Reset();
             AMG.AI.Navigation.WaypointManager.LoadWaypoints();
             Pathfinder.Initialize();
+            MeetingTranscriptService.Reset();
+
+            // the LLM agents forget the previous match (notes, team messages, what they saw)
+            foreach (var brain in Utils.GetAllLlmAgentBrain())
+            {
+                brain._chatService?.ResetMatch();
+                brain.ClearTimeline();
+            }
 
             // roster of everybody who started this match (kept after they die / get ejected / leave)
             AMGPlayers.SetAllPlayers();
@@ -44,12 +52,14 @@ namespace AMG.Patches.RoundPatches
         [HarmonyPostfix]
         public static void EndGameManager_Start_Postfix()
         {
+            /*
             foreach (var brain in Utils.GetAllStructuredAgentBrain())
             {
                 brain.LlmMeeting?.ClearDirectives();
                 brain.LlmMeeting?.ClearMemory();
             }
             LlmMeetingTranscript.NewMatch();
+            */
         }
 
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]
@@ -66,6 +76,8 @@ namespace AMG.Patches.RoundPatches
                 brain.ResetPath();
                 brain.SetState(Enums.AgentEnums.AgentState.OnMeeting);
             }
+
+            MeetingTranscriptService.AddNewMeetingData();
         }
 
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.ReportDeadBody))]
@@ -73,7 +85,7 @@ namespace AMG.Patches.RoundPatches
         public static void PlayerControl_ReportDeadBody_Postfix(PlayerControl __instance, NetworkedPlayerInfo target)
         {
             AMG.Patches.Gameplay.Signals.VentSignals.Reset();
-            LlmMeetingContext.Capture(__instance, target);
+            // LlmMeetingContext.Capture(__instance, target);
             if (target == null) return;   // emergency button: there is no body
 
             var body = Utils.Round.CurrentRoundDeadBodies.FirstOrDefault(x => x.PlayerId == target.PlayerId);

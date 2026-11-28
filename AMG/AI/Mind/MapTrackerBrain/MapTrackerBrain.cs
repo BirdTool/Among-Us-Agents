@@ -1,14 +1,12 @@
 using System;
-using System.IO;
 using AMG.AI.Control.AgentController;
 using UnityEngine;
-using UnityEngine.UIElements.UIR;
 
 namespace AMG.AI.Mind.MapTrackerBrain
 {
     internal enum TrackerBrainStates { RandomWalking, Navigating, Stopped };
 
-    public partial class MapTrackerBrain(IntPtr ptr) : AgentController(ptr)
+    public class MapTrackerBrain(IntPtr ptr) : AgentController(ptr)
     {
         private Vector2 currentDirection = Vector2.zero;
         private float directionChangeTimer = 0f;

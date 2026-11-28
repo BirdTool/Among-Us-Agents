@@ -265,7 +265,8 @@ namespace AMG.Models.LLM.Providers
                 Messages = messages,
                 MaxTokens = llm.MaxTokens,
                 Temperature = llm.Temperature,
-                JsonMode = llm.JsonMode
+                JsonMode = llm.JsonMode,
+                Effort = llm.Effort
             };
 
             return true;

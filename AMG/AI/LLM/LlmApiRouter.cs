@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -27,6 +28,9 @@ namespace AMG.AI.LLM
     //    requests are shared in rounds, still by priority. The top key answers (keys + 1) requests, the 2nd key 2,
     //    every other key 1, then the round restarts. Ex.: Claude + Gemini = 3 Claude, 2 Gemini; with 3 keys = 4, 2, 1.
     //    A chosen key that fails still falls back to the others, top first. Keys cooling down are left out of the round.
+    //  - Concurrency: any number of reasonings (detective, communicator...) may call at the same time.
+    //    Each key lets MaxConcurrentPerKey requests fly at once; extra requests go to a key with a free slot
+    //    (OverflowWhenBusy) or wait for one. Failures that hit the same key together count as ONE failure.
     // Health lives in memory only: restarting the game clears it.
     public static class LlmApiRouter
     {
@@ -39,7 +43,15 @@ namespace AMG.AI.LLM
         // false: always start at the top key (default). true: share the requests between the keys, see above.
         public static bool SpreadAcrossKeys { get; set; }
 
+        // Requests allowed in flight on the same key. Read when the key's gate is first used, so set it before the first request.
+        public static int MaxConcurrentPerKey { get; set; } = 2;
+
+        // true: a request whose first-choice key is full goes to the next key with a free slot (priority order kept).
+        // false: it waits for the first-choice key instead.
+        public static bool OverflowWhenBusy { get; set; } = true;
+
         private static long _rotation;
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> Gates = new(StringComparer.Ordinal);
 
         internal static Func<DateTime> UtcNow { get; set; } = () => DateTime.UtcNow;
 
@@ -60,6 +72,12 @@ namespace AMG.AI.LLM
             internal int ConsecutiveFailures;
             internal string LastErrorCode = string.Empty;
             internal DateTime? NextAttemptUtc;
+            internal DateTime? LastFailureUtc;
+        }
+
+        private sealed class Slot(SemaphoreSlim gate) : IDisposable
+        {
+            public void Dispose() => gate.Release();
         }
 
         private static readonly object Sync = new();
@@ -143,6 +161,9 @@ namespace AMG.AI.LLM
             if (SpreadAcrossKeys)
                 clients = OrderForSpread(clients);
 
+            if (OverflowWhenBusy)
+                clients = PreferFreeSlots(clients);
+
             var errors = new List<string>();
             TimeSpan? soonest = null;
             int coolingDown = 0;
@@ -162,8 +183,34 @@ namespace AMG.AI.LLM
                     continue;
                 }
 
+                Slot slot;
+
+                try
+                {
+                    slot = await AcquireSlotAsync(client.ClientId, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return (Fail<T>("Cancelled", "Request cancelled.", watch.Elapsed.TotalSeconds, report.HttpAttempts), report);
+                }
+
+                // Released at the end of this iteration, whatever way it ends.
+                using var held = slot;
+
+                // The key may have started cooling down while this request waited for its slot.
+                if (!TryAcquire(client.ClientId, out remaining))
+                {
+                    coolingDown++;
+
+                    if (soonest == null || remaining < soonest)
+                        soonest = remaining;
+
+                    continue;
+                }
+
                 report.KeysTried.Add(client.ClientId);
 
+                DateTime startedUtc = UtcNow();
                 ILLMResponse<string, T> response;
 
                 using (LlmReasoningContext.Enter(reasoning))
@@ -174,7 +221,7 @@ namespace AMG.AI.LLM
 
                 if (!response.HasError)
                 {
-                    RegisterSuccess(client.ClientId);
+                    RegisterSuccess(client.ClientId, startedUtc);
 
                     if (report.KeysTried.Count > 1)
                         LogManager.LogInfo($"[LLM] {client.ClientId} answered after {report.KeysTried.Count - 1} other key(s) failed.");
@@ -189,7 +236,7 @@ namespace AMG.AI.LLM
                     return (response, report);
 
                 if (kind == FailureKind.Key)
-                    RegisterFailure(client.ClientId, code, singleKey);
+                    RegisterFailure(client.ClientId, code, singleKey, startedUtc);
 
                 errors.Add($"{client.ClientId}: {code}");
             }
@@ -206,6 +253,36 @@ namespace AMG.AI.LLM
             return (Fail<T>("AllKeysFailed",
                 "All API keys failed: " + string.Join("; ", errors) + suffix,
                 watch.Elapsed.TotalSeconds, report.HttpAttempts), report);
+        }
+
+        private static SemaphoreSlim GateOf(string clientId)
+            => Gates.GetOrAdd(clientId, _ => new SemaphoreSlim(Math.Max(1, MaxConcurrentPerKey)));
+
+        private static async Task<Slot> AcquireSlotAsync(string clientId, CancellationToken cancellationToken)
+        {
+            SemaphoreSlim gate = GateOf(clientId);
+            await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return new Slot(gate);
+        }
+
+        // Keys with a free slot go first (priority order kept inside each group); full keys stay as the fallback.
+        // CurrentCount is only a hint: if it is stale the request just waits on its key's gate.
+        private static ILLMClient[] PreferFreeSlots(ILLMClient[] clients)
+        {
+            if (clients.Length < 2)
+                return clients;
+
+            var free = new List<ILLMClient>(clients.Length);
+            var busy = new List<ILLMClient>(clients.Length);
+
+            foreach (var client in clients)
+                (GateOf(client.ClientId).CurrentCount > 0 ? free : busy).Add(client);
+
+            if (free.Count == 0 || busy.Count == 0)
+                return clients;
+
+            free.AddRange(busy);
+            return [.. free];
         }
 
         // Top key = keys + 1 requests per round (2 keys: 3, 3 keys: 4...), 2nd key = 2, the others = 1.
@@ -312,26 +389,40 @@ namespace AMG.AI.LLM
             }
         }
 
-        private static void RegisterSuccess(string clientId)
+        private static void RegisterSuccess(string clientId, DateTime startedUtc)
         {
             lock (Sync)
             {
-                if (Health.TryGetValue(clientId, out var health) && health.ConsecutiveFailures >= FailuresBeforeCooldown)
+                if (!Health.TryGetValue(clientId, out var health))
+                    return;
+
+                // A request that started before the key's last failure says nothing about the key now.
+                if (health.LastFailureUtc is { } last && startedUtc <= last)
+                    return;
+
+                if (health.ConsecutiveFailures >= FailuresBeforeCooldown)
                     LogManager.LogInfo($"[LLM] {clientId} recovered.");
 
                 Health.Remove(clientId);
             }
         }
 
-        private static void RegisterFailure(string clientId, string code, bool singleKey)
+        private static void RegisterFailure(string clientId, string code, bool singleKey, DateTime startedUtc)
         {
             lock (Sync)
             {
                 if (!Health.TryGetValue(clientId, out var health))
                     Health[clientId] = health = new KeyHealth();
 
-                health.ConsecutiveFailures++;
                 health.LastErrorCode = code;
+
+                // Requests in flight together on the same key fail together (e.g. a 429 burst):
+                // that is ONE failure, not one per request, or 3 parallel calls would pause the key at once.
+                if (health.LastFailureUtc is { } last && startedUtc <= last)
+                    return;
+
+                health.LastFailureUtc = UtcNow();
+                health.ConsecutiveFailures++;
 
                 if (health.ConsecutiveFailures < FailuresBeforeCooldown)
                     return;

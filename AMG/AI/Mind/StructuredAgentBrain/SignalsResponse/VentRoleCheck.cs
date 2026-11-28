@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using AMG.AI.Mind.StructuredAgentBrain.Memories;
 using AMG.AI.Services.ChatService;
-using AMG.AI.Services.ChatService.Llm;
 using AMG.AI.Services.MessagesService;
 using AMG.Utilities;
 using AmongUs.GameOptions;
@@ -61,13 +60,6 @@ namespace AMG.AI.Mind.StructuredAgentBrain
         private static void Alert(PlayerControl venter, RoleTypes role)
         {
             if (!Alerted.Add(venter.PlayerId)) return;
-
-            string colour = LlmMeetingSession.Colour(venter);
-            string text = $"Vi {colour} ({venter.Data?.PlayerName}) usar uma vent, mas o cargo dele é {role}: não é Impostor nem Engenheiro. "
-                        + "Sugiro expulsá-lo da partida (possível cheater).";
-
-            LogManager.LogWarning($"[Vent] {colour} used a vent as {role}: not an Impostor or an Engineer.");
-            if (ChatMode.IsLlm) MessageServiceClass.WriteMessage(text, PrivateMessageSenderEnum.LLM);
         }
     }
 }

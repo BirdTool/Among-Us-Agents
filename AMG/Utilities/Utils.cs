@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using AMG.AI.Control.AgentController;
-using AMG.AI.Mind;
+using AMG.AI.Mind.LLMAgentBrain;
 using AMG.AI.Mind.ReactiveAgentBrain;
 using AMG.AI.Mind.StructuredAgentBrain;
 using AMG.AI.Navigation;
@@ -330,6 +329,11 @@ namespace AMG.Utilities
         public static List<StructuredAgentBrain> GetAllStructuredAgentBrain()
         {
             return [.. UnityEngine.Object.FindObjectsOfType<StructuredAgentBrain>()];
+        }
+
+        public static List<LLMAgentBrain> GetAllLlmAgentBrain()
+        {
+            return [.. UnityEngine.Object.FindObjectsOfType<LLMAgentBrain>()];
         }
 
         public static List<ReactiveAgentBrain> GetAllReactiveAgentBrain()

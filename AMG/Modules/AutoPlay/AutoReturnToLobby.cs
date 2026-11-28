@@ -48,7 +48,6 @@ namespace AMG.Modules.AutoPlay
 
         public static void Cancel() => _pending = false;
 
-        // Call every frame from the Unity main thread (MenuUI.Update). Does nothing unless a match just ended.
         public static void Tick()
         {
             if (!_pending) return;

@@ -111,7 +111,7 @@ namespace AMG.Utilities
         {
             PlayerId = player.PlayerId;
             PlayerName = player.Data.PlayerName;
-            PlayerColour = CleanColour(player.Data.ColorName);
+            PlayerColour = Utils.Colours.ColourOf(player.Data.ColorName);
             ClientId = player.GetClientId();
             FirstRole = player.Data.Role != null ? player.Data.Role.Role : RoleTypes.Crewmate;
             _lastKnownRole = FirstRole;
@@ -166,10 +166,18 @@ namespace AMG.Utilities
             }
         }
 
-        private static string CleanColour(string c)
+        public readonly List<PlayerRoomTracker> PlayerRoomHistory = [];
+
+        public void AddRoomHistory()
         {
-            c = c?.Trim().Trim('(', ')').Trim();
-            return string.IsNullOrEmpty(c) ? "Unknown" : c;
+            PlayerRoomHistory.Add(new PlayerRoomTracker(Player.GetTruePosition().GetClosestNode().Room, Utils.Round.CurrentRound.Number));
         }
+    }
+
+    public class PlayerRoomTracker(SystemTypes room, int round)
+    {
+        public SystemTypes Room = room;
+        public int Round = round;
+        public float Time = (float)Utils.SecondsSinceShipStart;
     }
 }
